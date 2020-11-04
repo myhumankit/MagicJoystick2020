@@ -21,7 +21,6 @@ from PIL import ImageFont
 
 
 # Constants definition:
-GET_JOY_DATA_PERIOD = 0.5
 DEFAULT_PERIOD = 0.01
 
 # Instanciate logger:
@@ -305,15 +304,14 @@ On disconnection, the server will automatically set X/Y to [0,0]
 """
 class client():
 
-    def __init__(self, ip, port):
+    def __init__(self, ip, port, joy):
         self.ip = ip
         self.port =port
         self.joy = joy
-        self.display = display
         self.sleeptime = self.joy.sleeptime
         self.server_nopresent = True
 
-        while(self.server_nopresent)
+        while(self.server_nopresent):
             try:
                 self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 server_address = (self.ip, self.port)
@@ -352,7 +350,7 @@ def parseInputs():
     parser.add_argument("--invert_y", help="Invert sign of y axis if set, default is false", action="store_true")
     parser.add_argument("--swap_xy", help="swap x/y inputs", action="store_true")
     parser.add_argument("-d", "--debug", help="Enable debug messages", action="store_true")
-    parser.add_argument("-t", "--test", help="Test mode, do not connect to CAN bus", action="store_true")
+    parser.add_argument("-t", "--test", help="Test mode, do not connect to R-NET server", action="store_true")
 
     return parser.parse_args()
 
@@ -374,7 +372,7 @@ if __name__ == "__main__":
     display.start_daemon()
 
     # create client and connect to Rnet server
-    cli = client(args.ip, args.port)
+    cli = client(args.ip, args.port, joy)
     cli.start()
 
 
