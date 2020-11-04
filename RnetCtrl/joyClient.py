@@ -8,16 +8,24 @@ import logging
 import curses
 import common
 
+# In case of test mode run on a PC, no 
+# ADC or screen will be available
 # imports for ADC
-import Adafruit_ADS1x15
+try:
+    FORCE_JOY_TESTMODE = False
+    import Adafruit_ADS1x15
+except:
+    FORCE_JOY_TESTMODE = True
 
-# # imports for oled screen
-import Adafruit_GPIO.SPI as SPI
-import Adafruit_SSD1306
-from PIL import Image
-from PIL import ImageDraw
-from PIL import ImageFont
-
+try:
+    # imports for oled screen
+    import Adafruit_GPIO.SPI as SPI
+    import Adafruit_SSD1306
+    from PIL import Image
+    from PIL import ImageDraw
+    from PIL import ImageFont
+except:
+    pass
 
 
 # Constants definition:
@@ -166,7 +174,9 @@ class joystick():
     def get_new_data(self):
 
         if self.kbdtest is not None:
-            x, y = self.kbdtest.get_kbd_arrows()
+            rnet_x, rnet_y = self.kbdtest.get_kbd_arrows()
+            scr_x = rnet_x
+            scr_y = rnet_y
 
         else:
             # Get magnetometer x/y values from ADC:
@@ -364,12 +374,19 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
 
+    if FORCE_JOY_TESTMODE is True:
+        logger.error("FORCE TEST")
+        args.test = True
+
     # Instanciate joystick 
     joy = joystick(args.period, args.invert_x, args.invert_y, args.swap_xy, args.test)
 
     # Instanciate display
-    display = display(joy)
-    display.start_daemon()
+    try:
+        display = display(joy)
+        display.start_daemon()
+    except:
+        logger.info("Screen error, no screen display")
 
     # create client and connect to Rnet server
     cli = client(args.ip, args.port, joy)
