@@ -7,6 +7,7 @@ MHK: control wheelchair hack based on the can2RNET project
 Script serveur Rnet:
 
 <code>
+
 python3 RnetCtrl.py  --help
 
 usage: RnetCtrl.py [-h] [--ip IP] [--port PORT] [--rnetaddr RNETADDR] [-d]
@@ -26,12 +27,14 @@ optional arguments:
   -d, --debug          Enable debug messages
 
   -t, --test           Test mode, do not connect to CAN bus
+
 </code>
 
 
 Script client Joystick:
 
 <code>
+
 python3 joyClient.py --help
 
 usage: joyClient.py [-h] [--ip IP] [--port PORT] [--period PERIOD]
@@ -56,6 +59,7 @@ optional arguments:
 
   -d, --debug      Enable debug messages
 
-  -t, --test       Test mode, do not connect to CAN bus
+  -t, --test       Test mode, do not connect to R-NET server
+
 </code>
 
