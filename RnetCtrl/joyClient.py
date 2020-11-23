@@ -106,13 +106,15 @@ class joystick():
         self.offset_x = 0
         self.offset_y = 0
         
-        if test :
+        if test is True:
+            logger.info("Starting joy in debug mode with with computer keybaord")
             self.kbdtest = kbdtest()
         else :
             self.kbdtest = None
             # Create an ADS1115 ADC (16-bit) instance.
             self.adc = Adafruit_ADS1x15.ADS1015()
             self.calibrate()
+            logger.info("Starting joy, calibration done")
 
 
     """
@@ -277,7 +279,7 @@ class display():
     Endless loop that sends periodically Rnet frames
     """
     def screen_daemon(self):
-        logger.debug("screen daemon started")
+        logger.info("Screen daemon started")
         # Display joy location on the screen;
         while True:
             _, _, scr_x, scr_y,  = self.joy.get_new_data()
@@ -327,14 +329,15 @@ class client():
                 server_address = (self.ip, self.port)
                 self.sock.connect(server_address)
                 self.server_nopresent = False
+                logger.info("Connected to Rnet server")
             except:
-                logger.error("connecting to %s:%d failed" %(self.ip, self.port))
+                logger.error("Connecting to %s:%d failed" %(self.ip, self.port))
                 time.sleep(2)
 
 
 
     def start(self):         
-
+        logger.info("Joy client started")
         while True:
             # get x/y
             # 'xx.yy'  where xx and yy are unsigned integer on 8 bits [0..255]
@@ -385,11 +388,12 @@ if __name__ == "__main__":
     try:
         display = display(joy)
         display.start_daemon()
+        logger.info("Display interface started")
     except:
         logger.info("Screen error, no screen display")
 
-    # create client and connect to Rnet server
     cli = client(args.ip, args.port, joy)
+    # create client and connect to Rnet server
     cli.start()
 
 
