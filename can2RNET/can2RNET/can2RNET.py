@@ -23,7 +23,17 @@ import sys
 from time import time, sleep
 import binascii  # used in build_frame
 import threading
-from common import logger
+import logging 
+
+# Instanciate logger:
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
+    handlers=[
+        logging.StreamHandler()
+    ])
+logger = logging.getLogger()
+
 
 # all functions take CAN messages as a string in "CANSEND" (from can-utils) format
 """
@@ -49,10 +59,9 @@ def build_frame(canstr):
     lcanid = len(cansplit[0])
     RTR = '#R' in canstr
     if lcanid == 3:
-        canid = struct.pack('I', int(cansplit[0], 16)+0x40000000*RTR)
+        canid = struct.pack('<I', int(cansplit[0], 16)+0x40000000*RTR)
     elif lcanid == 8:
-        canid = struct.pack(
-            'I', int(cansplit[0], 16)+0x80000000+0x40000000*RTR)
+        canid = struct.pack('<I', int(cansplit[0], 16)+0x80000000+0x40000000*RTR)
     else:
         logger.error('build_frame: cansend frame id format error: ' + canstr)
         return 'Err!'
@@ -84,6 +93,16 @@ def dissect_frame(frame):
         rtr = False
     can_idtxt = '{:08x}'.format(can_id & 0x1FFFFFFF)[-idl:]
     return (can_idtxt + '#'+''.join(["%02X" % x for x in data[:can_dlc]]) + 'R'*rtr)
+
+
+def cansendraw(s, canrawdata):
+    try:
+        logger.info("cansend: %r" %binascii.hexlify(canrawdata))
+        s.send(canrawdata)
+    except socket.error as e:
+        logger.error('reason: %s' %str(e))
+        logger.error('Error sending raw CAN frame %r' %canrawdata)
+        raise e
 
 
 def cansend(s, cansendtxt):
@@ -130,8 +149,25 @@ def canwait(s, canfiltertxt):
     mask = int(can_idf_split[1], 16)
     cancheckint = 0
     while cancheckint != canidint:
-        cf, addr = s.recvfrom(16)
+        cf, _ = s.recvfrom(16)
         cancheckint = struct.unpack("I", cf[:4])[0] & mask
+    return cf
+
+
+def canrecvTimeout(s, timeout):
+    s.settimeout(timeout)
+    cf = b''
+    try:
+        cf, _ = s.recvfrom(16)
+    except:
+        pass
+    s.settimeout(0)
+    return cf
+
+
+
+def canrecv(s):
+    cf, _ = s.recvfrom(16)
     return cf
 
 
@@ -141,7 +177,7 @@ def canwaitRTR(s, canfiltertxt):
     mask = int(can_idf_split[1], 16)+0x40000000
     cancheckint = 0
     while cancheckint != canidint:
-        cf, addr = s.recvfrom(16)
+        cf, _ = s.recvfrom(16)
         cancheckint = struct.unpack("I", cf[:4])[0] & mask
     return cf
 
