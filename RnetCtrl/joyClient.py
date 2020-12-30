@@ -6,7 +6,7 @@ import socket
 import sys
 import logging
 import curses
-import common
+
 
 # In case of test mode run on a PC, no 
 # ADC or screen will be available
@@ -39,6 +39,32 @@ logging.basicConfig(
         logging.StreamHandler()
     ])
 logger = logging.getLogger()
+
+
+
+# Unsigned 8 bits to signed 8bits
+# input x      : 0..255 center on 127 unsigned
+# input invert : True/False, invert sign
+def unsigned2signed(x, invert):
+
+    # Invert the sign if required
+    if invert is True :
+        x = 255-x
+
+    if x == 0:
+        out  = 128
+
+    # Case 'negative' range input 1..127 output 127..255 <=> -127..-1
+    elif x < 128:
+        out = x + 127
+
+    # Case positive range input 128..255 output 0..127
+    else :
+        # Range 0..127
+        out = x - 128
+
+    return out
+
 
 
 """
@@ -191,14 +217,14 @@ class joystick():
             scr_x = self.screen_scale(x - self.offset_x, 0, 2048, 0, 128)
             scr_y = self.screen_scale(y - self.offset_y, 0, 2048, 0, 64)
             if self.invert_x:
-                scr_x = common.unsigned2signed(scr_x, self.invert_x)
+                scr_x = unsigned2signed(scr_x, self.invert_x)
             if self.invert_y:
-                scr_y = common.unsigned2signed(scr_y, self.invert_y)
+                scr_y = unsigned2signed(scr_y, self.invert_y)
 
             # Convert unsigned scaled value to signed value, and possibly
             # invert sign if required
-            rnet_x = common.unsigned2signed(rnet_x_scaled, self.invert_x)
-            rnet_y = common.unsigned2signed(rnet_y_scaled, self.invert_y)
+            rnet_x = unsigned2signed(rnet_x_scaled, self.invert_x)
+            rnet_y = unsigned2signed(rnet_y_scaled, self.invert_y)
 
             # Filter raw data to create a real zero
             # FIXME : If required, add filter function on x,y
