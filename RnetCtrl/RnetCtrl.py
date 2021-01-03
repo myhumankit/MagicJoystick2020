@@ -41,41 +41,28 @@ def dec2hex(dec, hexlen):
 Basic commands over Rnet 
 """
 RNET_DICT={
-    'JSM_CONNECT'          : '0c000000#', #'00c#'
-    'JSM_SERIAL'           : '0e000000#9700148100000000',
-    'JSM_SERIAL_REQ'       : 'b3070000#',
-    'JMS_CFG_MODE1_REQ'    : '000007b1#',
+    'JSM_CONNECT'          : '00c#',
+    'JSM_SERIAL'           : '00e#9700148100000000',
+    'JSM_SERIAL_REQ'       : '7b3#',
+    'JMS_CFG_MODE1_REQ'    : '7b1#',
     'JSM_UI_READY'         : '1c240101#',      # 1c24XX01, XX=device
-    'JSM_SPEED_CFG'        : '0a04XXYY#00',    # XXYY is the JSM identifier eg '1100' used for joystick position
-    'JSM_JOY_POS'          : '0200XXYY#xxyy',  # XXYY is the JSM identifier, xxyy joystick position
+    'JSM_SPEED_CFG'        : '0a041100#00',    # Use JSM identifier '1100' same used for joystick position, and set to minimum speed
+    'JSM_JOY_POS'          : '02001100#0000',  # Set joystick osition to 00
+    'JSM_HEARTBEAT'        : '03c30f0f#87878787878787',
 
     'PM_SERIAL_ACK'        : '0007b3#R',
     'PM_CFG_MODE1_ACK'     : '0007b0#',
-    'PM_BATTERY_LEVEL'     : '1C0CXX00#YY',    # XX=device, YY=power level in % Xx = 0x00 - 0x64. Periodic: 1000ms
+    'PM_BATTERY_LEVEL'     : '1C0CXX00#YY',    # XX=device, YY=power level in %. yy range is [0x00 - 0x64]. Periodic: 1000ms
     'PM_HEARTBEAT'         : '0c140000#XX',
     'PM_CONNECTED'         : '0c280000#00',    # Sent only once after serial exchange
 }
 
-RNET_RAW_DICT={
-    'JSM_CONNECT'          : binascii.unhexlify(b'0c000000000000000000000000000000'),
-    'JSM_SERIAL'           : binascii.unhexlify(b'0e000000080000009700148100000000'),
-    'JSM_SERIAL_REQ'       : binascii.unhexlify(b'b3070000000000000000000000000000'),
-    'JMS_CFG_MODE1_REQ'    : binascii.unhexlify(b'b1070000000000000000000000000000'),
-    'JSM_UI_READY'         : '1c240101#',      # 1c24XX01, XX=device
-    'JSM_SPEED_CFG'        : '0a04XXYY#00',    # XXYY is the JSM identifier eg '1100' used for joystick position
-    'JSM_JOY_POS'          : '0200XXYY#xxyy',  # XXYY is the JSM identifier, xxyy joystick position
-
-    'PM_SERIAL_ACK'        : '0007b3#R',
-    'PM_CFG_MODE1_ACK'     : '0007b0#',
-    'PM_BATTERY_LEVEL'     : '1C0CXX00#YY',    # XX=device, YY=power level in % Xx = 0x00 - 0x64. Periodic: 1000ms
-    'PM_HEARTBEAT'         : '0c140000#XX',
-    'PM_CONNECTED'         : '0c280000#00',    # Sent only once after serial exchange
-}
 
 
 SERIAL_PERIOD = 0.05
 SERIAL_REQ_PERIOD = 0.03
-
+CONFIG_TIMEOUT = 0.2
+HEARTBEAT_PERIOD = 0.1
 
 
 """
@@ -94,9 +81,10 @@ class JsmPowerOn(threading.Thread):
     Sending periodic 50ms serial number <Thread>
     """
     def serialDaemon(self):
+        logger.info("<Serial number send daemon started>")
         while True:
             time.sleep(SERIAL_PERIOD)
-            can2RNET.cansendraw(self.cansocket, RNET_RAW_DICT['JSM_SERIAL'])
+            can2RNET.cansend(self.cansocket, RNET_DICT['JSM_SERIAL'])
 
 
     def startSerialDaemon(self):
@@ -105,9 +93,47 @@ class JsmPowerOn(threading.Thread):
         return daemon
 
 
+    def heartbeatDaemon(self):
+        logger.info("<Heartbeat daemon started>")
+        while True:
+            time.sleep(HEARTBEAT_PERIOD)
+            can2RNET.cansend(self.cansocket, RNET_DICT['JSM_HEARTBEAT'])
+
+
+    def startHeartbeatDaemon(self):
+        daemon = threading.Thread(target=self.heartbeatDaemon, daemon=True)
+        daemon.start()
+        return daemon
+
+
+    def ListenerDaemon(self):
+        logger.info("<Listener daemon started>")
+        data = 0
+        while True:
+            data = can2RNET.canrecvTimeout(self.cansocket, 0.1)
+            time.sleep(0.01)
+            if data is not b'':
+                logger.debug("**** Recv controller data: %r ****" %can2RNET.dissect_frame(data))
+
+
+    def startListenerDaemon(self):
+        daemon = threading.Thread(target=self.ListenerDaemon, daemon=True)
+        daemon.start()
+        return daemon
+
+
+
+    def recTimeOut(self, timeout):
+        data = 0
+        while data is not b'':
+            data = can2RNET.canrecvTimeout(self.cansocket, timeout)
+            if data is not b'':
+                logger.info("BOOT Recv controller data: %r" %can2RNET.dissect_frame(data))
+
+
     def reqack(self, req, ack):
 
-        can2RNET.cansendraw(self.cansocket, req)
+        can2RNET.cansend(self.cansocket, req)
         ack_frame = can2RNET.canrecvTimeout(self.cansocket, SERIAL_REQ_PERIOD)
 
         pm_answer = ''
@@ -119,7 +145,7 @@ class JsmPowerOn(threading.Thread):
             logger.debug("Wait for PM %s, got : TIMEOUT" %(req))
 
         while pm_answer != ack:
-            can2RNET.cansendraw(self.cansocket, req)
+            can2RNET.cansend(self.cansocket, req)
             ack_frame = can2RNET.canrecvTimeout(self.cansocket, SERIAL_REQ_PERIOD)
 
             if ack_frame is not b'':
@@ -132,37 +158,40 @@ class JsmPowerOn(threading.Thread):
     def powerOn(self):
 
         # Send JSM wake up to PM
-        can2RNET.cansendraw(self.cansocket, RNET_RAW_DICT['JSM_CONNECT'])
+        can2RNET.cansend(self.cansocket, RNET_DICT['JSM_CONNECT'])
         time.sleep(0.2)
 
         # start periodic serial info send thread:
         self.startSerialDaemon()
 
         # Initiate serial exchange, and wait for ack from PM
-        self.reqack(RNET_RAW_DICT['JSM_SERIAL_REQ'], RNET_DICT['PM_SERIAL_ACK'])        
-
+        self.reqack(RNET_DICT['JSM_SERIAL_REQ'], RNET_DICT['PM_SERIAL_ACK'])        
 
         logger.info("BOOT: get serial ack from pm")
 
-        binascii.hexlify(dd)
         # Receive serial frames from PM  
-        # assuming a 500ms timeout PM tells serial has benn sent
-        data = 0
-        while data is not None:
-            data = can2RNET.canrecvTimeout(self.cansocket, 0.5)
-            time.sleep(0.5)
-            logger.info("BOOT: got serial data %r" %data)
+        # assuming a 2000ms timeout PM tells serial has benn sent
+        self.recTimeOut(CONFIG_TIMEOUT)
+
+        logger.info("\n\nBOOT: RX TIMEOUT - Controller sent all configuration\n")
 
         # Tell PM that JSM UI is ready and wait for PM connected answer
 
         can2RNET.cansend(self.cansocket, RNET_DICT['JSM_UI_READY'])
 
-        pm_answer = ''
-        while pm_answer is not RNET_DICT['PM_CONNECTED']:
-            time.sleep(0.1) 
-            pm_answer = can2RNET.dissect_frame(can2RNET.canrecv(self.cansocket))
-
         logger.info("BOOT: get pm connected !")
+
+        # Set speed to minimum 
+        can2RNET.cansend(self.cansocket, RNET_DICT['JSM_SPEED_CFG'])
+
+        self.recTimeOut(CONFIG_TIMEOUT)
+
+        # Logger daemon for frames received from Controller
+        self.startListenerDaemon()
+
+        # Start heartbeat daemon thread
+        self.startHeartbeatDaemon()
+
 
 
 """
@@ -262,7 +291,6 @@ class RnetControl(threading.Thread):
     """
     def send_joy_position(self):
         joyframe = self.createJoyFrame(ID_JOY_CONTROL, self.joy_x, self.joy_y)
-        logger.debug("Sending Rnet frame: %s" %joyframe)
         self.cansend(self.cansocket, joyframe)
 
 
@@ -342,20 +370,13 @@ if __name__ == "__main__":
         logger.setLevel(logging.DEBUG)
 
 
-    # Connect and initialize Rnet controller:
+    # Connect and initialize Rnet controller,
+    # start heartbeat
     rnet = RnetControl(args.rnetaddr, args.test)
 
     rnet.powerOn.powerOn()
     # Start Rnet controller
     try:
-        
-        # WIP
-        # Autodetect the JSM address that controls 
-        # X/Y commands
-        # rnet.get_jsm_header()
-
-        # Send exploit to crash JSM
-        rnet.send_jsm_exploit()
         # Start position daemon
         deamon = rnet.start_daemon()
         
