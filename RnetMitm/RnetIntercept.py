@@ -31,7 +31,7 @@ input: "jsm_address" is the identification of the wheelchair JSM
 """
 class RnetLogger(threading.Thread):
 
-    def __init__(self, rIp, rPort, logger_tag, logfile, rawlog):
+    def __init__(self, rIp, rPort, logger_tag, logfile):
         self.cansocket = None
         self.sock = None
         self.rIp = rIp
@@ -39,7 +39,6 @@ class RnetLogger(threading.Thread):
         self.server_nopresent = True
         self.logger_tag = logger_tag
         self.logfile = logfile
-        self.rawlog = rawlog
         
         threading.Thread.__init__(self)
         logger.info("Opening socketcan")
@@ -85,10 +84,7 @@ class RnetLogger(threading.Thread):
         # sending joystick frame @100Hz
         while True:
             rnetFrame = can2RNET.canrecv(self.cansocket)
-            if self.rawlog:
-                self.logfile.write('%s - %s: %r\n' %(time.monotonic(), self.logger_tag,binascii.hexlify(rnetFrame)))
-            else:
-                self.logfile.write('%s - %s: %r\n' %(time.monotonic(), self.logger_tag,can2RNET.dissect_frame(rnetFrame)))
+            self.logfile.write('%s: %r\n' %(self.logger_tag,can2RNET.dissect_frame(rnetFrame)))
             self.sock.send(rnetFrame)
 
 
@@ -98,13 +94,13 @@ on the Rnet bus.
 """
 class server():
 
-    def __init__(self, ip, port, iptag, rnet, logfile, rawlog):
+    def __init__(self, ip, port, iptag, rnet, logfile):
         self.ip = ip
         self.port =port
         self.rnet = rnet
         self.iptag = iptag
         self.logfile = logfile
-        self.rawlog = rawlog
+
         try:
             self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -124,11 +120,7 @@ class server():
             logger.info('Accept connection from: %r' %addr[0])
             while True:
                 data = conn.recv(TCP_BUFFER_SIZE)
-                if not data: break
-                if self.rawlog:
-                    self.logfile.write('%s - %s: %r\n' %(time.monotonic(), self.iptag,binascii.hexlify(data)))
-                else:
-                    self.logfile.write('%s - %s: %r\n' %(time.monotonic(), self.iptag,can2RNET.dissect_frame(data)))
+                self.logfile.write('%s: %r\n' %(self.iptag,can2RNET.dissect_frame(data)))
                 self.rnet.sendFrame(data)
 
             logger.info('TCP connection closed')
@@ -149,7 +141,7 @@ def parseInputs():
     parser.add_argument("--iptag", type=str, default="MOTOR", help="Defines logger tag like 'MOTOR' for IP stream. Default is 'MOTOR'")
     parser.add_argument("--logfile", type=str, default="logfile.txt", help="Output can log filename")
     parser.add_argument("-d", "--debug", help="Enable debug messages", action="store_true")
-    parser.add_argument("-r", "--raw", help="Log raw binary", action="store_true")
+
 
     return parser.parse_args()
 
@@ -167,8 +159,8 @@ if __name__ == "__main__":
         # Connect and initialize Rnet controller
         # Will listen for Rnet frames and transmit
         # them to distant TCP server
-        rnet = RnetLogger(args.rIp,args.rPort, args.cantag, logfile, args.raw)
-        serv = server(args.lIp, args.lPort, args.iptag, rnet, logfile, args.raw)
+        rnet = RnetLogger(args.rIp,args.rPort, args.cantag, logfile)
+        serv = server(args.lIp, args.lPort, args.iptag, rnet, logfile)
 
         # Start position daemon
         deamon = rnet.start_daemon()
