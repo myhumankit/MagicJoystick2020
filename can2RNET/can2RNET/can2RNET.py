@@ -1,5 +1,5 @@
 #!/Python3.4
-# Python canbus functions for R-net exploration by Specter and RedDragonX
+# Python canbus functions for R-net exploration by Specter and RedragonX
 
 # This file is part of can2RNET.
 #
