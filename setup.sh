@@ -40,7 +40,7 @@ echo "# pican interface configuration "  >> /etc/network/interfaces
 echo "allow-hotplug can0" >> /etc/network/interfaces
 echo "iface can0 can static" >> /etc/network/interfaces
 echo "       bitrate 125000" >> /etc/network/interfaces
-echo "       up /sbin/ip link set $IFACE down" >> /etc/network/interfaces
+echo "       down /sbin/ip link set $IFACE down" >> /etc/network/interfaces
 echo "       up /sbin/ip link set $IFACE up" >> /etc/network/interfaces
 echo "# MagicJoy config stops ============="  >> /etc/network/interfaces
 
