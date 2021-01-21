@@ -136,8 +136,8 @@ class RnetDualLogger(threading.Thread):
         # sending joystick frame @100Hz
         while True:
             rnetFrame = can2RNET.canrecv(listensock)
-            logger.info('%s: %r\n' %(logger_tag,can2RNET.dissect_frame(rnetFrame)))
-            self.logfile.write('%s: %r\n' %(logger_tag,can2RNET.dissect_frame(rnetFrame)))
+            logger.debug('%s: %r\n' %(logger_tag,can2RNET.dissect_frame(rnetFrame)))
+            self.logfile.write('%s\t%s: %r\n' %(time.clock_gettime(0), logger_tag,can2RNET.dissect_frame(rnetFrame)))
             can2RNET.cansendraw(sendsock, rnetFrame)
 
 
