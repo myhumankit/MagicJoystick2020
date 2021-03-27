@@ -13,8 +13,13 @@ from can2RNET import can2RNET
 logger = can2RNET.logger
 
 """
-RnetIntercept is a 2 raspberry + Can boards architecture to perform man in the middle on the can bus
-between JSM and main controller.
+Rnet Man in the middle logger
+Supports two configurations:
+    - 2 raspberry + Can boards architecture 
+    or
+    - 1 raspberry + Dual Can board architecture
+
+Will be placed between JSM and main controller to log all messages with source name.
 """
 
 
@@ -227,6 +232,22 @@ Configuration using one raspi with dual port pican boards.
 """
 def picanDualCase(args):
     # Start Rnet listener daemon
+    with open(args.logfile,"w") as logfile:
+
+        # Connect and initialize Rnet controller
+        # Will listen for Rnet frames and transmit
+        # them to other Rnet Port
+        rnet = RnetDualLogger(args.cantag, args.iptag, logfile)
+        daemon0, daemon1 = rnet.start_daemons()
+
+        daemon0.join()
+        daemon1.join()
+
+"""
+Record JSM Initialization sequence
+Use logfile as output file
+"""
+def recInitSequence(args):
     with open(args.logfile,"w") as logfile:
 
         # Connect and initialize Rnet controller
