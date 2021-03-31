@@ -97,7 +97,7 @@ def dissect_frame(frame):
 
 def cansendraw(s, canrawdata):
     try:
-        logger.info("cansend: %r" %binascii.hexlify(canrawdata))
+        logger.debug("cansend: %r" %binascii.hexlify(canrawdata))
         s.send(canrawdata)
     except socket.error as e:
         logger.error('reason: %s' %str(e))
