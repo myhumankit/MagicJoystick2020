@@ -142,7 +142,12 @@ class RnetDualLogger(threading.Thread):
         while True:
             rnetFrame = can2RNET.canrecv(listensock)
             logger.debug('%s: %r\n' %(logger_tag,can2RNET.dissect_frame(rnetFrame)))
-            self.logfile.write('%s\t%s: %r\n' %(time.clock_gettime(0), logger_tag,can2RNET.dissect_frame(rnetFrame)))
+            self.logfile.write('%s\t %s.%s.%s \t%s: %r\n' %(time.clock_gettime(0), 
+                                                            binascii.hexlify(rnetFrame[0:4]),
+                                                            binascii.hexlify(rnetFrame[4:8]),
+                                                            binascii.hexlify(rnetFrame[8:]), 
+                                                            logger_tag, 
+                                                            can2RNET.dissect_frame(rnetFrame)))
             can2RNET.cansendraw(sendsock, rnetFrame)
 
 
