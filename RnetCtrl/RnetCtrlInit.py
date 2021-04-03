@@ -40,6 +40,9 @@ R-net class for single raspi and pican dual port logging
 """
 class RnetDualLogger(threading.Thread):
 
+    jsm_id = False
+    init = False
+
     def __init__(self, tag0, tag1, logfile):
         self.cansocket0 = None
         self.cansocket1 = None
@@ -81,10 +84,9 @@ class RnetDualLogger(threading.Thread):
     """
     def rnet_daemon(self, listensock, sendsock, logger_tag):
         logger.debug("Rnet listener daemon started")
-
-        record = True
+        is_motor = False
         
-        while record:
+        while self.init is False or self.jsm_id is False:
             rnetFrame = can2RNET.canrecv(listensock)
             frameToLog  = binascii.hexlify(rnetFrame)
             logger.debug('%s:%s\n' %(logger_tag, frameToLog))
@@ -92,10 +94,22 @@ class RnetDualLogger(threading.Thread):
             can2RNET.cansendraw(sendsock, rnetFrame)
 
             # Check end of init condition
-            __, __, frameName = RnetDissector.getFrameType(rnetFrame)
+            __, subType, frameName = RnetDissector.getFrameType(rnetFrame)
             if frameName == 'END_OF_INIT':
-                record = False
+                self.init = True
+            
+            # Check current thread is MOTOR or JMS
+            if frameName == 'PMTX_CONNECT':
+                logger.debug('********** PMTX_CONNECT frame received **********\n')
+                is_motor = True
 
+            # In case thread is JSM side, wait for 
+            # a joy position to record JSM ID
+            if is_motor is False and self.init is True:
+                if frameName == 'JOY_POSITION':
+                    logger.debug('********** Got JMS ID: 0x%x **********\n' %subType)
+                    self.logfile.write('JSM_TYPE:0x%x\n' %subType)
+                    self.jsm_id = True
 
 
 """
