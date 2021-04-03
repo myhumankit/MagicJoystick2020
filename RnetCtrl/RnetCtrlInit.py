@@ -42,12 +42,11 @@ class RnetDualLogger(threading.Thread):
 
     jsm_id = False
     init = False
+    joy_subtype = None
 
-    def __init__(self, tag0, tag1, logfile):
+    def __init__(self, logfile):
         self.cansocket0 = None
         self.cansocket1 = None
-        self.tag0 = tag0
-        self.tag1 = tag1
         self.logfile = logfile
         
         threading.Thread.__init__(self)
@@ -71,9 +70,9 @@ class RnetDualLogger(threading.Thread):
 
         # launch daemon
         logger.debug("Starting Rnet Dual daemons")
-        daemon0 = threading.Thread(target=self.rnet_daemon, args=[self.cansocket0, self.cansocket1, self.tag0], daemon=True)
+        daemon0 = threading.Thread(target=self.rnet_daemon, args=[self.cansocket0, self.cansocket1, 'PORT0'], daemon=True)
         daemon0.start()
-        daemon1 = threading.Thread(target=self.rnet_daemon, args=[self.cansocket1, self.cansocket0, self.tag1], daemon=True)
+        daemon1 = threading.Thread(target=self.rnet_daemon, args=[self.cansocket1, self.cansocket0, 'PORT1'], daemon=True)
         daemon1.start()
         return daemon0, daemon1
 
@@ -108,7 +107,8 @@ class RnetDualLogger(threading.Thread):
             if is_motor is False and self.init is True:
                 if frameName == 'JOY_POSITION':
                     logger.debug('********** Got JMS ID: 0x%x **********\n' %subType)
-                    self.logfile.write('JSM_TYPE:0x%x\n' %subType)
+                    self.logfile.write('JOY_SUBTYPE:0x%x\n' %subType)
+                    joy_subtype = subType
                     self.jsm_id = True
 
 
@@ -117,11 +117,7 @@ Argument parser definition
 """
 def parseInputs():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--port0tag", type=str, default="MOTOR", help="Defines logger tag like 'MOTOR' for Rx-CAN0 stream. Default is 'MOTOR'")
-    parser.add_argument("--port1tag", type=str, default="JSM", help="Defines logger tag like 'JSM' for Rx-CAN1 stream. Default is 'JSM'")
-    parser.add_argument("--outfile", type=str, default="init.log", help="JMS init sequence filename, default is 'init.log'")
     parser.add_argument("-d", "--debug", help="Enable debug messages", action="store_true")
-
     return parser.parse_args()
 
 
@@ -129,14 +125,14 @@ def parseInputs():
 """
 Configuration using one raspi with dual port pican boards.
 """
-def picanDualCase(outfile, port0tag, port1tag):
+def picanDualCaseInit():
     # Start Rnet listener daemon
-    with open(outfile,"w") as outfile:
+    with open('jsm_init.log',"w") as outfile:
 
         # Connect and initialize Rnet controller
         # Will listen for Rnet frames and transmit
         # them to other Rnet Port
-        rnet = RnetDualLogger(port0tag, port1tag, outfile)
+        rnet = RnetDualLogger(outfile)
         daemon0, daemon1 = rnet.start_daemons()
 
         daemon0.join()
@@ -152,5 +148,5 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
 
-    picanDualCase(args.outfile, args.port0tag, args.port1tag)
+    picanDualCaseInit()
 
