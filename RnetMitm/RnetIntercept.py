@@ -138,7 +138,6 @@ class RnetDualLogger(threading.Thread):
     def rnet_daemon(self, listensock, sendsock, logger_tag):
         logger.debug("Rnet listener daemon started")
         
-        # sending joystick frame @100Hz
         while True:
             rnetFrame = can2RNET.canrecv(listensock)
             logger.debug('%s: %r\n' %(logger_tag,can2RNET.dissect_frame(rnetFrame)))
