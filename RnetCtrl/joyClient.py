@@ -389,7 +389,7 @@ def parseInputs():
     parser.add_argument("--invert_y", help="Invert sign of y axis if set, default is false", action="store_true")
     parser.add_argument("--swap_xy", help="swap x/y inputs", action="store_true")
     parser.add_argument("-d", "--debug", help="Enable debug messages", action="store_true")
-    parser.add_argument("-t", "--test", help="Test mode, do not connect to R-NET server", action="store_true")
+    parser.add_argument("-t", "--test", help="Test mode, Use computer keyboard instead of Joysticj inputs", action="store_true")
 
     return parser.parse_args()
 
