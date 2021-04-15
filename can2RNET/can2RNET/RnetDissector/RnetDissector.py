@@ -35,6 +35,7 @@ def getFrameType(rawFrame):
         raw.set_raw_frame(rawFrame)
         frameType = raw.header.type & 0x3FFF
         frameSubtype = raw.header.subtype
+        allData  =raw.get_data(8)
 
         # Case where type is null ('short' headers):
         if frameType == 0:
@@ -46,7 +47,7 @@ def getFrameType(rawFrame):
                     frameName = RNET_FRAME_TYPE_R[(frameType, frameSubtype & 0xFFFF0)]
                     frameSubtype = frameSubtype & 0xFFFF0
                 except:
-                    frameName = None
+                    frameName = 'Unknown'
         # Long header case:
         else:
             try:
@@ -55,9 +56,19 @@ def getFrameType(rawFrame):
                 try:
                     frameName = RNET_FRAME_TYPE_R[(frameType, 0)]
                 except:
-                    frameName = None
+                    frameName = 'Unknown'
 
-        return frameType, frameSubtype, frameName
+        return frameType, frameSubtype, frameName, allData
+
+
+
+def printFrame(rawFrame):
+
+    frameType, frameSubtype, frameName, allData = getFrameType(rawFrame)
+    data = binascii.hexlify(allData)
+    print("[%s]\t\t0x%x\t-\t0x%x\t\tDATA: %s" %(frameName, frameType, frameSubtype, data))
+
+
 
 
 
@@ -409,29 +420,35 @@ if __name__ == "__main__":
     print('battery level: %d' %level)
 
 
-    frameType, frameSubtype, frameName = getFrameType(binascii.unhexlify('0000288c010000000000000000000000'))
+    frameType, frameSubtype, frameName, _ = getFrameType(binascii.unhexlify('0000288c010000000000000000000000'))
     print('Frame type: 0x%x, subtype: 0x%x, Frame name: %r' %(frameType, frameSubtype, frameName))
 
-    frameType, frameSubtype, frameName = getFrameType(binascii.unhexlify('0000148c010000000000000000000000'))
+    frameType, frameSubtype, frameName, _ = getFrameType(binascii.unhexlify('0000148c010000000000000000000000'))
     print('Frame type: 0x%x, subtype: 0x%x, Frame name: %r' %(frameType, frameSubtype, frameName))
     
-    frameType, frameSubtype, frameName = getFrameType(binascii.unhexlify('60000000040000001100000200000000'))
+    frameType, frameSubtype, frameName, _ = getFrameType(binascii.unhexlify('60000000040000001100000200000000'))
     print('Frame type: 0x%x, subtype: 0x%x, Frame name: %r' %(frameType, frameSubtype, frameName))
 
-    frameType, frameSubtype, frameName = getFrameType(binascii.unhexlify('0f0fc383070000008787878787878700'))
+    frameType, frameSubtype, frameName, _ = getFrameType(binascii.unhexlify('0f0fc383070000008787878787878700'))
     print('Frame type: 0x%x, subtype: 0x%x, Frame name: %r' %(frameType, frameSubtype, frameName))
     
-    frameType, frameSubtype, frameName = getFrameType(binascii.unhexlify('00000c9c010000006300000000000000'))
+    frameType, frameSubtype, frameName, _ = getFrameType(binascii.unhexlify('00000c9c010000006300000000000000'))
     print('Frame type: 0x%x, subtype: 0x%x, Frame name: %r' %(frameType, frameSubtype, frameName))
 
-    frameType, frameSubtype, frameName = getFrameType(binascii.unhexlify('0011008202000000fffe000000000000'))
+    frameType, frameSubtype, frameName, _ = getFrameType(binascii.unhexlify('0011008202000000fffe000000000000'))
     print('Frame type: 0x%x, subtype: 0x%x, Frame name: %r' %(frameType, frameSubtype, frameName))
 
-    frameType, frameSubtype, frameName = getFrameType(binascii.unhexlify('0011048a010000006400000000000000'))
-    print('Frame type: 0x%x, subtype: 0x%x, Frame name: %r' %(frameType, frameSubtype, frameName))
+    frameType, frameSubtype, frameName, _ = getFrameType(binascii.unhexlify('0011048a010000006400000000000000'))
+    print('Frame type: 0x%x, subtype: 0x%x, Frame name: %r\n' %(frameType, frameSubtype, frameName))
 
-    frameType, frameSubtype, frameName = getFrameType(binascii.unhexlify('0c000000000000000000000000000000'))
-    print('Frame type: 0x%x, subtype: 0x%x, Frame name: %r' %(frameType, frameSubtype, frameName))
+    printFrame(binascii.unhexlify('0c000000000000000000000000000000'))
+    printFrame(binascii.unhexlify('ADDEEFBE00000000000000000000000000'))
+    printFrame(binascii.unhexlify('0000288c010000000000000000000000'))
+    printFrame(binascii.unhexlify('0000148c010000000000000000000000'))
+    printFrame(binascii.unhexlify('60000000040000001100000200000000'))
+    printFrame(binascii.unhexlify('0f0fc383070000008787878787878700'))
+    printFrame(binascii.unhexlify('00000c9c010000006300000000000000'))
+    printFrame(binascii.unhexlify('0011008202000000fffe000000000000'))
+    printFrame(binascii.unhexlify('0011048a010000006400000000000000'))
+    printFrame(binascii.unhexlify('0c000000000000000000000000000000'))
 
-    frameType, frameSubtype, frameName = getFrameType(binascii.unhexlify('ADDEEFBE00000000000000000000000000'))
-    print('Frame type: 0x%x, subtype: 0x%x, Frame name: %r' %(frameType, frameSubtype, frameName))
