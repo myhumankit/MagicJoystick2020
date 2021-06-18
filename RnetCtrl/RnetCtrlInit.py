@@ -36,6 +36,15 @@ be tagged:
 
 """
 
+def print_rec_procedure():
+    print("\
+        Procedure to generate '%s' file :\n\
+          1- Connect the wheelchair JSM to dualPican port1\n\
+          2- Connect the wheelchair Motor to dualPican port2\n\
+          3- launch this program: 'python3 RnetCtrlInit.py -d'\n\
+          4- Power On the JSM and wait for the program to complete\n\
+          5- After program ends, power Off the JSM\n\
+        The %s file will be created with the JSM init sequence" %(JSM_INIT_FILE, JSM_INIT_FILE))
 
 """
 R-net class for single raspi and pican dual port logging
@@ -86,6 +95,7 @@ class RnetDualLogger(threading.Thread):
     def rnet_daemon(self, listensock, sendsock, logger_tag):
         logger.debug("Rnet listener daemon started")
         is_motor = False
+        is_serial = False
 
         while self.init is False or self.jsm_id is False:
             rnetFrame = can2RNET.canrecv(listensock)
@@ -95,7 +105,7 @@ class RnetDualLogger(threading.Thread):
             can2RNET.cansendraw(sendsock, rnetFrame)
 
             # Check end of init condition
-            __, subType, frameName, __ = RnetDissector.getFrameType(rnetFrame)
+            __, subType, frameName, data = RnetDissector.getFrameType(rnetFrame)
             if frameName == 'END_OF_INIT':
                 self.init = True
             
@@ -104,12 +114,19 @@ class RnetDualLogger(threading.Thread):
                 logger.debug('********** PMTX_CONNECT frame received **********\n')
                 is_motor = True
 
+            # Memorize serial
+            if is_serial is False and frameName == 'SERIAL':
+                logger.debug('********** SERIAL frame received **********\n')
+                self.jsm_serial = data
+                is_serial = True
+
             # In case thread is JSM side, wait for 
             # a joy position to record JSM ID
             if is_motor is False and self.init is True:
                 if frameName == 'JOY_POSITION':
                     logger.debug('********** Got JMS ID: 0x%x **********\n' %subType)
                     self.logfile.write('-1.0:JOY_SUBTYPE:0x%x\n' %subType)
+                    self.logfile.write('-1.0:JOY_SERIAL:%s\n' %binascii.hexlify(self.jsm_serial))
                     self.jsm_id = True
 
 
@@ -131,6 +148,7 @@ class JSMiser(threading.Thread):
                 self.jsm_cmds = infile.readlines()
         except:
             logger.error("The JMS init file %s is not present, please run JSM init recorder 'RnetCtrlInit.py' to create it" %JSM_INIT_FILE)
+            print_rec_procedure()
             sys.exit(1)
 
         if 'PORT0' in self.jsm_cmds[0]:
@@ -150,8 +168,9 @@ class JSMiser(threading.Thread):
             if 'JOY_SUBTYPE' in line:
                 self.jsm_subtype = int(line.split(':')[2],16)
                 logger.info("JSM subtype: 0x%x" %self.jsm_subtype)
-
-
+            if 'JOY_SERIAL' in line:
+                self.jsm_serial = binascii.unhexlify(line.split("'")[1])
+                logger.info("JSM serial: %r" %self.jsm_serial)
 
         # Open motor can socket, assuming at first that the port is identical
         # to the init file. If not, try the other port as init sequence recording
@@ -174,7 +193,7 @@ class JSMiser(threading.Thread):
 
 
     """
-    Start JSM init sequence, blocking call until init sequence
+    Start JSM init sequence, blocking function call until init sequence
     fully completed.
     """
     def jsm_start(self):
@@ -216,7 +235,6 @@ class JSMiser(threading.Thread):
                 RnetDissector.printFrame(frame)
                 time.sleep(currentTimeFrame - self.timeFrame )
                 logger.debug("%d: sleep(%s) - Sending JSM frame %s" %(frame_idx, currentTimeFrame - self.timeFrame ,binascii.hexlify(frame)))
-                # print("%r: sleep(%s) - Sending JSM frame %s" %(frame_idx,  currentTimeFrame - self.timeFrame,binascii.hexlify(frame)))
                 can2RNET.cansendraw(self.motor_cansocket, frame)
 
             elif port == MOTORport:
@@ -273,7 +291,12 @@ if __name__ == "__main__":
         jsm = JSMiser()
         jsm.jsm_start()
 
-
+    # Default case, the "JSM_INIT_FILE" will be created
+    # Procedure:
+    # 1- Connect JSM to dualPican port1
+    # 2- Connect Motor to dualPican port2
+    # 3- launch this program: "python3 RnetCtrlInit.py -d
+    # 4- Power On the JSM and wait for the program to complete
     else:
         picanDualCaseInit()
-
+        print("Initialisation sequence acquisition complete !")
