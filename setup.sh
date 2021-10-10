@@ -24,13 +24,13 @@ fi
 echo "Updating /boot/config.txt ..."
 # ==============================================
 cp /boot/config.txt /boot/config.txt.bak
+echo "" >> /boot/config.txt
 echo "# MagicJoy config starts ============="  >> /boot/config.txt
 echo "dtparam=i2c_arm=on" >> /boot/config.txt
-echo "dtparam=spi=on"  >> /boot/config.txt
 echo "dtoverlay=mcp2515-can0,oscillator=16000000,interrupt=25"  >> /boot/config.txt
-echo "dtoverlay=mcp2515-can1,oscillator=16000000,interrupt=25"  >> /boot/config.txt
-echo "dtoverlay=spi-bcm2835"  >> /boot/config.txt
-echo "dtoverlay=spi1-1cs"  >> /boot/config.txt
+echo "dtoverlay=mcp2515-can1,oscillator=16000000,interrupt=24"  >> /boot/config.txt
+echo "dtoverlay=spi1-hw-cs"  >> /boot/config.txt
+echo "dtoverlay=spi0-hw-cs"  >> /boot/config.txt
 echo "# MagicJoy config stops ============="  >> /boot/config.txt
 
 echo "Updating /etc/network/interfaces ..."
