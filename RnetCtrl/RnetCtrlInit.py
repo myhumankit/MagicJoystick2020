@@ -1,4 +1,4 @@
-#!/python3
+#!/usr/bin/python3
 import can2RNET
 import threading
 import argparse
