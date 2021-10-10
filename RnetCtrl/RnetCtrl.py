@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+from os import initgroups
 import can2RNET
 import threading
 import argparse
@@ -80,7 +81,7 @@ class RnetControl(threading.Thread):
 
     POSITION_FREQUENCY = 0.01   # 100Hz
 
-    def __init__(self, testmode = False):
+    def __init__(self, jsm_init_file = "", testmode = False):
         self.joy_x = 0
         self.joy_y = 0
         self.cansocket = None
@@ -95,7 +96,8 @@ class RnetControl(threading.Thread):
             self.cansend = self.dummy
 
         # Open can socket to prepare fake JSM PowerOn
-        self.jsm =  RnetCtrlInit.JSMiser()
+        print(">>>>>>> %s" %jsm_init_file)
+        self.jsm =  RnetCtrlInit.JSMiser(jsm_init_file)
         self.cansocket = self.jsm.motor_cansocket
         self.joyPosition = RnetDissector.rnet_joyPosition(0,0,self.jsm.jsm_subtype)
 
@@ -195,7 +197,8 @@ Argument parser definition
 def parseInputs():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ip", type=str, default="0.0.0.0", help="Define server IPv4 address to listen to receive Joy positions, default is '0.0.0.0'")
-    parser.add_argument("--port", type=int, default="4141", help="Define server portto listen, default is 4141")
+    parser.add_argument("--port", type=int, default="4141", help="Define server port to listen, default is 4141")
+    parser.add_argument("-c", "--config", default="./jsm_init.log", help="path to jsm_init_file, default is under 'xx/MagicJoystick2020/RnetCtrl/jsm_init.log'")
     parser.add_argument("-d", "--debug", help="Enable debug messages", action="store_true")
     parser.add_argument("-t", "--test", help="Test mode, do not connect to CAN bus", action="store_true")
 
@@ -212,7 +215,7 @@ if __name__ == "__main__":
 
     # Connect and initialize Rnet controller,
     # start heartbeat
-    rnet = RnetControl(args.test)
+    rnet = RnetControl(args.config, args.test)
 
     # Send JSM init sequence 'power on'
     rnet.powerOn()

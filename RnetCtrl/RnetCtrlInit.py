@@ -13,7 +13,7 @@ from can2RNET.RnetDissector import RnetDissector
 
 logger = can2RNET.logger
 
-JSM_INIT_FILE = 'jsm_init.log'
+JSM_INIT_FILE = './jsm_init.log'
 
 """
 Rnet JSM init sequence recorder and playback
@@ -141,17 +141,23 @@ class JSMiser(threading.Thread):
     Get the JSM init sequence file,
     Then connect the Rnet socket to the correct interface
     """
-    def __init__(self):
+    def __init__(self, jsm_init_file=""):
+
+        if jsm_init_file == "":
+                self.jsm_init_file = JSM_INIT_FILE
+        else:
+            self.jsm_init_file = jsm_init_file
+        logger.info("selected jsm file: %s" %self.jsm_init_file)
 
         try:
-            with open(JSM_INIT_FILE,"r") as infile:
+            with open(self.jsm_init_file,"r") as infile:
                 self.jsm_cmds = infile.readlines()
-                if len(t) == 0:
-                    logger.error("The JMS init file %s is empt, please run JSM init recorder 'RnetCtrlInit.py' to create it" %JSM_INIT_FILE)        
+                if len(self.jsm_cmds) == 0:
+                    logger.error("The JMS init file %s is empt, please run JSM init recorder 'RnetCtrlInit.py' to create it" %self.jsm_init_file)
                     print_rec_procedure()
                     sys.exit(1)
         except:
-            logger.error("The JMS init file %s is not present, please run JSM init recorder 'RnetCtrlInit.py' to create it" %JSM_INIT_FILE)
+            logger.error("The JMS init file %s is not present, please run JSM init recorder 'RnetCtrlInit.py' to create it" %self.jsm_init_file)
             print_rec_procedure()
             sys.exit(1)
 

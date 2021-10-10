@@ -13,9 +13,12 @@ echo "Creating startup script ..."
 # ==============================================
 export CURPATH=$(pwd)
 
-echo "python3 $CURPATH/RnetCtrl/RnetCtrl.py --ip 127.0.0.1 &" > $CURPATH/MagicJoy2020StartAll.sh
+chmod +x $CURPATH/RnetCtrl/RnetCtrl.py
+chmod +x $CURPATH/RnetCtrl/joyClient.py
+
+echo "$CURPATH/RnetCtrl/RnetCtrl.py --ip 127.0.0.1 -c $CURPATH/RnetCtrl/jsm_init.log &" > $CURPATH/MagicJoy2020StartAll.sh
 echo "sleep 3" >> $CURPATH/MagicJoy2020StartAll.sh
-echo "python3 $CURPATH/RnetCtrl/joyClient.py" >> $CURPATH/MagicJoy2020StartAll.sh
+echo "$CURPATH/RnetCtrl/joyClient.py --ip 127.0.0.1 &" >> $CURPATH/MagicJoy2020StartAll.sh
 chmod +x $CURPATH/MagicJoy2020StartAll.sh
 chown $USER:$USER $CURPATH/MagicJoy2020StartAll.sh
 
