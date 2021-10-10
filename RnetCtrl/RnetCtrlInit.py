@@ -146,6 +146,10 @@ class JSMiser(threading.Thread):
         try:
             with open(JSM_INIT_FILE,"r") as infile:
                 self.jsm_cmds = infile.readlines()
+                if len(t) == 0:
+                    logger.error("The JMS init file %s is empt, please run JSM init recorder 'RnetCtrlInit.py' to create it" %JSM_INIT_FILE)        
+                    print_rec_procedure()
+                    sys.exit(1)
         except:
             logger.error("The JMS init file %s is not present, please run JSM init recorder 'RnetCtrlInit.py' to create it" %JSM_INIT_FILE)
             print_rec_procedure()
