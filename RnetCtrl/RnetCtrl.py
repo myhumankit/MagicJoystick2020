@@ -96,23 +96,21 @@ class RnetControl(threading.Thread):
             self.cansend = self.dummy
 
         # Open can socket to prepare fake JSM PowerOn
-        self.jsm =  RnetCtrlInit.JSMiser(jsm_init_file)
+        self.jsm =  RnetCtrlInit.RnetDualLogger()
+
         self.cansocket = self.jsm.motor_cansocket
         self.joyPosition = RnetDissector.rnet_joyPosition(0,0,self.jsm.jsm_subtype)
 
 
     def powerOn(self):
-        self.jsmDaemons = JsmDeamons(self.cansocket, self.jsm.jsm_serial)
+        # self.jsmDaemons = JsmDeamons(self.cansocket, self.jsm.jsm_serial)
         # Send power on sequence (Sends all JSM init frames)
-        self.jsm.jsm_start()
+        self.jsm.start_daemons()
 
-        # Send MaxSpeed frame. Max speed set to 20%:
-        speed = RnetDissector.rnet_motorMaxSpeed(20, self.jsm.jsm_subtype)
-        can2RNET.cansendraw(self.cansocket, speed.encode())
+        # Wait for init to be sent by JSM
+        while self.jsm.init_done is not True:
+            time.sleep(0.1)
 
-        # activate periodic messages to motor
-        self.jsmDaemons.startHeartbeatDaemon()
-        self.jsmDaemons.startSerialDaemon()
 
 
     def dummy(self, arg0, arg1):
