@@ -55,10 +55,11 @@ class RnetDualLogger(threading.Thread):
     init = False
     joy_subtype = None
 
-    def __init__(self, logfile):
+    def __init__(self, logfile, log):
         self.cansocket0 = None
         self.cansocket1 = None
         self.logfile = logfile
+        self.log = log
 
         threading.Thread.__init__(self)
         logger.info("Opening socketcan")
@@ -104,30 +105,31 @@ class RnetDualLogger(threading.Thread):
             self.logfile.write('%s:%s:%s\n' %(time.time(), logger_tag, frameToLog))
             can2RNET.cansendraw(sendsock, rnetFrame)
 
-            # Check end of init condition
-            __, subType, frameName, data = RnetDissector.getFrameType(rnetFrame)
-            if frameName == 'END_OF_INIT':
-                self.init = True
-            
-            # Check current thread is MOTOR or JMS
-            if frameName == 'PMTX_CONNECT':
-                logger.debug('********** PMTX_CONNECT frame received **********\n')
-                is_motor = True
+            if self.log is not True:
+                # Check end of init condition
+                __, subType, frameName, data = RnetDissector.getFrameType(rnetFrame)
+                if frameName == 'END_OF_INIT':
+                    self.init = True
+                
+                # Check current thread is MOTOR or JMS
+                if frameName == 'PMTX_CONNECT':
+                    logger.debug('********** PMTX_CONNECT frame received **********\n')
+                    is_motor = True
 
-            # Memorize serial
-            if is_serial is False and frameName == 'SERIAL':
-                logger.debug('********** SERIAL frame received **********\n')
-                self.jsm_serial = data
-                is_serial = True
+                # Memorize serial
+                if is_serial is False and frameName == 'SERIAL':
+                    logger.debug('********** SERIAL frame received **********\n')
+                    self.jsm_serial = data
+                    is_serial = True
 
-            # In case thread is JSM side, wait for 
-            # a joy position to record JSM ID
-            if is_motor is False and self.init is True:
-                if frameName == 'JOY_POSITION':
-                    logger.debug('********** Got JMS ID: 0x%x **********\n' %subType)
-                    self.logfile.write('-1.0:JOY_SUBTYPE:0x%x\n' %subType)
-                    self.logfile.write('-1.0:JOY_SERIAL:%s\n' %binascii.hexlify(self.jsm_serial))
-                    self.jsm_id = True
+                # In case thread is JSM side, wait for 
+                # a joy position to record JSM ID
+                if is_motor is False and self.init is True:
+                    if frameName == 'JOY_POSITION':
+                        logger.debug('********** Got JMS ID: 0x%x **********\n' %subType)
+                        self.logfile.write('-1.0:JOY_SUBTYPE:0x%x\n' %subType)
+                        self.logfile.write('-1.0:JOY_SERIAL:%s\n' %binascii.hexlify(self.jsm_serial))
+                        self.jsm_id = True
 
 
 
@@ -267,6 +269,7 @@ def parseInputs():
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--debug", help="Enable debug messages", action="store_true")
     parser.add_argument("-t", "--test_init", help="Test init sequense", action="store_true")
+    parser.add_argument("-l", "--log", help="Log frames in file until CTRL+C", action="store_true")
     return parser.parse_args()
 
 
@@ -274,14 +277,14 @@ def parseInputs():
 """
 Configuration using one raspi with dual port pican boards.
 """
-def picanDualCaseInit():
+def picanDualCaseInit(log):
     # Start Rnet listener daemon
     with open(JSM_INIT_FILE,"w") as outfile:
 
         # Connect and initialize Rnet controller
         # Will listen for Rnet frames and transmit
         # them to other Rnet Port
-        rnet = RnetDualLogger(outfile)
+        rnet = RnetDualLogger(outfile, log)
         daemon0, daemon1 = rnet.start_daemons()
 
         daemon0.join()
@@ -308,5 +311,5 @@ if __name__ == "__main__":
     # 3- launch this program: "python3 RnetCtrlInit.py -d
     # 4- Power On the JSM and wait for the program to complete
     else:
-        picanDualCaseInit()
+        picanDualCaseInit(args.log)
         print("Initialisation sequence acquisition complete !")
