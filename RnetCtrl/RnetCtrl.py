@@ -96,7 +96,6 @@ class RnetControl(threading.Thread):
             self.cansend = self.dummy
 
         # Open can socket to prepare fake JSM PowerOn
-        print(">>>>>>> %s" %jsm_init_file)
         self.jsm =  RnetCtrlInit.JSMiser(jsm_init_file)
         self.cansocket = self.jsm.motor_cansocket
         self.joyPosition = RnetDissector.rnet_joyPosition(0,0,self.jsm.jsm_subtype)
