@@ -66,7 +66,9 @@ def printFrame(rawFrame):
 
     frameType, frameSubtype, frameName, allData = getFrameType(rawFrame)
     data = binascii.hexlify(allData)
-    print("[%s]\t\t0x%x\t-\t0x%x\t\tDATA: %s" %(frameName, frameType, frameSubtype, data))
+    ret = "[%s]\t\t0x%x\t-\t0x%x\t\tDATA: %s" % (frameName, frameType, frameSubtype, data)
+    print(ret)
+    return ret
 
 
 
