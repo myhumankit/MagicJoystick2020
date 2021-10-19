@@ -148,7 +148,7 @@ class rnet_motorMaxSpeed:
     def set_data(self, maxSpeed):
         # Consider max speed > 100 is a bug, 
         # force it to minimum
-        if maxSpeed > 100:
+        if (maxSpeed > 100)|(maxSpeed < 0):
             maxSpeed = 0
         
         self.maxSpeed = maxSpeed
