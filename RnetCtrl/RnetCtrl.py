@@ -98,8 +98,6 @@ class RnetControl(threading.Thread):
         # Open can socket to prepare fake JSM PowerOn
         self.jsm =  RnetCtrlInit.RnetDualLogger()
 
-        self.cansocket = self.jsm.motor_cansocket
-        self.joyPosition = RnetDissector.rnet_joyPosition(0,0,self.jsm.jsm_subtype)
 
 
     def powerOn(self):
@@ -111,6 +109,12 @@ class RnetControl(threading.Thread):
         while self.jsm.init_done is not True:
             time.sleep(0.1)
 
+
+        logger.info("jsm_subtype: %d" %self.jsm.jsm_subtype)
+        # Initialize joystick frame object:
+        self.cansocket = self.jsm.motor_cansocket
+        self.joyPosition = RnetDissector.rnet_joyPosition(0,0,self.jsm.jsm_subtype)
+        self.start_daemon()
 
 
     def dummy(self, arg0, arg1):
@@ -218,14 +222,14 @@ if __name__ == "__main__":
     rnet.powerOn()
 
 
-    # Start Rnet controller
-    try:
-        # Start position daemon
-        deamon = rnet.start_daemon()
+    # # Start Rnet controller
+    # try:
+    #     # Start position daemon
+    #     deamon = rnet.start_daemon()
         
-    except:
-        logger.error("Cannot start Rnet controller")
-        sys.exit(1)
+    # except:
+    #     logger.error("Cannot start Rnet controller")
+    #     sys.exit(1)
 
 
     # Start Joy or any positionning sensor server listener

@@ -52,7 +52,8 @@ R-net class for single raspi and pican dual port logging
 class RnetDualLogger(threading.Thread):
 
     init_done = False
-    joy_subtype = None
+    jsm_subtype = None
+    motor_cansocket = None
 
     def __init__(self):
         self.cansocket0 = None
@@ -106,10 +107,14 @@ class RnetDualLogger(threading.Thread):
             if frameName != 'JOY_POSITION':
                 can2RNET.cansendraw(sendsock, rnetFrame)
 
+            if frameName == 'PMTX_CONNECT':
+                self.motor_cansocket = listensock
+
+
             # Wait for a joy position to record JSM ID
             if frameName == 'JOY_POSITION':
                 logger.debug('********** Got JMS ID: 0x%x **********\n' %subType)
-                self.joy_subtype = subType
+                self.jsm_subtype = subType
                 self.init_done = True
 
 
