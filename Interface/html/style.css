@@ -108,6 +108,7 @@ div.body.wheelchair > div > div {
     height: 100%;
 }
 
+#jack,
 #wheelchair {
     background-image: url("button_wheelchair.png");
 }
@@ -115,4 +116,46 @@ div.body.wheelchair > div > div {
 #current_speed {
     background: none;
     font-size: 30px;
+}
+
+#max_speed,
+#current_jack {
+    background: none;
+}
+
+.bargraph {
+    display: inline-block;
+    width: 15%;
+    height: 25%;
+    border: white solid 2px;
+    background-color: transparent;
+    top: 35%;
+    box-sizing: border-box;
+    position: relative;
+    margin-left: 2.5%;
+    margin-right: 2.5%;
+}
+
+#light.on {
+    color: #FFFF00;
+}
+
+#lvl1.on {
+    background-color: #00FF00;
+}
+
+#lvl2.on {
+    background-color: #88FF00;
+}
+
+#lvl3.on {
+    background-color: #FFFF00;
+}
+
+#lvl4.on {
+    background-color: #FF8800;
+}
+
+#lvl5.on {
+    background-color: #FF0000;
 }

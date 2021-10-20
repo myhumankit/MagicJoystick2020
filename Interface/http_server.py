@@ -1,4 +1,4 @@
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, request
 from flask_restful import Resource, Api
 import paho.mqtt.client as mqtt
 
@@ -35,9 +35,20 @@ class Actions(Resource):
             print(f"Connection failed with code {rc}")
 
     def post(self, action):
+        data = request.get_json()
+
         if action == "light":
-            print("light")
-            self.client.publish("rnet/light", "light")
+            self.client.publish("rnet/light", data["on"])
+            return "", 200
+        elif action == "max_speed":
+            self.client.publish("rnet/max_speed", data["max_speed"])
+            return "", 200
+        elif action == "drive":
+            self.client.publish("magick_bt1/attach", 0)
+            self.client.publish("rnet/drive", 1)
+            return "", 200
+        elif action == "horn":
+            self.client.publish("rnet/horn", 1)
             return "", 200
         else:
             return "", 404
