@@ -1,0 +1,118 @@
+:root {
+    --header-height: 5vh;
+    --border-width: 20px;
+    --icon-size: 70px;
+}
+
+
+* {
+    -webkit-tap-highlight-color: rgba(0,0,0,0); /* make transparent link selection, adjust last value opacity 0 to 1.0 */
+}
+
+body {
+    -webkit-touch-callout: none;                /* prevent callout to copy image, etc when tap to hold */
+    -webkit-text-size-adjust: none;             /* prevent webkit from resizing text to fit */
+    -webkit-user-select: none;                  /* prevent copy paste, to allow, change 'none' to 'text' */
+    background-color:#222;
+    font-family: system-ui, -apple-system, -apple-system-font, 'Segoe UI', 'Roboto', sans-serif;
+    font-size:12px;
+    color: #EEE;
+    height:100vh;
+    width:100vw;
+
+    margin:0px;
+    padding:0px;
+    border: none;
+}
+
+.header {
+    box-sizing: border-box;
+    position: absolute;
+    top: 0px;
+    width: 100%;
+    height: var(--header-height);
+    padding: 0px;
+    margin: 0px;
+}
+
+#time, #battery {
+    color: white;
+    font-size: var(--header-height);
+    line-height: var(--header-height);
+    position: absolute;
+}
+
+#time {
+    left: 10px;
+}
+
+#battery {
+    right: 10px;
+}
+
+div.body {
+    position: absolute;
+    bottom: 0px;
+    width: 100%;
+    height: calc(100% - var(--header-height));
+    box-sizing: border-box;
+    border: transparent solid var(--border-width);
+    font-size: 0px;
+}
+
+div.body > div {
+    width: 100%;
+}
+
+div.body > div > div {
+    display: inline-block;
+
+    padding: 0px;
+    margin: 0px;
+
+    text-align: center;
+
+    box-sizing: border-box;
+    border: transparent solid var(--border-width);
+    
+    background: url("button_default.png") no-repeat center;
+    background-size: contain;
+}
+
+div.body > div > div > i {
+    position: relative;
+    font-size: var(--icon-size);
+    top: 50%;
+    margin-top: calc(var(--icon-size) / -2)
+}
+
+.spacer {
+    color: transparent;
+}
+
+div.body.main > div {
+    height: calc(100% / 4);
+}
+
+div.body.main > div > div {
+    width: 100%;
+    height: 100%;
+}
+
+div.body.wheelchair > div {
+    height: calc(100% / 5);
+}
+
+div.body.wheelchair > div > div {
+    width: 50%;
+    height: 100%;
+}
+
+#wheelchair {
+    background-image: url("button_wheelchair.png");
+}
+
+#current_speed {
+    background: none;
+    font-size: 30px;
+}
