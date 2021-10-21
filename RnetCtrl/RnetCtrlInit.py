@@ -54,6 +54,7 @@ class RnetDualLogger(threading.Thread):
     init_done = False
     jsm_subtype = None
     motor_cansocket = None
+    jsm_cansocket = None
 
     def __init__(self):
         self.cansocket0 = None
@@ -107,15 +108,16 @@ class RnetDualLogger(threading.Thread):
             if frameName != 'JOY_POSITION':
                 can2RNET.cansendraw(sendsock, rnetFrame)
 
-            if frameName == 'PMTX_CONNECT':
-                self.motor_cansocket = listensock
+            if self.init_done == False:
+                if frameName == 'PMTX_CONNECT':
+                    self.motor_cansocket = listensock
+                    self.jsm_cansocket = sendsock
 
-
-            # Wait for a joy position to record JSM ID
-            if frameName == 'JOY_POSITION':
-                logger.debug('********** Got JMS ID: 0x%x **********\n' %subType)
-                self.jsm_subtype = subType
-                self.init_done = True
+                # Wait for a joy position to record JSM ID
+                if frameName == 'JOY_POSITION':
+                    logger.debug('********** Got JMS ID: 0x%x **********\n' %subType)
+                    self.jsm_subtype = subType
+                    self.init_done = True
 
 
 

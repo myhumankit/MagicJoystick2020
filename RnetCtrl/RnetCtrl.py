@@ -22,34 +22,37 @@ NEUTRAL_JOY_POSITION = '%d.%d' %(0,0)
 TCP_BUFFER_SIZE = 1024
 
 
+
+
+
 """
 JMS PowerOn class will substitute to a legacy JSM 
 So you can poweron raspberry witout the need to 
 poweron the JMS
 """
+
+"""
 class JsmDeamons(threading.Thread):
 
     NON_CRITICAL_PERIOD = 0.2
 
-    def __init__(self, cansocket, jsm_subtype):
+    def __init__(self, cansocket, jsm_subtype, mqtt_client):
         self.cansocket = cansocket
         self.jsm_subtype = jsm_subtype
         self.rnet_horn = RnetDissector.rnet_horn(jsm_subtype)
+        
+        
         threading.Thread.__init__(self)
 
 
-    """
-    Sending periodic 200ms Non critical control
-    """
+
+    #Periodic 200ms Non critical control
     def nonCriticalDaemon(self):
         logger.info("<non critical control daemon started>")
         while True:
             time.sleep(self.NON_CRITICAL_PERIOD)
-
             self.hornProcess()
-
             
-
 
     def startSerialDaemon(self):
         daemon = threading.Thread(target=self.nonCriticalDaemon, daemon=True)
@@ -57,13 +60,18 @@ class JsmDeamons(threading.Thread):
         return daemon
 
 
-    def hornProcess():
+    def hornProcess(self):
 
         state = self.rnet_horn.get_state()
 
-        can2RNET.cansendraw(self.cansocket,self.jsm_serial.encode())
-        pass
+        #TODO: mqtt receive
+        mqtt_horn_state = 1
 
+        if state != mqtt_horn_state:
+            self.rnet_horn.set_state(mqtt_horn_state)
+            can2RNET.cansendraw(self.cansocket,self.rnet_horn.encode())
+        pass
+"""
 
 
 
@@ -80,10 +88,16 @@ class RnetControl(threading.Thread):
     def __init__(self, jsm_init_file = "", testmode = False):
         self.joy_x = 0
         self.joy_y = 0
-        self.cansocket = None
+        self.rnet_horn = None
         self.testmode = testmode
         threading.Thread.__init__(self)
         logger.info("Opening socketcan")
+
+        self.mqtt_client = mqtt.Client() 
+        self.mqtt_client.on_connect = self.on_connect 
+        self.mqtt_client.on_message = self.on_message
+        self.mqtt_client.connect("localhost", 1883, 60) 
+        self.mqtt_client.loop_start()
 
         if testmode is False:
             self.cansend = can2RNET.cansend
@@ -95,8 +109,46 @@ class RnetControl(threading.Thread):
         self.jsm =  RnetCtrlInit.RnetDualLogger()
 
 
+    def on_connect(self, mqtt_client, userdata, flags, rc):
+            if rc == 0:
+                print("Connection successful")
+                mqtt_client.subscribe("rnet/drive")
+                mqtt_client.subscribe("rnet/light")
+                mqtt_client.subscribe("rnet/horn")
+                mqtt_client.subscribe("rnet/max_speed")
+            else:
+                logger.info(f"Connection failed with code {rc}")
+
+
+    # MQTT Message broker :
+    def on_message(self, mqtt_client, userdata, msg):
+            print(f"{msg.topic} {msg.payload}")
+            if msg.topic == "rnet/drive":
+                pass
+
+            elif msg.topic == "rnet/light":
+                pass
+
+            elif msg.topic == "rnet/horn":
+                self.rnet_horn.set_state()
+                can2RNET.cansendraw(self.jsm.jsm_cansocket,self.rnet_horn.encode())
+                time.sleep(1)
+                self.rnet_horn.set_state()
+                can2RNET.cansendraw(self.jsm.jsm_cansocket,self.rnet_horn.encode())
+
+            elif msg.topic == "rnet/max_speed":
+                pass
+
+            else:
+                logger.error("MQTT unsupported message")
+
+
+
+
+
 
     def powerOn(self):
+
         # Send power on sequence (Sends all JSM init frames)
         self.jsm.start_daemons()
 
@@ -104,13 +156,15 @@ class RnetControl(threading.Thread):
         while self.jsm.init_done is not True:
             time.sleep(0.1)
 
-        self.jsmDaemons = JsmDeamons(self.cansocket, self.jsm.jsm_subtype)
+        # self.jsmDaemons = JsmDeamons(self.cansocket, self.jsm.jsm_subtype)
+
+        self.rnet_horn = RnetDissector.rnet_horn(self.jsm.jsm_subtype)
+
 
         logger.info("jsm_subtype: %d" %self.jsm.jsm_subtype)
         # Initialize joystick frame object:
-        self.cansocket = self.jsm.motor_cansocket
         self.joyPosition = RnetDissector.rnet_joyPosition(0,0,self.jsm.jsm_subtype)
-        self.start_daemon()
+        return self.start_daemon()
 
 
     def dummy(self, arg0, arg1):
@@ -118,7 +172,7 @@ class RnetControl(threading.Thread):
 
 
     """
-    Function to be called when a new position is received from positionning client
+    Function to be called when a new position is received from positionning mqtt_client
     """
     def update_joy_position(self, data):
         x = int((data).split('.')[0])
@@ -132,7 +186,7 @@ class RnetControl(threading.Thread):
     """
     def send_joy_position(self):
         joyframe = self.joyPosition.encode()
-        can2RNET.cansendraw(self.cansocket, joyframe)
+        can2RNET.cansendraw(self.jsm.motor_cansocket, joyframe)
 
 
     def start_daemon(self):
@@ -215,9 +269,8 @@ if __name__ == "__main__":
     rnet = RnetControl(args.config, args.test)
 
     # Send JSM init sequence 'power on'
-    rnet.powerOn()
-
-
+    daemon = rnet.powerOn()
+    daemon.join()
     # # Start Rnet controller
     # try:
     #     # Start position daemon
@@ -229,5 +282,5 @@ if __name__ == "__main__":
 
 
     # Start Joy or any positionning sensor server listener
-    serv = server(args.ip, args.port, rnet)
-    serv.start()
+    # serv = server(args.ip, args.port, rnet)
+    # serv.start()
