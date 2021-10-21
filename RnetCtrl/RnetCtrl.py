@@ -12,6 +12,7 @@ import binascii
 from can2RNET import can2RNET
 from can2RNET.RnetDissector import RnetDissector
 import RnetCtrlInit
+import paho.mqtt.client as mqtt
 
 logger = can2RNET.logger
 
@@ -28,46 +29,41 @@ poweron the JMS
 """
 class JsmDeamons(threading.Thread):
 
-    SERIAL_PERIOD = 0.05
-    HEARTBEAT_PERIOD = 0.1
+    NON_CRITICAL_PERIOD = 0.2
 
-    def __init__(self, cansocket, jsm_serial):
+    def __init__(self, cansocket, jsm_subtype):
         self.cansocket = cansocket
-        self.jsm_serial = RnetDissector.rnet_serial(jsm_serial)
-        self.heartbeat = RnetDissector.rnet_heartbeat()
+        self.jsm_subtype = jsm_subtype
+        self.rnet_horn = RnetDissector.rnet_horn(jsm_subtype)
         threading.Thread.__init__(self)
 
 
     """
-    Sending periodic 50ms serial number <Thread>
+    Sending periodic 200ms Non critical control
     """
-    def serialDaemon(self):
-        logger.info("<Serial number send daemon started>")
+    def nonCriticalDaemon(self):
+        logger.info("<non critical control daemon started>")
         while True:
-            time.sleep(self.SERIAL_PERIOD)
-            can2RNET.cansendraw(self.cansocket,self.jsm_serial.encode())
+            time.sleep(self.NON_CRITICAL_PERIOD)
+
+            self.hornProcess()
+
+            
 
 
     def startSerialDaemon(self):
-        daemon = threading.Thread(target=self.serialDaemon, daemon=True)
+        daemon = threading.Thread(target=self.nonCriticalDaemon, daemon=True)
         daemon.start()
         return daemon
 
 
-    """
-    Sending periodic 100ms heartbeat <Thread>
-    """
-    def heartbeatDaemon(self):
-        logger.info("<Heartbeat daemon started>")
-        while True:
-            time.sleep(self.HEARTBEAT_PERIOD)
-            can2RNET.cansendraw(self.cansocket, self.heartbeat.encode())
+    def hornProcess():
 
+        state = self.rnet_horn.get_state()
 
-    def startHeartbeatDaemon(self):
-        daemon = threading.Thread(target=self.heartbeatDaemon, daemon=True)
-        daemon.start()
-        return daemon
+        can2RNET.cansendraw(self.cansocket,self.jsm_serial.encode())
+        pass
+
 
 
 
@@ -101,7 +97,6 @@ class RnetControl(threading.Thread):
 
 
     def powerOn(self):
-        # self.jsmDaemons = JsmDeamons(self.cansocket, self.jsm.jsm_serial)
         # Send power on sequence (Sends all JSM init frames)
         self.jsm.start_daemons()
 
@@ -109,6 +104,7 @@ class RnetControl(threading.Thread):
         while self.jsm.init_done is not True:
             time.sleep(0.1)
 
+        self.jsmDaemons = JsmDeamons(self.cansocket, self.jsm.jsm_subtype)
 
         logger.info("jsm_subtype: %d" %self.jsm.jsm_subtype)
         # Initialize joystick frame object:

@@ -65,14 +65,19 @@ echo "running apt-update and installing required modules ..."
 # ===========================================================
 sudo apt-get -y update
 sudo apt-get -y install can-utils build-essential python3-dev python3-smbus git python3-pip cmake
+sudo apt-get -y install mosquitto
 echo "running pip3 and installing required modules ..."
 # ===========================================================
 pip3 install wheel
 pip3 install setuptools
-pip3 -y install Adafruit-SSD1306 
-pip3 -y install RPi.GPIO
-pip3 -y install Adafruit-ADS1x15
-pip3 -y install spidev
+pip3 install Adafruit-SSD1306 
+pip3 install RPi.GPIO
+pip3 install Adafruit-ADS1x15
+pip3 install spidev
+pip3 install paho-mqtt
+pip3 install Flask
+pip3 install Flask-RESTful
+
 
 echo "Installing can2RNET python library"
 python3 ./can2RNET/setup.py install

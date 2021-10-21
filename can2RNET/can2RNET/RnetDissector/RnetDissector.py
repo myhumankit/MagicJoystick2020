@@ -25,6 +25,7 @@ RNET_FRAME_TYPE={
     'PMTX_CONNECT'  : (0x0C28, 0x0000),
     'PMTX_HEATBEAT' : (0x0C14, 0x0000),
     'BATTERY_LEVEL' : (0x1C0C, 0x0000),
+    'HORN'          : (0x0C04, 0x0000)
 }
 
 RNET_FRAME_TYPE_R = RNET_FRAME_TYPE.__class__(map(reversed, RNET_FRAME_TYPE.items()))
@@ -200,6 +201,48 @@ class rnet_joyPosition :
 
         frame.set_data(data)
         return frame.get_raw_frame()
+
+
+
+# --------------------------
+# control Horn
+# --------------------------
+class rnet_horn :
+
+    horn_t = cs.Struct(
+        "state" / cs.Int8ub
+    )
+    
+    def __init__(self, jsm_id=0): 
+        self.state = 0
+        self.type = RNET_FRAME_TYPE['HORN'][TYPE]
+        self.subtype = jsm_id
+
+
+    def enable(self):
+        self.state = 1
+
+
+    def disable(self):
+        self.state = 0
+
+
+    def get_state(self):
+        return self.state
+
+
+    def encode(self):
+        frame = raw_frame(True, False, self.type, self.subtype)
+
+        data = self.horn_t.build(
+            dict(
+                state = self.state)
+            )
+
+        frame.set_data(data)
+        return frame.get_raw_frame()
+
+
 
 
 # --------------------------
