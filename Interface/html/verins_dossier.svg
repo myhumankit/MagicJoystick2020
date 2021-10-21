@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg901"
+   inkscape:version="0.92.5 (0.92.5+68)"
+   sodipodi:docname="verins_dossier.svg">
+  <defs
+     id="defs895" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.56472176"
+     inkscape:cx="221.30649"
+     inkscape:cy="531.27151"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1366"
+     inkscape:window-height="692"
+     inkscape:window-x="0"
+     inkscape:window-y="24"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata898">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       inkscape:groupmode="layer"
+       id="layer2"
+       inkscape:label="Layer 1" />
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot1582"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:15px;line-height:125%;font-family:'Myriad Roman';-inkscape-font-specification:'Myriad Roman, Normal';text-align:start;letter-spacing:0.1px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       transform="scale(0.26458333)"><flowRegion
+         id="flowRegion1584"><rect
+           id="rect1586"
+           width="191.34972"
+           height="44.123829"
+           x="519.57153"
+           y="747.54407" /></flowRegion><flowPara
+         id="flowPara1588" /></flowRoot>    <g
+       id="g832">
+      <rect
+         transform="matrix(0.98042787,-0.19687861,0.2804678,0.95986344,0,0)"
+         ry="1.5885701"
+         rx="7.0324864"
+         y="124.36409"
+         x="6.0480919"
+         height="60.569805"
+         width="13.911283"
+         id="rect1446"
+         style="fill:#00fffb;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1.00185764;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <g
+         transform="matrix(1.2286009,0,0,1.2286009,-58.447526,16.472339)"
+         style="fill:#000000;fill-opacity:1;stroke-width:0.81393397;stroke-miterlimit:4;stroke-dasharray:none"
+         id="g1546">
+        <path
+           sodipodi:nodetypes="ccccccsssccc"
+           inkscape:connector-curvature="0"
+           id="rect1590"
+           transform="matrix(0.21535336,0,0,0.21535336,25.34359,29.430959)"
+           d="m 488.1543,418.41016 c -2.93688,0.11373 -7.37844,2.21493 -11.71485,5.78906 l -18.16797,14.97461 c -6.3075,5.19873 -9.93539,11.48848 -8.13476,14.10351 l 99.99805,139.23438 c 3.89048,-0.35581 -1.75554,-0.0909 0,0 h 65.8789 c 3.34129,0 6.03125,-9.62071 6.03125,-21.57227 0,-11.95155 -2.68996,-21.57422 -6.03125,-21.57422 H 580.47266 L 491.07617,419.53516 c -0.56269,-0.8172 -1.58693,-1.1767 -2.92187,-1.125 z"
+           style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:3.77952766;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      </g>
+      <rect
+         transform="rotate(-90)"
+         ry="1.595755"
+         rx="7.0536718"
+         y="58.817402"
+         x="-175.58443"
+         height="44.418777"
+         width="12.11522"
+         id="rect1446-3"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+  </g>
+</svg>
