@@ -217,29 +217,29 @@ class rnet_horn :
         self.state = 0
         self.type = RNET_FRAME_TYPE['HORN'][TYPE]
         self.subtype = jsm_id
-
-
-    def enable(self):
-        self.state = 1
-
-
-    def disable(self):
         self.state = 0
 
 
-    def get_state(self):
-        return self.state
+    def set_state(self):
+        if self.state == 1:
+            self.subtype = self.subtype - 1
+        elif self.state == 0:
+            self.subtype = self.subtype + 1
+
 
 
     def encode(self):
         frame = raw_frame(True, False, self.type, self.subtype)
+        # frame = raw_frame(True, False, self.type, self.subtype)
 
         data = self.horn_t.build(
             dict(
-                state = self.state)
+                state = 0)
             )
 
         frame.set_data(data)
+
+        print("%r, %r" %(self.subtype, frame.get_raw_frame()))
         return frame.get_raw_frame()
 
 
