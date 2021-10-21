@@ -1,5 +1,10 @@
 import pickle
 
+
+def deserialize(arrray):
+    return pickle.loads(arrray)
+
+
 # Base class for MQTT messages
 class base_mqtt_message:
     def __init__(self):
@@ -8,6 +13,8 @@ class base_mqtt_message:
     """ returns byte array representation of this object """
     def serialize(self):
         return pickle.dumps(self.__dict__)
+
+
 
 # Data format for each topic
 class joystick_state(base_mqtt_message):
