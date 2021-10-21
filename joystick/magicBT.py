@@ -8,11 +8,13 @@ import dbus.mainloop.glib
 import time
 import paho.mqtt.client as mqtt
 import json
+from mqtt_topics.mqtt_topics import *
 
 # Global variables
 state = [0, 0, 0, 0]
 waiting_left_click = 0
 waiting_right_click = 0
+drive_state = False
 
 class MouseClient():
     
@@ -47,53 +49,82 @@ def get_mouse_position(rnet_x, rnet_y):
 
     return dx, dy
 
+
 def on_connect(client, userdata, flags, rc):
   print("Connected with result code "+str(rc))
-  client.subscribe("joystick/state")
+  client.subscribe(joystick_state.TOPIC_NAME)
+  client.subscribe(action_drive.TOPIC_NAME)
+
 
 def on_message(client, userdata, msg):
     global state
     global waiting_left_click
     global waiting_right_click
-    
-    new_state = json.loads(msg.payload.decode("utf-8"))
-    if state[0] == 0:
-        if new_state[0] == 1:
-            waiting_left_click += 1
-        elif new_state[0] == 2:
-            waiting_right_click += 1
-    
-    dx, dy = get_mouse_position(new_state[1], new_state[2])
-    new_state[1] = dx
-    new_state[2] = dy
-    state = new_state.copy()
+    new_state = [0,0,0,0]
+    global drive_state
+
+    print("state: %s", msg.topic)
+
+    if msg.topic == action_drive.TOPIC_NAME:
+        drive_state = True
+
+    elif msg.topic == joystick_state.TOPIC_NAME:
+
+        joy_position = deserialize(msg.payload)
+        new_state[0] = joy_position.buttons
+        new_state[1] = joy_position.x
+        new_state[2] = joy_position.y
+        new_state[3] = joy_position.long_click
+
+        if drive_state:
+            if (joy_position.buttons == 1) :
+                drive_state = False
+            new_state[0] = 0
+            new_state[1] = 0
+            new_state[2] = 0            
+            new_state[3] = 0
+            state = new_state.copy()
+
+        else :
+
+            if state[0] == 0:
+                if new_state[0] == 1:
+                    waiting_left_click += 1
+                elif new_state[0] == 2:
+                    waiting_right_click += 1
+            
+            dx, dy = get_mouse_position(new_state[1], new_state[2])
+            new_state[1] = dx
+            new_state[2] = dy
+            state = new_state.copy()
+
 
 if __name__ == "__main__":
     bt_mouse_client = MouseClient()
     
     client = mqtt.Client()
-    client.connect('localhost',1883,60)
 
     client.on_connect = on_connect
-    
     client.on_message = on_message
+
+    client.connect('localhost',1883,60)
     client.loop_start()
 
     while True:
         if waiting_left_click > 0:
             bt_mouse_client.state[0] = 1
             waiting_left_click -= 1
-        else:
-            bt_mouse_client.state[0] = 0
-        if waiting_right_click > 0:
+
+        elif waiting_right_click > 0:
             bt_mouse_client.state[0] = 2
             waiting_right_click -= 1
+
         else:
             bt_mouse_client.state[0] = 0
         bt_mouse_client.state[1] = state[1]
         bt_mouse_client.state[2] = state[2]
         bt_mouse_client.state[3] = state[3]
-        print("state:", bt_mouse_client.state)
+        
         bt_mouse_client.send_current()
 
         time.sleep(1/30) 

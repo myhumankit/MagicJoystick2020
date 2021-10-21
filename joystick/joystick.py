@@ -142,16 +142,16 @@ class Joystick():
         Normalize x/y values between 0 and 1
     """
     def normalize_xy(self, x, y):
-        min_x = 0 + self.offset_x
+        min_x = self.offset_x
         max_x = self.ADC_GAIN_SCALE - 1 + self.offset_x
         range_x = max_x - min_x
 
-        min_y = 0 + self.offset_y
+        min_y = self.offset_y
         max_y = self.ADC_GAIN_SCALE - 1 + self.offset_y
         range_y = max_y - min_y
 
-        norm_x = (x - min_x) / range_x
-        norm_y = (y - min_y) / range_y
+        norm_x = min(1, max(0, (x - min_x) / range_x))
+        norm_y = min(1, max(0, (y - min_y) / range_y))
         return norm_x, norm_y
 
 
@@ -181,12 +181,10 @@ class Joystick():
     def get_new_data(self):
 
         # Get magnetometer x/y values from ADC:
-        x, y = self.get_xy()
-        x, y = self.normalize_xy(x, y)
+        x, y = self.normalize_xy(*self.get_xy())
 
         # Scale ADC range to 8bits range for rnet
-        x = int(x * 255)
-        y = int(y * 255)
+        x, y = int(x * 255), int(y * 255)
 
         # Convert unsigned scaled value to signed value, and possibly
         # invert sign if required
