@@ -1,13 +1,13 @@
 import paho.mqtt.client as mqtt
+from mqtt_topics import *
         
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         print("Connection successful")
-        client.subscribe("magick_bt1/attach")
-        client.subscribe("rnet/drive")
-        client.subscribe("rnet/light")
-        client.subscribe("rnet/horn")
-        client.subscribe("rnet/max_speed")
+        client.subscribe(action_drive.TOPIC_NAME)
+        client.subscribe(action_light.TOPIC_NAME)
+        client.subscribe(action_horn.TOPIC_NAME)
+        client.subscribe(action_max_speed.TOPIC_NAME)
     else:
         print(f"Connection failed with code {rc}")
 

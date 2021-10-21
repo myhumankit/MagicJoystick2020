@@ -1,6 +1,7 @@
 from flask import Flask, send_from_directory, request
 from flask_restful import Resource, Api
 import paho.mqtt.client as mqtt
+from mqtt_topics import *
 
 app = Flask(__name__)
 
@@ -38,20 +39,18 @@ class Actions(Resource):
         data = request.get_json()
 
         if action == "light":
-            self.client.publish("rnet/light", data["on"])
-            return "", 200
+            msg = action_light()
         elif action == "max_speed":
-            self.client.publish("rnet/max_speed", data["max_speed"])
-            return "", 200
+            msg = action_max_speed(data["max_speed"])
         elif action == "drive":
-            self.client.publish("magick_bt1/attach", 0)
-            self.client.publish("rnet/drive", 1)
-            return "", 200
+            msg = action_drive(True)
         elif action == "horn":
-            self.client.publish("rnet/horn", 1)
-            return "", 200
+            msg = action_horn()
         else:
             return "", 404
+            
+        self.client.publish(msg.TOPIC_NAME, msg.serialize())
+        return "", 200
 
 app = Flask(__name__)
 api = Api(app)
