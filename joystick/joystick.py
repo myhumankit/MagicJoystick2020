@@ -10,6 +10,7 @@ import time
 from gpiozero import Button
 import paho.mqtt.client as mqtt
 import json
+from mqtt_topics import *
 
 # Constants definition:
 DEFAULT_PERIOD = 0.01
@@ -217,11 +218,11 @@ class Joystick():
 
         return x_out, y_out
 
+
 if __name__ == "__main__":
 
     state = [0,0,0,0]
-    json_state = ""
-    save_json_state = ""
+    save_state = [0,0,0,0]
     diff = 1
     btn1_state_save = False
 
@@ -263,9 +264,8 @@ if __name__ == "__main__":
 
         state[1], state[2] = joy.get_new_data()
 
-        json_state = json.dumps(state)
-
-        if(save_json_state != json_state ):
-            client.publish("joystick/state", json.dumps(state))
-            save_json_state = json_state
+        if(save_state != state ):
+            joy_data = joystick_state(state[0], state[1], state[2],state[3])
+            client.publish(joy_data.TOPI_NAME, joy_data.serialize())
+            save_state = state
 

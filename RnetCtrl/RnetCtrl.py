@@ -13,6 +13,7 @@ from can2RNET import can2RNET
 from can2RNET.RnetDissector import RnetDissector
 import RnetCtrlInit
 import paho.mqtt.client as mqtt
+from mqtt_topics import *
 
 logger = can2RNET.logger
 
@@ -116,6 +117,7 @@ class RnetControl(threading.Thread):
                 mqtt_client.subscribe("rnet/light")
                 mqtt_client.subscribe("rnet/horn")
                 mqtt_client.subscribe("rnet/max_speed")
+                mqtt_client.subscribe(joystick_state.TOPIC_NAME)
             else:
                 logger.info(f"Connection failed with code {rc}")
 
@@ -138,6 +140,10 @@ class RnetControl(threading.Thread):
 
             elif msg.topic == "rnet/max_speed":
                 pass
+
+            elif msg.topic == joystick_state.TOPIC_NAME:
+                joy_data = deserialize(joystick_state.payload)
+                self.joyPosition.set_data(joy_data.x, joy_data.y)
 
             else:
                 logger.error("MQTT unsupported message")
