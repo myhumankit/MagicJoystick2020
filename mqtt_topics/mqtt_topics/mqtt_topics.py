@@ -12,18 +12,19 @@ class base_mqtt_message:
 
     """ returns byte array representation of this object """
     def serialize(self):
-        return pickle.dumps(self.__dict__)
+        # TODO : optimize serialization size
+        return pickle.dumps(self)
 
 
 
 # Data format for each topic
 class joystick_state(base_mqtt_message):
     TOPIC_NAME = "joystick/state"
-    def __init__(self, buttons, x, y, long_click):
-        self.buttons = buttons
+    def __init__(self, buttons=0, x=0, y=0, long_click=0):
+        self.buttons = buttons  # 0: no button, 1: Left click, 2: Right click
         self.x = x
         self.y = y
-        self.long_click = long_click
+        self.long_click = long_click    # 0: Short click, 1: lobg click
 
 class action_drive(base_mqtt_message):
     TOPIC_NAME = "action/drive"

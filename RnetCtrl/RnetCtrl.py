@@ -13,7 +13,7 @@ from can2RNET import can2RNET
 from can2RNET.RnetDissector import RnetDissector
 import RnetCtrlInit
 import paho.mqtt.client as mqtt
-from mqtt_topics import *
+from mqtt_topics.mqtt_topics import *
 
 logger = can2RNET.logger
 
@@ -91,6 +91,7 @@ class RnetControl(threading.Thread):
         self.joy_y = 0
         self.rnet_horn = None
         self.testmode = testmode
+        self.drive_mode = False
         threading.Thread.__init__(self)
         logger.info("Opening socketcan")
 
@@ -113,7 +114,7 @@ class RnetControl(threading.Thread):
     def on_connect(self, mqtt_client, userdata, flags, rc):
             if rc == 0:
                 print("Connection successful")
-                mqtt_client.subscribe("rnet/drive")
+                mqtt_client.subscribe(action_drive.TOPIC_NAME)
                 mqtt_client.subscribe("rnet/light")
                 mqtt_client.subscribe("rnet/horn")
                 mqtt_client.subscribe("rnet/max_speed")
@@ -124,9 +125,9 @@ class RnetControl(threading.Thread):
 
     # MQTT Message broker :
     def on_message(self, mqtt_client, userdata, msg):
-            print(f"{msg.topic} {msg.payload}")
-            if msg.topic == "rnet/drive":
-                pass
+            logger.info("recv mqtt message from %s" %(msg.topic))
+            if msg.topic == action_drive.TOPIC_NAME:
+                self.drive_mode = True
 
             elif msg.topic == "rnet/light":
                 pass
@@ -142,8 +143,19 @@ class RnetControl(threading.Thread):
                 pass
 
             elif msg.topic == joystick_state.TOPIC_NAME:
-                joy_data = deserialize(joystick_state.payload)
-                self.joyPosition.set_data(joy_data.x, joy_data.y)
+                if self.drive_mode is True:
+                    joy_data = deserialize(msg.payload)
+                    
+                    # Check if long click is pressed to get out of drive mode
+                    # and force position to neutral is true
+                    if (joy_data.buttons == 1)&(joy_data.long_click == 1):
+                        self.drive_mode = False
+                        self.joyPosition.set_data(0, 0)
+                    else:
+                        self.joyPosition.set_data(joy_data.x, joy_data.y)
+
+
+
 
             else:
                 logger.error("MQTT unsupported message")
@@ -183,7 +195,6 @@ class RnetControl(threading.Thread):
     def update_joy_position(self, data):
         x = int((data).split('.')[0])
         y = int((data).split('.')[1])
-        logger.debug("Update position: x=%r, y=%r" %(x,y))
         self.joyPosition.set_data(x, y)
 
 

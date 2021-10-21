@@ -1,7 +1,7 @@
 from flask import Flask, send_from_directory, request
 from flask_restful import Resource, Api
 import paho.mqtt.client as mqtt
-from mqtt_topics import *
+from mqtt_topics.mqtt_topics import *
 
 app = Flask(__name__)
 

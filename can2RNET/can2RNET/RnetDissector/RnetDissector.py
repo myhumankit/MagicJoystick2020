@@ -189,6 +189,8 @@ class rnet_joyPosition :
         self.X = x
         self.Y = y
 
+    def get_data(self):
+        return self.X,self.Y
 
     def encode(self):
         frame = raw_frame(True, False, self.type, self.subtype)
