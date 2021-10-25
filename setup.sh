@@ -84,7 +84,7 @@ echo "Installing Magick Joystick python library"
 pip3 install -e .
 
 echo "Installing service startup"
-cat magick_joystick.service | sed "s/@PWD@/$PWD/g" > /etc/systemd/system/magick_joystick.service
+cat magick_joystick.service | sed "s|@PWD@|$PWD|g" > /etc/systemd/system/magick_joystick.service
 
 echo "Setup done"
 echo ""
