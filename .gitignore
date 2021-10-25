@@ -1,2 +1,4 @@
 __pycache__
-RnetCtrl/.vscode
+.vscode
+*.egg-info
+*.swp

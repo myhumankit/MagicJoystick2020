@@ -1,0 +1,12 @@
+[Unit]
+Description=Magick Joystick Service
+Requires=bluetooth.service
+After=bluetooth.service
+
+[Service]
+Restart=always
+ExecStart=@PWD@/start_magick_joystick.sh
+ExecStop=supervisorctl shutdown
+
+[Install]
+WantedBy=multi-user.target

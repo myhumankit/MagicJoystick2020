@@ -24,71 +24,67 @@ fi
 echo "Updating /boot/config.txt ..."
 # ==============================================
 cp /boot/config.txt /boot/config.txt.bak
-echo "" >> /boot/config.txt
-echo "# MagicJoy config starts ============="  >> /boot/config.txt
-echo "dtparam=i2c_arm=on" >> /boot/config.txt
-echo "dtoverlay=mcp2515-can0,oscillator=16000000,interrupt=25"  >> /boot/config.txt
-echo "dtoverlay=mcp2515-can1,oscillator=16000000,interrupt=24"  >> /boot/config.txt
-echo "dtoverlay=spi1-hw-cs"  >> /boot/config.txt
-echo "dtoverlay=spi0-hw-cs"  >> /boot/config.txt
-echo "# MagicJoy config stops ============="  >> /boot/config.txt
+read -r -d '' BOOT_CFG << EOF
+
+# MagicJoy config starts =============
+dtparam=i2c_arm=on
+dtoverlay=mcp2515-can0,oscillator=16000000,interrupt=25
+dtoverlay=mcp2515-can1,oscillator=16000000,interrupt=24
+dtoverlay=spi1-hw-cs
+dtoverlay=spi0-hw-cs
+# MagicJoy config stops =============
+EOF
+echo $BOOT_CFG >> /boot/config.txt
 
 echo "Updating /etc/network/interfaces ..."
 # ==============================================
 cp /etc/network/interfaces /etc/network/interfaces.bak
-echo "# MagicJoy config starts ============="  >> /etc/network/interfaces
-echo "# pican interface0 configuration "  >> /etc/network/interfaces
-echo "allow-hotplug can0" >> /etc/network/interfaces
-echo "iface can0 can static" >> /etc/network/interfaces
-echo "       bitrate 125000" >> /etc/network/interfaces
-echo "       down /sbin/ip link set $IFACE down" >> /etc/network/interfaces
-echo "       up /sbin/ip link set $IFACE up" >> /etc/network/interfaces
-echo ""  >> /etc/network/interfaces
-echo "# pican interface1 configuration "  >> /etc/network/interfaces
-echo "allow-hotplug can1" >> /etc/network/interfaces
-echo "iface can1 can static" >> /etc/network/interfaces
-echo "       bitrate 125000" >> /etc/network/interfaces
-echo "       down /sbin/ip link set $IFACE down" >> /etc/network/interfaces
-echo "       up /sbin/ip link set $IFACE up" >> /etc/network/interfaces
-echo "# MagicJoy config stops ============="  >> /etc/network/interfaces
+read -r -d '' NET_ITF << EOF
+# MagicJoy config starts =============
+# pican interface0 configuration
+allow-hotplug can0
+iface can0 can static
+       bitrate 125000
+       down /sbin/ip link set $IFACE down
+       up /sbin/ip link set $IFACE up
+
+# pican interface1 configuration
+allow-hotplug can1
+iface can1 can static
+       bitrate 125000
+       down /sbin/ip link set $IFACE down
+       up /sbin/ip link set $IFACE up
+# MagicJoy config stops =============
+EOF
+echo "$NET_IF" >> /etc/network/interfaces
+
 
 echo "Updating /etc/modules ..."
 # ==============================================
 cp /etc/modules /etc/modules.bak
-echo "# MagicJoy config starts ============="  >> /etc/modules
-echo "i2c-dev"  >> /etc/modules
-echo "mcp251x"  >> /etc/modules
-echo "can_dev"  >> /etc/modules
-echo "# MagicJoy config stops ============="  >> /etc/modules
+read -r -d '' MODULES << EOF
+# MagicJoy config starts =============
+i2c-dev
+mcp251x
+can_dev
+# MagicJoy config stops =============
+EOF
+echo "$MODULES" >> /etc/modules
 
 echo "running apt-update and installing required modules ..."
 # ===========================================================
-sudo apt-get -y update
-sudo apt-get -y install can-utils build-essential python3-dev python3-smbus git python3-pip cmake
-sudo apt-get -y install mosquitto
+apt-get -y update
+apt-get -y install can-utils build-essential python3-dev git python3-pip cmake
+apt-get -y install mosquitto supervisor
 echo "running pip3 and installing required modules ..."
 # ===========================================================
-pip3 install wheel
-pip3 install setuptools
-pip3 install Adafruit-SSD1306 
-pip3 install RPi.GPIO
-pip3 install Adafruit-ADS1x15
-pip3 install spidev
-pip3 install paho-mqtt
-pip3 install Flask
-pip3 install Flask-RESTful
+pip3 install -r requirements.txt
 
+echo "Installing Magick Joystick python library"
+pip3 install -e .
 
-echo "Installing can2RNET python library"
-python3 ./can2RNET/setup.py install
-
-echo "Installing python construct"
-cd Depends 
-tar -xf construct-2.10.63.tar.gz
-cd construct-2.10.63
-python3 setup.py install
-cd ..
-rm -rf construct-2.10.63
+echo "Installing service startup"
+cat magick_joystick.service | sed "s/@PWD@/$PWD/g" > /etc/systemd/system/magick_joystick.service
 
 echo "Setup done"
 echo ""

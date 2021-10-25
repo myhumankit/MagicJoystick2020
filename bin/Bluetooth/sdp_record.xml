@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<record>
+    <!-- Service Class ID -->
+	<attribute id="0x0001">
+		<sequence>
+            <!-- HID UUID -->
+			<uuid value="0x1124" />
+		</sequence>
+	</attribute>
+
+    <!-- Protocol descriptor list -->
+	<attribute id="0x0004">
+		<sequence>
+			<sequence>
+                <!-- Profile based on top of L2CAP -->
+				<uuid value="0x0100" />
+                <!-- PSM for HID control -->
+				<uint16 value="0x0011" />
+			</sequence>
+			<sequence>
+                <!-- Protocol identifier UUID -->
+				<uuid value="0x0011" />
+			</sequence>
+		</sequence>
+	</attribute>
+
+    <!-- Browse group list -->
+	<attribute id="0x0005">
+		<sequence>
+            <!-- SDP entry is visible -->
+			<uuid value="0x1002" />
+		</sequence>
+	</attribute>
+
+    <!-- Language base attribute -->
+	<attribute id="0x0006">
+		<sequence>
+            <!-- "en" : English (ISO639) -->
+			<uint16 value="0x656e" />
+            <!-- UTF-8 encoding -->
+			<uint16 value="0x006a" />
+            <!-- Base offset -->
+			<uint16 value="0x0100" />
+		</sequence>
+	</attribute>
+
+    <!-- Attribute Profile Descriptor -->
+	<attribute id="0x0009">
+		<sequence>
+			<sequence>
+                <!-- HID -->
+				<uuid value="0x1124" />
+                <!-- Version -->
+				<uint16 value="0x0100" />
+			</sequence>
+		</sequence>
+	</attribute>
+
+    <!-- Additionnal protocol descriptor list -->
+	<attribute id="0x000d">
+		<sequence>
+			<sequence>
+				<sequence>
+                    <!-- Profile based on L2CAP -->
+					<uuid value="0x0100" />
+                    <!-- PSM for HID interrupt -->
+					<uint16 value="0x0013" />
+				</sequence>
+				<sequence>
+                    <!-- Protocol identifier's UUID for the HID profile -->
+					<uuid value="0x0011" />
+				</sequence>
+			</sequence>
+		</sequence>
+	</attribute>
+
+    <!-- Service name -->
+	<attribute id="0x0100">
+		<text value="Virtual mouse" />
+	</attribute>
+
+    <!-- Service Description -->
+	<attribute id="0x0101">
+		<text value="MagickJoystick Mouse" />
+	</attribute>
+
+    <!-- Provider Name -->
+	<attribute id="0x0102">
+		<text value="MyHumanKit" />
+	</attribute>
+
+    <!-- HID Device Release Number -->
+	<attribute id="0x0200">
+        <!-- version 1.0 -->
+		<uint16 value="0x0100" />
+	</attribute>
+
+    <!-- HID Parser Version -->
+	<attribute id="0x0201">
+		<uint16 value="0x0111" />
+	</attribute>
+
+    <!-- HID Device Subclass -->
+	<attribute id="0x0202">
+        <!-- -->
+		<uint8 value="0xC0" />
+	</attribute>
+
+    <!-- HID Country Code -->
+	<attribute id="0x0203">
+		<uint8 value="0x00" />
+	</attribute>
+
+    <!-- HID Virtual Cable -->
+	<attribute id="0x0204">
+		<boolean value="false" />
+	</attribute>
+
+    <!-- HID Reconnect Initiate -->
+	<attribute id="0x0205">
+		<boolean value="false" />
+	</attribute>
+
+    <!-- HID descriptor list -->
+	<attribute id="0x0206">
+		<sequence>
+			<sequence>
+                <!-- Report descriptor -->
+				<uint8 value="0x22" />
+                <!-- Report descriptor content -->
+				<!--<text encoding="hex" value="05010906a101850175019508050719e029e715002501810295017508810395057501050819012905910295017503910395067508150026ff000507190029ff8100c005010902a10185020901a100950575010509190129051500250181029501750381017508950305010930093109381581257f8106c0c0" />-->
+                <text encoding="hex" value="05010902a1010901a1008502050919012903150025019503750181029501750581029501750581030501093009311581257f750895028106c0c0" />
+			</sequence>
+		</sequence>
+	</attribute>
+
+    <!-- HID Language ID Base List -->
+	<attribute id="0x0207">
+		<sequence>
+			<sequence>
+                <!-- "en-US" -->
+				<uint16 value="0x0409" />
+                <!-- Bluetooth string offset -->
+				<uint16 value="0x0100" />
+			</sequence>
+		</sequence>
+	</attribute>
+
+    <!-- HID Profile Version -->
+	<attribute id="0x020b">
+		<uint16 value="0x0100" />
+	</attribute>
+
+    <!-- HID Supervision Timeout -->
+	<attribute id="0x020c">
+		<uint16 value="0x0c80" />
+	</attribute>
+
+    <!-- HID normally connectable -->
+	<attribute id="0x020d">
+		<!--<boolean value="false" />-->
+		<boolean value="true" />
+	</attribute>
+
+    <!-- HID Boot Device -->
+	<attribute id="0x020e">
+		<boolean value="false" />
+	</attribute>
+
+    <!-- HIDSSR Host Maximum Latency -->
+	<attribute id="0x020f">
+		<uint16 value="0x0640" />
+	</attribute>
+
+    <!-- HIDSSR Host Minimum Timeout -->
+	<attribute id="0x0210">
+		<uint16 value="0x0320" />
+	</attribute>
+</record>

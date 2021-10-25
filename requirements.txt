@@ -1,0 +1,11 @@
+Adafruit-ADS1x15
+Adafruit-SSD1306 
+construct==2.10.63
+Flask==1.1.2
+Flask-RESTful==0.3.8
+paho-mqtt==1.6.0
+RPi.GPIO
+setuptools
+smbus
+spidev
+wheel
