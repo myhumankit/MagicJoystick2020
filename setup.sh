@@ -75,7 +75,7 @@ echo "running apt-update and installing required modules ..."
 # ===========================================================
 apt-get -y update
 apt-get -y install can-utils build-essential python3-dev git python3-pip cmake
-apt-get -y install mosquitto supervisor
+apt-get -y install mosquitto supervisor bluez libcap2-bin
 echo "running pip3 and installing required modules ..."
 # ===========================================================
 pip3 install -r requirements.txt
