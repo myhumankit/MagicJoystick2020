@@ -5,7 +5,8 @@ After=bluetooth.service
 
 [Service]
 Restart=always
-ExecStart=@PWD@/start_magick_joystick.sh
+WorkingDirectory=@PWD@
+ExecStart=start_magick_joystick.sh
 ExecStop=supervisorctl shutdown
 
 [Install]
