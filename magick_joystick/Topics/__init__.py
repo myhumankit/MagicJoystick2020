@@ -41,3 +41,8 @@ class action_light(base_mqtt_message):
     TOPIC_NAME = "action/light"
     def __init__(self):
         pass
+
+class status_battery_level(base_mqtt_message):
+    TOPIC_NAME = "status/battery_level"
+    def __init__(self, battery_level):
+        self.battery_level = battery_level
