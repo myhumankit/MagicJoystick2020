@@ -4,70 +4,12 @@ import time
 import socket
 import sys
 import logging
-import RnetCtrlInit
+from rnet_can import  RnetCan
 import paho.mqtt.client as mqtt
 from magick_joystick.can2RNET import can2RNET, RnetDissector
 from magick_joystick.Topics import *
 
 logger = can2RNET.logger
-
-
-# Default constants:
-NEUTRAL_JOY_POSITION = '%d.%d' %(0,0)
-TCP_BUFFER_SIZE = 1024
-
-
-
-
-
-"""
-JMS PowerOn class will substitute to a legacy JSM 
-So you can poweron raspberry witout the need to 
-poweron the JMS
-"""
-
-"""
-class JsmDeamons(threading.Thread):
-
-    NON_CRITICAL_PERIOD = 0.2
-
-    def __init__(self, cansocket, jsm_subtype, mqtt_client):
-        self.cansocket = cansocket
-        self.jsm_subtype = jsm_subtype
-        self.rnet_horn = RnetDissector.rnet_horn(jsm_subtype)
-        
-        
-        threading.Thread.__init__(self)
-
-
-
-    #Periodic 200ms Non critical control
-    def nonCriticalDaemon(self):
-        logger.info("<non critical control daemon started>")
-        while True:
-            time.sleep(self.NON_CRITICAL_PERIOD)
-            self.hornProcess()
-            
-
-    def startSerialDaemon(self):
-        daemon = threading.Thread(target=self.nonCriticalDaemon, daemon=True)
-        daemon.start()
-        return daemon
-
-
-    def hornProcess(self):
-
-        state = self.rnet_horn.get_state()
-
-        #TODO: mqtt receive
-        mqtt_horn_state = 1
-
-        if state != mqtt_horn_state:
-            self.rnet_horn.set_state(mqtt_horn_state)
-            can2RNET.cansendraw(self.cansocket,self.rnet_horn.encode())
-        pass
-"""
-
 
 
 
@@ -78,77 +20,89 @@ and take the control over the legacy JSM
 """
 class RnetControl(threading.Thread):
 
-    POSITION_FREQUENCY = 0.01   # 100Hz
+    POSITION_FREQUENCY = 0.01   # 100Hz - RNET requirement
+    STATUS_FREQUENCY = 0.1      # 10Hz
 
-    def __init__(self, jsm_init_file = "", testmode = False):
-        self.joy_x = 0
-        self.joy_y = 0
-        self.rnet_horn = None
+    def __init__(self, testmode = False):
+        self.RnetHorn = None
         self.testmode = testmode
         self.drive_mode = False
+        self.battery_level = 0
         threading.Thread.__init__(self)
-        logger.info("Opening socketcan")
-
-        self.mqtt_client = mqtt.Client() 
-        self.mqtt_client.on_connect = self.on_connect 
-        self.mqtt_client.on_message = self.on_message
-        self.mqtt_client.connect("localhost", 1883, 60) 
-        self.mqtt_client.loop_start()
+        
+        try:
+            self.mqtt_client = mqtt.Client() 
+            self.mqtt_client.on_connect = self.on_connect 
+            self.mqtt_client.on_message = self.on_message
+            self.mqtt_client.connect("localhost", 1883, 60) 
+            self.mqtt_client.loop_start()
+            logger.info("mqtt connection successfull")
+        except:
+            logger.error("mqtt connection error")
 
         if testmode is False:
-            self.cansend = can2RNET.cansend
+            self.cansend = can2RNET.cansendraw
         else:
             logger.warning("Switching in test mode, do not connect to CAN bus")
             self.cansend = self.dummy
 
-        # Open can socket to prepare fake JSM PowerOn
-        self.jsm =  RnetCtrlInit.RnetDualLogger()
+        # Open can socket to prepare fake JSM power_on
+        logger.info("Opening socketcan")
+        self.rnet_can =  RnetCan(self.testmode)
 
 
+    # MQTT Connection initialization
     def on_connect(self, mqtt_client, userdata, flags, rc):
             if rc == 0:
-                print("Connection successful")
+                logger.info("Connection successful")
                 mqtt_client.subscribe(action_drive.TOPIC_NAME)
-                mqtt_client.subscribe("rnet/light")
-                mqtt_client.subscribe("rnet/horn")
-                mqtt_client.subscribe("rnet/max_speed")
+                mqtt_client.subscribe(action_light.TOPIC_NAME)
+                mqtt_client.subscribe(action_horn.TOPIC_NAME)
+                mqtt_client.subscribe(action_max_speed.TOPIC_NAME)
                 mqtt_client.subscribe(joystick_state.TOPIC_NAME)
             else:
                 logger.info(f"Connection failed with code {rc}")
 
 
     # MQTT Message broker :
-    def on_message(self, mqtt_client, userdata, msg):
-            logger.info("recv mqtt message from %s" %(msg.topic))
+    def on_message(self, mqtt_client, userdata, msg):         
+            # ENABLE DRIVE COMMAND
             if msg.topic == action_drive.TOPIC_NAME:
+                logger.debug("[recv %s] Switch to drive mode ON" %(msg.topic))
                 self.drive_mode = True
 
-            elif msg.topic == "rnet/light":
-                pass
+            # ENABLE/DISABLE LIGHTS COMMAND
+            elif msg.topic == action_light.TOPIC_NAME:
+                logger.debug("[recv %s] Switch ON lights" %(msg.topic))
 
-            elif msg.topic == "rnet/horn":
-                self.rnet_horn.set_state()
-                can2RNET.cansendraw(self.jsm.jsm_cansocket,self.rnet_horn.encode())
+            # ENABLE/DISABLE HORN
+            elif msg.topic == action_horn.TOPIC_NAME:
+                self.RnetHorn.toogle_state()
+                logger.debug("[recv %s] Switch horn state to %r" %(msg.topic, self.RnetHorn.get_state))
+                self.cansend(self.rnet_can.jsm_cansocket,self.RnetHorn.encode())
                 time.sleep(1)
-                self.rnet_horn.set_state()
-                can2RNET.cansendraw(self.jsm.jsm_cansocket,self.rnet_horn.encode())
+                self.RnetHorn.toogle_state()
+                logger.debug("[recv %s] Switch horn state to %r" %(msg.topic, self.RnetHorn.get_state))
+                self.cansend(self.rnet_can.jsm_cansocket,self.RnetHorn.encode())
 
-            elif msg.topic == "rnet/max_speed":
-                pass
+            # SET MAX SPEED
+            elif msg.topic == action_max_speed.TOPIC_NAME:
+                logger.debug("[recv %s] set max speed to FXME" %(msg.topic))
 
+            # JOYSTICK POSITION
             elif msg.topic == joystick_state.TOPIC_NAME:
                 if self.drive_mode is True:
                     joy_data = deserialize(msg.payload)
                     
                     # Check if long click is pressed to get out of drive mode
-                    # and force position to neutral is true
+                    # and force position to neutral if true
                     if (joy_data.buttons == 1) :
                         self.drive_mode = False
-                        self.joyPosition.set_data(0, 0)
+                        self.RnetJoyPosition.set_data(0, 0)
                     else:
-                        self.joyPosition.set_data(joy_data.x, joy_data.y)
-
-
+                        self.RnetJoyPosition.set_data(joy_data.x, joy_data.y)
+                        if joy_data.x or joy_data.y:
+                            logger.debug("[recv %s] X=%d, Y=%d" %(msg.topic, joy_data.x, joy_data.y))
 
 
             else:
@@ -156,100 +110,62 @@ class RnetControl(threading.Thread):
 
 
 
-
-
-
-    def powerOn(self):
+    def power_on(self):
 
         # Send power on sequence (Sends all JSM init frames)
-        self.jsm.start_daemons()
+        self.rnet_can.connect()
 
         # Wait for init to be sent by JSM
-        while self.jsm.init_done is not True:
+        while self.rnet_can.init_done is not True:
             time.sleep(0.1)
 
-        # self.jsmDaemons = JsmDeamons(self.cansocket, self.jsm.jsm_subtype)
+        logger.info("Rnet Init complete, jsm_subtype id is: %x" %self.rnet_can.jsm_subtype)
 
-        self.rnet_horn = RnetDissector.rnet_horn(self.jsm.jsm_subtype)
+        # Initialize required Rnet frame objects and callbacks:
+        self.rnet_can.set_battery_level_callback(self.update_battery_level)        
+        self.RnetHorn = RnetDissector.RnetHorn(self.rnet_can.jsm_subtype)
+        self.RnetJoyPosition = RnetDissector.RnetJoyPosition(0,0,self.rnet_can.jsm_subtype)
+        self.RnetBatteryLevel = RnetDissector.RnetBatteryLevel()
 
-
-        logger.info("jsm_subtype: %d" %self.jsm.jsm_subtype)
-        # Initialize joystick frame object:
-        self.joyPosition = RnetDissector.rnet_joyPosition(0,0,self.jsm.jsm_subtype)
-        return self.start_daemon()
+        return self.start_threads()
 
 
     def dummy(self, arg0, arg1):
         pass
 
 
-    """
-    Function to be called when a new position is received from positionning mqtt_client
-    """
-    def update_joy_position(self, data):
-        x = int((data).split('.')[0])
-        y = int((data).split('.')[1])
-        self.joyPosition.set_data(x, y)
+    def update_battery_level(self, raw_frame):
+        self.RnetBatteryLevel.set_raw(raw_frame)
+        self.battery_level = self.RnetBatteryLevel.decode()
+
+
+    def start_threads(self):
+        logger.debug("Starting Rnet joystick position thread")
+        thread = threading.Thread(target=self.rnet_joystick_thread, daemon=True)
+        thread.start()
+        return thread
 
 
     """
-    Function to be called periodically to send new joy command to Rnet bus
+    Endless loop that provides wheelchair statuses such as battery level...
     """
-    def send_joy_position(self):
-        joyframe = self.joyPosition.encode()
-        can2RNET.cansendraw(self.jsm.motor_cansocket, joyframe)
-
-
-    def start_daemon(self):
-        logger.debug("Starting Rnet daemon")
-        daemon = threading.Thread(target=self.rnet_daemon, daemon=True)
-        daemon.start()
-        return daemon
-
-
-    """
-    Endless loop that sends periodically Rnet frames
-    """
-    def rnet_daemon(self):
-        logger.debug("Rnet daemon started")
-        # sending joystick frame @100Hz
+    def rnet_status_thread(self):
+        logger.debug("Rnet status thread started")
         while True:
-            self.send_joy_position()
+            status = status_battery_level(self.battery_level)
+            self.mqtt_client.publish(status.TOPIC_NAME, status.serialize())
+            time.sleep(self.STATUS_FREQUENCY)
+
+
+    """
+    Endless loop that sends periodically Rnet joystick position frames
+    """
+    def rnet_joystick_thread(self):
+        logger.debug("Rnet joystick thread started")
+        while True:
+            joyframe = self.RnetJoyPosition.encode()
+            self.cansend(self.rnet_can.motor_cansocket, joyframe)
             time.sleep(self.POSITION_FREQUENCY)
-
-
-class server():
-
-    def __init__(self, ip, port, rnet):
-        self.ip = ip
-        self.port =port
-        self.rnet = rnet
-        try:
-            self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.s.bind((self.ip, self.port))
-        except:
-            logger.error("binding socket to %s:%d failed" %(self.ip, self.port))
-            sys.exit(1)
-
-
-    def start(self):         
-            
-        while True:
-            logger.info('Wait for new connection')
-            self.s.listen(1)
-            conn, addr = self.s.accept()
-            logger.info('Accept connection from: %r' %addr[0])
-
-            while True:
-                data = conn.recv(TCP_BUFFER_SIZE)
-                if not data: break
-                logger.debug('Received data: "%s"' %data)
-                self.rnet.update_joy_position(data.decode())
-
-            logger.info('Connection closed, reset joy position to neutral position')
-            self.rnet.update_joy_position(NEUTRAL_JOY_POSITION)
-            conn.close()
 
 
 
@@ -258,11 +174,8 @@ Argument parser definition
 """
 def parseInputs():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--ip", type=str, default="0.0.0.0", help="Define server IPv4 address to listen to receive Joy positions, default is '0.0.0.0'")
-    parser.add_argument("--port", type=int, default="4141", help="Define server port to listen, default is 4141")
-    parser.add_argument("-c", "--config", default="./jsm_init.log", help="path to jsm_init_file, default is under 'xx/MagicJoystick2020/RnetCtrl/jsm_init.log'")
     parser.add_argument("-d", "--debug", help="Enable debug messages", action="store_true")
-    parser.add_argument("-t", "--test", help="Test mode, do not connect to CAN bus", action="store_true")
+    parser.add_argument("-t", "--testmode", help="Test mode, do not connect to CAN bus", action="store_true")
 
     return parser.parse_args()
 
@@ -274,24 +187,9 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
 
-
-    # Connect and initialize Rnet controller,
-    # start heartbeat
-    rnet = RnetControl(args.config, args.test)
+    # Connect to piCan and initialize Rnet controller,
+    rnet = RnetControl(args.testmode)
 
     # Send JSM init sequence 'power on'
-    daemon = rnet.powerOn()
-    daemon.join()
-    # # Start Rnet controller
-    # try:
-    #     # Start position daemon
-    #     deamon = rnet.start_daemon()
-        
-    # except:
-    #     logger.error("Cannot start Rnet controller")
-    #     sys.exit(1)
-
-
-    # Start Joy or any positionning sensor server listener
-    # serv = server(args.ip, args.port, rnet)
-    # serv.start()
+    thread = rnet.power_on()
+    thread.join()
