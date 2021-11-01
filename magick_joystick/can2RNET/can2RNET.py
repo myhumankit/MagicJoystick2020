@@ -25,6 +25,8 @@ import binascii  # used in build_frame
 import threading
 import logging 
 
+
+
 # Instanciate logger:
 logging.basicConfig(
     level=logging.INFO,
@@ -33,6 +35,9 @@ logging.basicConfig(
         logging.StreamHandler()
     ])
 logger = logging.getLogger()
+h = logging.StreamHandler(sys.stdout)
+h.flush = sys.stdout.flush
+logger.addHandler(h)
 
 
 # all functions take CAN messages as a string in "CANSEND" (from can-utils) format
@@ -97,7 +102,7 @@ def dissect_frame(frame):
 
 def cansendraw(s, canrawdata):
     try:
-        logger.debug("cansend: %r" %binascii.hexlify(canrawdata))
+        #logger.debug("cansend: %r" %binascii.hexlify(canrawdata))
         s.send(canrawdata)
     except socket.error as e:
         logger.error('reason: %s' %str(e))

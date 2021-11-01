@@ -5,21 +5,13 @@ import RPi.GPIO as GPIO
 from gpiozero import Button
 import paho.mqtt.client as mqtt
 from magick_joystick.Topics import *
+import sys
 
 # Constants definition:
 DEFAULT_PERIOD = 0.01
 
 GPIO_LEFT_BUTTON = 23
 GPIO_RIGHT_BUTTON = 26
-# In case of test mode run on a PC, no 
-# ADC or screen will be available
-# imports for ADC
-try:
-    FORCE_JOY_TESTMODE = False
-    import Adafruit_ADS1x15
-except Exception as e:
-    FORCE_JOY_TESTMODE = True
-    print(str(e))
 
     # Instanciate logger:
 logging.basicConfig(
@@ -29,6 +21,20 @@ logging.basicConfig(
         logging.StreamHandler()
     ])
 logger = logging.getLogger()
+h = logging.StreamHandler(sys.stdout)
+h.flush = sys.stdout.flush
+logger.addHandler(h)
+
+
+# In case of test mode run on a PC, no 
+# ADC or screen will be available
+# imports for ADC
+try:
+    FORCE_JOY_TESTMODE = False
+    import Adafruit_ADS1x15
+except Exception as e:
+    FORCE_JOY_TESTMODE = True
+    logger.error(str(e))
 
 
 # Unsigned 8 bits to signed 8bits
