@@ -81,7 +81,7 @@ def printFrame(rawFrame):
 # --------------------------
 # Connect message
 # --------------------------
-class rnet_connect :
+class RnetConnect :
     
     def __init__(self): 
         self.type = 0x0000
@@ -97,7 +97,7 @@ class rnet_connect :
 # --------------------------
 # Heartbeat message
 # --------------------------
-class rnet_heartbeat :
+class RnetHeartbeat :
     
     def __init__(self): 
         self.type = RNET_FRAME_TYPE['HEARTBEAT'][TYPE]
@@ -113,7 +113,7 @@ class rnet_heartbeat :
 # --------------------------
 # periodic serial message
 # --------------------------
-class rnet_serial:
+class RnetSerial:
 
     serial_t = cs.Struct(
         "serial" / cs.Bytes(8)
@@ -134,7 +134,7 @@ class rnet_serial:
 # --------------------------
 # set motor max speed message
 # --------------------------
-class rnet_motorMaxSpeed:
+class RnetMotorMaxSpeed:
 
     maxSpeed_t = cs.Struct(
         "maxSpeed" / cs.Int8ub,
@@ -171,7 +171,7 @@ class rnet_motorMaxSpeed:
 # --------------------------
 # set Joystick position message
 # --------------------------
-class rnet_joyPosition :
+class RnetJoyPosition :
 
     joyPosition_t = cs.Struct(
         "X" / cs.Int8ub,
@@ -209,7 +209,7 @@ class rnet_joyPosition :
 # --------------------------
 # control Horn
 # --------------------------
-class rnet_horn :
+class RnetHorn :
 
     horn_t = cs.Struct(
         "state" / cs.Int8ub
@@ -222,7 +222,7 @@ class rnet_horn :
         self.state = 0
 
 
-    def set_state(self):
+    def toogle_state(self):
         if self.state == 1:
             self.subtype = self.subtype - 1
         elif self.state == 0:
@@ -250,7 +250,7 @@ class rnet_horn :
 # --------------------------
 # get battery level
 # --------------------------
-class rnet_batteryLevel :
+class RnetBatteryLevel :
 
     batteryLevel_t = cs.Struct(
         "level" / cs.Int8ub,
@@ -258,6 +258,7 @@ class rnet_batteryLevel :
     
     def __init__(self, level=0): 
         self.level = 0
+        self.raw = None
         self.type = RNET_FRAME_TYPE['BATTERY_LEVEL'][TYPE]
         self.subtype = 0
 
@@ -279,7 +280,8 @@ class rnet_batteryLevel :
 
 
     def decode(self):
-        level = self.batteryLevel_t.parse(self.raw.get_data(1))
+        if self.self.raw is not None:
+            level = self.batteryLevel_t.parse(self.raw.get_data(1))
         return level.level
 
 
@@ -291,7 +293,7 @@ class rnet_batteryLevel :
 # => all frames with 0006x from 
 # JSM or Motor used to match the end of init
 # --------------------------
-class rnet_endOfInit :
+class RnetEndOfInit :
 
     endOfInit_t = cs.Struct(
         "data" / cs.Int32ub,
@@ -317,7 +319,7 @@ class rnet_endOfInit :
 # --------------------------
 # PMTx Connect
 # --------------------------
-class rnet_pmTxConnect :
+class RnetPmTxConnect :
 
     pmTxConnect_t = cs.Struct(
         "data" / cs.Int8ub,
@@ -343,9 +345,9 @@ class rnet_pmTxConnect :
 # --------------------------
 # PMTx Heartbeat
 # --------------------------
-class rnet_pmTxHeartbeat :
+class RnetPmTxHeartbeat :
 
-    rnet_pmTxHeartbeat_t = cs.Struct(
+    RnetPmTxHeartbeat_t = cs.Struct(
         "data" / cs.Int8ub,
     )
     
@@ -361,7 +363,7 @@ class rnet_pmTxHeartbeat :
 
 
     def decode(self):
-        data = self.rnet_pmTxHeartbeat_t.parse(self.raw.get_data(1))
+        data = self.RnetPmTxHeartbeat_t.parse(self.raw.get_data(1))
         return data.data
 
 
@@ -443,25 +445,25 @@ class raw_frame:
 # TEST functions 
 if __name__ == "__main__":
 
-    connect = rnet_connect()
-    print('rnet_connect: %r' %binascii.hexlify(connect.encode()))
+    connect = RnetConnect()
+    print('RnetConnect: %r' %binascii.hexlify(connect.encode()))
 
-    heartbeat = rnet_heartbeat()
-    print('rnet_heartbeat: %r' %binascii.hexlify(heartbeat.encode()))
+    heartbeat = RnetHeartbeat()
+    print('RnetHeartbeat: %r' %binascii.hexlify(heartbeat.encode()))
 
-    serial = rnet_serial(b'\x01\x02\x03\x04\x05\x06\x07\x08')
-    print('rnet_serial: %r' %binascii.hexlify(serial.encode()))
+    serial = RnetSerial(b'\x01\x02\x03\x04\x05\x06\x07\x08')
+    print('RnetSerial: %r' %binascii.hexlify(serial.encode()))
 
-    speed = rnet_motorMaxSpeed(100, 0x1100)
-    print('rnet_motorMaxSpeed: %r' %binascii.hexlify(speed.encode()))
+    speed = RnetMotorMaxSpeed(100, 0x1100)
+    print('RnetMotorMaxSpeed: %r' %binascii.hexlify(speed.encode()))
     # Max speed bug test
-    speed = rnet_motorMaxSpeed(255555, 0x1100)
-    print('rnet_motorMaxSpeed: %r' %binascii.hexlify(speed.encode()))
+    speed = RnetMotorMaxSpeed(255555, 0x1100)
+    print('RnetMotorMaxSpeed: %r' %binascii.hexlify(speed.encode()))
 
-    pos =  rnet_joyPosition(255,254,0x1100)
-    print('rnet_joyPosition: %r' %binascii.hexlify(pos.encode()))
+    pos =  RnetJoyPosition(255,254,0x1100)
+    print('RnetJoyPosition: %r' %binascii.hexlify(pos.encode()))
 
-    vbat = rnet_batteryLevel()
+    vbat = RnetBatteryLevel()
     vbat.set_raw(binascii.unhexlify('00000c9c010000006300000000000000'))
     level = vbat.decode()
     print('battery level: %d' %level)
