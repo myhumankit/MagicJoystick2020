@@ -9,6 +9,8 @@ import struct
 import binascii
 import logging
 from can2RNET import can2RNET
+from can2RNET.RnetDissector.RnetDissector import printFrame
+import readchar 
 
 logger = can2RNET.logger
 
@@ -102,6 +104,8 @@ class RnetDualLogger(threading.Thread):
         self.tag0 = tag0
         self.tag1 = tag1
         self.logfile = logfile
+        self.record = False
+        self.daemon_ctrl = True
         
         threading.Thread.__init__(self)
         logger.info("Opening socketcan")
@@ -117,6 +121,7 @@ class RnetDualLogger(threading.Thread):
             sys.exit(1)
 
 
+
     """
     used for single raspi and pican dual config
     """
@@ -128,7 +133,21 @@ class RnetDualLogger(threading.Thread):
         daemon0.start()
         daemon1 = threading.Thread(target=self.rnet_daemon, args=[self.cansocket1, self.cansocket0, self.tag1], daemon=True)
         daemon1.start()
+        daemon3 = threading.Thread(target=self.record_trigger, args=[], daemon=True)
+        daemon3.start()
         return daemon0, daemon1
+
+
+    def record_trigger(self):
+        while(1):
+            c = readchar.readchar()
+            if c == "q":
+                break
+            else:
+                self.record = not(self.record)
+                logger.info("Switch record = %r" %self.record)
+        self.daemon_ctrl = False
+        logger.info("Stop recording") 
 
 
     """
@@ -138,15 +157,11 @@ class RnetDualLogger(threading.Thread):
     def rnet_daemon(self, listensock, sendsock, logger_tag):
         logger.debug("Rnet listener daemon started")
         
-        while True:
+        while self.daemon_ctrl:
             rnetFrame = can2RNET.canrecv(listensock)
             #logger.debug('%s: %r\n' %(logger_tag,can2RNET.dissect_frame(rnetFrame)))
-            self.logfile.write('%s\t %s.%s.%s \t%s: %r\n' %(time.clock_gettime(0), 
-                                                            binascii.hexlify(rnetFrame[0:4]),
-                                                            binascii.hexlify(rnetFrame[4:8]),
-                                                            binascii.hexlify(rnetFrame[8:]), 
-                                                            logger_tag, 
-                                                            can2RNET.dissect_frame(rnetFrame)))
+            if self.record is True:
+                self.logfile.write('%s\t %s - %s\n' %(time.clock_gettime(0), logger_tag, printFrame(rnetFrame)))
             can2RNET.cansendraw(sendsock, rnetFrame)
 
 
@@ -276,5 +291,6 @@ if __name__ == "__main__":
     if args.dual is False:
         picanCase(args)
     else:
+        logger.info("Press any key to start or stop logging, 'q' to quit")
         picanDualCase(args)
 

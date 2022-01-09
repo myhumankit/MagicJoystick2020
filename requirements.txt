@@ -10,3 +10,4 @@ smbus
 spidev
 wheel
 supervisor
+readchar
