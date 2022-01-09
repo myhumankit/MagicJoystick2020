@@ -25,7 +25,8 @@ RNET_FRAME_TYPE={
     'PMTX_CONNECT'  : (0x0C28, 0x0000),
     'PMTX_HEATBEAT' : (0x0C14, 0x0000),
     'BATTERY_LEVEL' : (0x1C0C, 0x0000),
-    'HORN'          : (0x0C04, 0x0000)
+    'HORN'          : (0x0C04, 0x0000),
+    'PLAY_TONE'     : (0x181c, 0x0000)
 }
 
 RNET_FRAME_TYPE_R = RNET_FRAME_TYPE.__class__(map(reversed, RNET_FRAME_TYPE.items()))
@@ -45,8 +46,8 @@ def getFrameType(rawFrame):
             except:
                 # Exception for End of Init, mask subtype 4 LSbits:
                 try:
-                    frameName = RNET_FRAME_TYPE_R[(frameType, frameSubtype & 0xFFFF0)]
-                    frameSubtype = frameSubtype & 0xFFFF0
+                    frameName = RNET_FRAME_TYPE_R[(frameType, frameSubtype & 0xFFF0)]
+                    frameSubtype = frameSubtype & 0xFFF0
                 except:
                     frameName = 'Unknown'
         # Long header case:
@@ -149,7 +150,7 @@ class RnetMotorMaxSpeed:
     def set_data(self, maxSpeed):
         # Consider max speed > 100 is a bug, 
         # force it to minimum
-        if (maxSpeed > 100)|(maxSpeed < 0):
+        if (maxSpeed > 100) or (maxSpeed < 0):
             maxSpeed = 0
         
         self.maxSpeed = maxSpeed
@@ -225,14 +226,19 @@ class RnetHorn :
     def toogle_state(self):
         if self.state == 1:
             self.subtype = self.subtype - 1
+            self.state = 0
         elif self.state == 0:
             self.subtype = self.subtype + 1
+            self.state = 1
 
+
+    def get_state(self):
+        return self.state
 
 
     def encode(self):
-        frame = raw_frame(True, False, self.type, self.subtype)
         # frame = raw_frame(True, False, self.type, self.subtype)
+        frame = raw_frame(False, False, self.type, self.subtype)
 
         data = self.horn_t.build(
             dict(
@@ -280,7 +286,7 @@ class RnetBatteryLevel :
 
 
     def decode(self):
-        if self.self.raw is not None:
+        if self.raw is not None:
             level = self.batteryLevel_t.parse(self.raw.get_data(1))
         return level.level
 
