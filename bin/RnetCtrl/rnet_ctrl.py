@@ -68,26 +68,30 @@ class RnetControl(threading.Thread):
     def on_message(self, mqtt_client, userdata, msg):         
             # ENABLE DRIVE COMMAND
             if msg.topic == action_drive.TOPIC_NAME:
-                logger.debug("[recv %s] Switch to drive mode ON" %(msg.topic))
+                logger.info("[recv %s] Switch to drive mode ON" %(msg.topic))
                 self.drive_mode = True
 
             # ENABLE/DISABLE LIGHTS COMMAND
             elif msg.topic == action_light.TOPIC_NAME:
-                logger.debug("[recv %s] Switch ON lights" %(msg.topic))
+                logger.info("[recv %s] Switch ON lights" %(msg.topic))
 
             # ENABLE/DISABLE HORN
             elif msg.topic == action_horn.TOPIC_NAME:
                 self.RnetHorn.toogle_state()
-                logger.debug("[recv %s] Switch horn state to %r" %(msg.topic, self.RnetHorn.get_state))
+                logger.info("[recv %s] Switch horn state to %r" %(msg.topic, self.RnetHorn.get_state()))
                 self.cansend(self.rnet_can.jsm_cansocket,self.RnetHorn.encode())
                 time.sleep(1)
                 self.RnetHorn.toogle_state()
-                logger.debug("[recv %s] Switch horn state to %r" %(msg.topic, self.RnetHorn.get_state))
+                logger.info("[recv %s] Switch horn state to %r" %(msg.topic, self.RnetHorn.get_state()))
                 self.cansend(self.rnet_can.jsm_cansocket,self.RnetHorn.encode())
 
             # SET MAX SPEED
             elif msg.topic == action_max_speed.TOPIC_NAME:
-                logger.debug("[recv %s] set max speed to FXME" %(msg.topic))
+                max_speed = deserialize(msg.payload)
+                speed = (max_speed.max_speed)*20
+                self.RnetMotorMaxSpeed.set_data(speed)
+                self.cansend(self.rnet_can.jsm_cansocket,self.RnetMotorMaxSpeed.encode())
+                logger.info("[recv %s] set max speed to %d" %(msg.topic, speed))
 
             # JOYSTICK POSITION
             elif msg.topic == joystick_state.TOPIC_NAME:
@@ -126,6 +130,7 @@ class RnetControl(threading.Thread):
         self.RnetHorn = RnetDissector.RnetHorn(self.rnet_can.jsm_subtype)
         self.RnetJoyPosition = RnetDissector.RnetJoyPosition(0,0,self.rnet_can.jsm_subtype)
         self.RnetBatteryLevel = RnetDissector.RnetBatteryLevel()
+        self.RnetMotorMaxSpeed = RnetDissector.RnetMotorMaxSpeed(20, self.rnet_can.jsm_subtype)
 
         return self.start_threads()
 
@@ -137,10 +142,11 @@ class RnetControl(threading.Thread):
     def update_battery_level(self, raw_frame):
         self.RnetBatteryLevel.set_raw(raw_frame)
         self.battery_level = self.RnetBatteryLevel.decode()
+        logger.debug("Got battery level info: %d" %self.battery_level)
 
 
     def start_threads(self):
-        logger.debug("Starting Rnet joystick position thread")
+        logger.info("Starting Rnet joystick position thread")
         thread = threading.Thread(target=self.rnet_joystick_thread, daemon=True)
         thread.start()
         return thread
@@ -150,7 +156,7 @@ class RnetControl(threading.Thread):
     Endless loop that provides wheelchair statuses such as battery level...
     """
     def rnet_status_thread(self):
-        logger.debug("Rnet status thread started")
+        logger.info("Rnet status thread started")
         while True:
             status = status_battery_level(self.battery_level)
             self.mqtt_client.publish(status.TOPIC_NAME, status.serialize())
@@ -161,7 +167,7 @@ class RnetControl(threading.Thread):
     Endless loop that sends periodically Rnet joystick position frames
     """
     def rnet_joystick_thread(self):
-        logger.debug("Rnet joystick thread started")
+        logger.info("Rnet joystick thread started")
         while True:
             joyframe = self.RnetJoyPosition.encode()
             self.cansend(self.rnet_can.motor_cansocket, joyframe)
