@@ -5,6 +5,7 @@ import time
 import sys
 import binascii
 import logging
+from build.lib.magick_joystick.can2RNET.RnetDissector import printFrame
 from magick_joystick.can2RNET import can2RNET, RnetDissector
 
 logger = can2RNET.logger
@@ -35,16 +36,16 @@ class RnetCan(threading.Thread):
             self.jsm_subtype = 0x200
 
         else:
-            logger.info("Opening socketcan")
+            logger.info("RnetListener Opening socketcan")
             try:
                 self.cansocket0 = can2RNET.opencansocket(0)
             except:
-                logger.error("socketcan can0 cannot be opened! Check connectivity")
+                logger.error("RnetListener socketcan can0 cannot be opened! Check connectivity")
                 sys.exit(1)
             try:
                 self.cansocket1 = can2RNET.opencansocket(1)
             except:
-                logger.error("socketcan can1 cannot be opened! Check connectivity")
+                logger.error("RnetListener socketcan can1 cannot be opened! Check connectivity")
                 sys.exit(1)
 
 
@@ -54,7 +55,7 @@ class RnetCan(threading.Thread):
     def connect(self):
         if self.testmode is False:
             # launch daemon
-            logger.debug("Starting Rnet Dual daemons")
+            logger.debug("RnetListener Starting Rnet Dual daemons")
             daemon0 = threading.Thread(target=self.rnet_daemon, args=[self.cansocket0, self.cansocket1, 'PORT0'], daemon=True)
             daemon0.start()
             daemon1 = threading.Thread(target=self.rnet_daemon, args=[self.cansocket1, self.cansocket0, 'PORT1'], daemon=True)
@@ -83,7 +84,7 @@ class RnetCan(threading.Thread):
     Each received frame is logged/filtered and forwarded to other port
     """
     def rnet_daemon(self, listensock, sendsock, logger_tag):
-        logger.debug("Rnet listener daemon started")
+        logger.debug("RnetListener daemon started")
         is_motor = False
         is_serial = False
 
@@ -113,7 +114,8 @@ class RnetCan(threading.Thread):
                 if (self.jsm_subtype is not None) and (self.jsm_cansocket is not None):
                     self.init_done = True
 
-            if (frameName == 'BATTERY_LEVEL') and (self.battery_level is not None):
-                self.battery_level(rnetFrame)
+            if (frameName == 'BATTERY_LEVEL'):
+                if self.battery_level is not None:
+                    self.battery_level(rnetFrame)
 
 
