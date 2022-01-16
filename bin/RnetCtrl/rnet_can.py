@@ -93,7 +93,7 @@ class RnetCan(threading.Thread):
             frameToLog  = binascii.hexlify(rnetFrame)
             #logger.debug('%s:%s:%s\n' %(time.time(), logger_tag, frameToLog))
 
-            __, subType, frameName, data = RnetDissector.getFrameType(rnetFrame)
+            __, subType, frameName, data, __, __ = RnetDissector.getFrameType(rnetFrame)
            
             # Trash all joy position frames if not in JSM mode enabled
             if (self.jsm_mode is False) and (frameName == 'JOY_POSITION'):

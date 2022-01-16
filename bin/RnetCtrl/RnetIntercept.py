@@ -1,5 +1,4 @@
 #!/python3
-import can2RNET
 import threading
 import argparse
 import time
@@ -8,8 +7,8 @@ import sys
 import struct
 import binascii
 import logging
-from can2RNET import can2RNET
-from can2RNET.RnetDissector.RnetDissector import printFrame
+from magick_joystick.can2RNET import can2RNET
+from magick_joystick.can2RNET.RnetDissector import printFrame
 import readchar 
 
 logger = can2RNET.logger

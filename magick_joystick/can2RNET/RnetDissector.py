@@ -35,6 +35,10 @@ RNET_FRAME_TYPE_R = RNET_FRAME_TYPE.__class__(map(reversed, RNET_FRAME_TYPE.item
 def getFrameType(rawFrame):
         raw = raw_frame()
         raw.set_raw_frame(rawFrame)
+
+        idl = raw.header.type & 0x8000
+        rtr = raw.header.type & 0x4000
+
         frameType = raw.header.type & 0x3FFF
         frameSubtype = raw.header.subtype
         allData  =raw.get_data(8)
@@ -60,19 +64,24 @@ def getFrameType(rawFrame):
                 except:
                     frameName = 'Unknown'
 
-        return frameType, frameSubtype, frameName, allData
+        return frameType, frameSubtype, frameName, allData, idl, rtr
 
 
 
 def printFrame(rawFrame):
 
-    frameType, frameSubtype, frameName, allData = getFrameType(rawFrame)
+    frameType, frameSubtype, frameName, allData, idl, rtr = getFrameType(rawFrame)
+    if idl:
+        idl = True
+    else:
+        idl = False
+    if rtr:
+        rtr = True
+    else:
+        rtr = False
+
     data = binascii.hexlify(allData)
-    ret = "[%s]\t\t0x%x\t-\t0x%x\t\tDATA: %s - RAW: %s" % (frameName, frameType, frameSubtype, data, binascii.hexlify(rawFrame))
-    print(ret)
-    return ret
-
-
+    return "[%s]\t\t0x%x\t-\t0x%x\t\tDATA: %s - RAW: %s (idl=%r, rtr=%r)" % (frameName, frameType, frameSubtype, data, binascii.hexlify(rawFrame), idl, rtr)
 
 
 
