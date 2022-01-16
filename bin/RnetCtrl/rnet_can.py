@@ -5,7 +5,6 @@ import time
 import sys
 import binascii
 import logging
-from build.lib.magick_joystick.can2RNET.RnetDissector import printFrame
 from magick_joystick.can2RNET import can2RNET, RnetDissector
 
 logger = can2RNET.logger
