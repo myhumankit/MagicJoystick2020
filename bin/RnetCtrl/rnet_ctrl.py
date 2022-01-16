@@ -25,6 +25,7 @@ class RnetControl(threading.Thread):
 
     def __init__(self, testmode = False):
         self.RnetHorn = None
+        # self.hornThread = None
         self.testmode = testmode
         self.drive_mode = False
         self.battery_level = 0
@@ -75,15 +76,11 @@ class RnetControl(threading.Thread):
             elif msg.topic == action_light.TOPIC_NAME:
                 logger.info("[recv %s] Switch ON lights" %(msg.topic))
 
-            # ENABLE/DISABLE HORN
+            # HORN
             elif msg.topic == action_horn.TOPIC_NAME:
-                self.RnetHorn.toogle_state()
-                logger.info("[recv %s] Switch horn state to %r" %(msg.topic, self.RnetHorn.get_state()))
-                self.cansend(self.rnet_can.jsm_cansocket,self.RnetHorn.encode())
-                time.sleep(1)
-                self.RnetHorn.toogle_state()
-                logger.info("[recv %s] Switch horn state to %r" %(msg.topic, self.RnetHorn.get_state()))
-                self.cansend(self.rnet_can.jsm_cansocket,self.RnetHorn.encode())
+                logger.info("[recv %s] Play Tone" %(msg.topic))
+                tone = RnetDissector.RnetPlayTone()
+                self.cansend(self.rnet_can.jsm_cansocket, tone.encode())
 
             # SET MAX SPEED
             elif msg.topic == action_max_speed.TOPIC_NAME:
@@ -112,6 +109,18 @@ class RnetControl(threading.Thread):
             else:
                 logger.error("MQTT unsupported message")
 
+
+    # For now Horn doesn't work, use 'playTone' instead
+    # def horn_thread(self):
+    #     while self.RnetHorn.get_state() == 0:
+    #         self.cansend(self.rnet_can.motor_cansocket,self.RnetHorn.encode())
+    #         logger.info("Send horn to motor: %s " %(RnetDissector.printFrame(self.RnetHorn.encode())))
+    #         time.sleep(0.1)
+
+    #     self.RnetHorn.toogle_state()
+    #     self.cansend(self.rnet_can.motor_cansocket,self.RnetHorn.encode())      
+    #     logger.info("Send horn to motor: %s " %(RnetDissector.printFrame(self.RnetHorn.encode())))
+    #     self.hornThread = None
 
 
     def power_on(self):

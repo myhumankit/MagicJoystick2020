@@ -26,7 +26,7 @@ RNET_FRAME_TYPE={
     'PMTX_HEATBEAT' : (0x0C14, 0x0000),
     'BATTERY_LEVEL' : (0x1C0C, 0x0000),
     'HORN'          : (0x0C04, 0x0000),
-    'PLAY_TONE'     : (0x181c, 0x0000)
+    'PLAY_TONE'     : (0x181c, 0x0D00)
 }
 
 RNET_FRAME_TYPE_R = RNET_FRAME_TYPE.__class__(map(reversed, RNET_FRAME_TYPE.items()))
@@ -218,48 +218,76 @@ class RnetJoyPosition :
 
 # --------------------------
 # control Horn
+#
+# First send '0' to motor every 100ms, then send '1'to stop.
+# JSM -   [HORN]		0xc04	-	0x100		DATA: b'0000000000000000'
+# MOTOR - [HORN]		0xc04	-	0x401		DATA: b'0000000000000000'
+# JSM -   [HORN]		0xc04	-	0x100		DATA: b'0000000000000000'
+# MOTOR - [HORN]		0xc04	-	0x401		DATA: b'0000000000000000'
+# ...
+# JSM -   [HORN]		0xc04	-	0x100		DATA: b'0000000000000000'
+# JSM -   [HORN]		0xc04	-	0x101		DATA: b'0000000000000000' 
 # --------------------------
 class RnetHorn :
 
-    horn_t = cs.Struct(
-        "state" / cs.Int8ub
-    )
-    
     def __init__(self, jsm_id=0): 
         self.state = 0
         self.type = RNET_FRAME_TYPE['HORN'][TYPE]
-        self.subtype = jsm_id
-        self.state = 0
-
+        self.subtype = 0x100 # ?? Seens not to be JSM ID...
 
     def toogle_state(self):
-        if self.state == 1:
-            self.subtype = self.subtype - 1
-            self.state = 0
-        elif self.state == 0:
-            self.subtype = self.subtype + 1
+        if self.state == 0:
             self.state = 1
-
+        else:
+            self.state = 0
 
     def get_state(self):
         return self.state
 
 
     def encode(self):
-        # frame = raw_frame(True, False, self.type, self.subtype)
-        frame = raw_frame(False, False, self.type, self.subtype)
-
-        data = self.horn_t.build(
-            dict(
-                state = 0)
-            )
-
-        frame.set_data(data)
-
-        print("%r, %r" %(self.subtype, frame.get_raw_frame()))
+        frame = raw_frame(True, False, self.type, self.subtype + self.state)
+        frame.set_data(None)
         return frame.get_raw_frame()
 
 
+# --------------------------
+# control PlayTone
+# --------------------------
+class RnetPlayTone :
+
+    tone_t = cs.Struct(
+        "tone0_length" / cs.Int8ub,
+        "tone0_note" / cs.Int8ub,
+        "tone1_length" / cs.Int8ub,
+        "tone1_note" / cs.Int8ub,
+        "tone2_length" / cs.Int8ub,
+        "tone2_note" / cs.Int8ub,
+        "tone3_length" / cs.Int8ub,
+        "tone3_note" / cs.Int8ub
+    )
+
+    def __init__(self): 
+        self.type = RNET_FRAME_TYPE['PLAY_TONE'][TYPE]
+        self.subtype = RNET_FRAME_TYPE['PLAY_TONE'][SUBTYPE]
+
+
+    def encode(self):
+        frame = raw_frame(True, False, self.type, self.subtype)
+        data = self.tone_t.build(
+            dict(
+            tone0_length = 10,
+            tone0_note   = 70,
+            tone1_length = 10,
+            tone1_note   = 80,
+            tone2_length = 10,
+            tone2_note   = 90,
+            tone3_length = 10,
+            tone3_note   = 100)
+        )
+
+        frame.set_data(data)
+        return frame.get_raw_frame()
 
 
 # --------------------------
