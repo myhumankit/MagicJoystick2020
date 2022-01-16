@@ -90,7 +90,7 @@ class RnetControl(threading.Thread):
                 max_speed = deserialize(msg.payload)
                 speed = (max_speed.max_speed)*20
                 self.RnetMotorMaxSpeed.set_data(speed)
-                self.cansend(self.rnet_can.jsm_cansocket,self.RnetMotorMaxSpeed.encode())
+                self.cansend(self.rnet_can.motor_cansocket,self.RnetMotorMaxSpeed.encode())
                 logger.info("[recv %s] set max speed to %d" %(msg.topic, speed))
 
             # JOYSTICK POSITION
