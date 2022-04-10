@@ -22,6 +22,7 @@ class RnetControl(threading.Thread):
 
     POSITION_FREQUENCY = 0.01   # 100Hz - RNET requirement
     STATUS_FREQUENCY = 0.1      # 10Hz
+    JOY_WATCHDOG_TIMEOUT = 20   # Force joystick position to [0,0] after 200ms without data
 
     def __init__(self, testmode = False):
         self.RnetHorn = None
@@ -29,6 +30,7 @@ class RnetControl(threading.Thread):
         self.testmode = testmode
         self.drive_mode = False
         self.battery_level = 0
+        self.joy_watchdog = self.JOY_WATCHDOG_TIMEOUT
         threading.Thread.__init__(self)
         
         try:
@@ -95,6 +97,9 @@ class RnetControl(threading.Thread):
                 if self.drive_mode is True:
                     joy_data = deserialize(msg.payload)
                     
+                    # Data received from Joystck, reset watchdog
+                    self.joy_watchdog = self.JOY_WATCHDOG_TIMEOUT
+
                     # Check if long click is pressed to get out of drive mode
                     # and force position to neutral if true
                     if (joy_data.buttons == 1) :
@@ -180,6 +185,14 @@ class RnetControl(threading.Thread):
         while True:
             joyframe = self.RnetJoyPosition.encode()
             self.cansend(self.rnet_can.motor_cansocket, joyframe)
+            
+            # Decrement joystick watchdog
+            # force position to [0,0] if no data received from 
+            # joystick 
+            self.joy_watchdog -= 1
+            if self.joy_watchdog == 0 :
+                self.RnetJoyPosition.set_data(0, 0)
+            
             time.sleep(self.POSITION_FREQUENCY)
 
 
