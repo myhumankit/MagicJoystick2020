@@ -9,7 +9,7 @@ fi
 
 # Create log directory
 mkdir -p /var/log/magick_joy/log
-export MAGICK_JOY_LOG=`mktemp -d -p /var/log/magick_joy/log`
+export MAGICK_JOY_LOG=`mktemp -d -p /dev/shm/log/magick_joy/log`
 chown -R pi:pi $MAGICK_JOY_LOG
 
 supervisord -c supervisord.conf
