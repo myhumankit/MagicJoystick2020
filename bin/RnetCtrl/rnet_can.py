@@ -1,10 +1,6 @@
 #!/usr/bin/python3
 import threading
-import argparse
-import time
 import sys
-import binascii
-import logging
 from magick_joystick.can2RNET import can2RNET, RnetDissector
 
 logger = can2RNET.logger
