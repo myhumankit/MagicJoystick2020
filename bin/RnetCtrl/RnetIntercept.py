@@ -97,12 +97,13 @@ R-net class for single raspi and pican dual port logging
 """
 class RnetDualLogger(threading.Thread):
 
-    def __init__(self, tag0, tag1, logfile):
+    def __init__(self, tag0, tag1, logfile, frametype):
         self.cansocket0 = None
         self.cansocket1 = None
         self.tag0 = tag0
         self.tag1 = tag1
         self.logfile = logfile
+        self.frametype = frametype
         self.record = False
         self.daemon_ctrl = True
         
@@ -146,7 +147,12 @@ class RnetDualLogger(threading.Thread):
                 self.record = not(self.record)
                 logger.info("Switch record = %r" %self.record)
         self.daemon_ctrl = False
-        logger.info("Stop recording") 
+        logger.info("Stop recording")
+
+
+    def record_logfile(self, printframe, logger_tag):
+        if not any(ftype in printframe for ftype in self.frametype):
+            self.logfile.write('%s\t %s - %s\n' %(time.clock_gettime(0), logger_tag, printframe))
 
 
     """
@@ -160,7 +166,7 @@ class RnetDualLogger(threading.Thread):
             rnetFrame = can2RNET.canrecv(listensock)
             #logger.debug('%s: %r\n' %(logger_tag,can2RNET.dissect_frame(rnetFrame)))
             if self.record is True:
-                self.logfile.write('%s\t %s - %s\n' %(time.clock_gettime(0), logger_tag, printFrame(rnetFrame)))
+                self.record_logfile(printFrame(rnetFrame), logger_tag)
             can2RNET.cansendraw(sendsock, rnetFrame)
 
 
@@ -218,6 +224,7 @@ def parseInputs():
     parser.add_argument("--logfile", type=str, default="logfile.txt", help="Output can log filename")
     parser.add_argument("-d", "--debug", help="Enable debug messages", action="store_true")
     parser.add_argument("--dual", help="'PICAN2 Dual' board case, no need to have 2 raspi. IP/port inputs not required", action="store_true")
+    parser.add_argument('-e', '--exclude-frametype', dest='frametype', default=[], nargs='+')
 
 
     return parser.parse_args()
@@ -255,7 +262,8 @@ def picanDualCase(args):
         # Connect and initialize Rnet controller
         # Will listen for Rnet frames and transmit
         # them to other Rnet Port
-        rnet = RnetDualLogger(args.cantag, args.iptag, logfile)
+        rnet = RnetDualLogger(args.cantag, args.iptag, logfile,
+                              args.frametype)
         daemon0, daemon1 = rnet.start_daemons()
 
         daemon0.join()
