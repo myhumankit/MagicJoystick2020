@@ -1,7 +1,6 @@
 
 import time
 import paho.mqtt.client as mqtt
-from magick_joystick.can2RNET import  RnetDissector
 from click import getchar
 import threading
 from magick_joystick.Topics import *
@@ -56,11 +55,11 @@ def sendFrames():
     client.connect("localhost", 1883, 60)
     client.loop_start()
 
-    act = RnetDissector.RnetActuatorCtrl(0,0,0x300)
     while running:
         if isMoving:
-            act.set_data(frameToSend//2, frameToSend%2)
-            client.publish(action_actuator_ctrl.TOPIC_NAME, act.encode())
+            act = action_actuator_ctrl(frameToSend//2,frameToSend%2)
+            print("Sending act=%d, dir=%d" % (frameToSend//2,frameToSend%2))
+            client.publish(act.TOPIC_NAME, act.serialize())
         time.sleep(PERIOD)
     return
 

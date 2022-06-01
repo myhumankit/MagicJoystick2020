@@ -21,7 +21,7 @@ and take the control over the legacy JSM
 class RnetControl(threading.Thread):
 
     POSITION_FREQUENCY = 0.01   # 100Hz - RNET requirement
-    STATUS_FREQUENCY = 0.1      # 10Hz
+    STATUS_FREQUENCY = 1        # 1Hz
     JOY_WATCHDOG_TIMEOUT = 20   # Force joystick position to [0,0] after 200ms without data.
     ACTUATOR_FREQUENCY = 0.05   # 20 Hz
     ACTUATOR_WATCHDOG_TIMEOUT = 14 # 700ms (assume mqtt publish every 2Hz / 500ms)
@@ -32,8 +32,8 @@ class RnetControl(threading.Thread):
         self.testmode = testmode
         self.drive_mode = False
         self.battery_level = 0
-        self.joy_watchdog = self.JOY_WATCHDOG_TIMEOUT
-        self.actuator_watchdog = self.ACTUATOR_WATCHDOG_TIMEOUT
+        self.joy_watchdog = 0
+        self.actuator_watchdog = 0
         threading.Thread.__init__(self)
         
         try:
@@ -66,6 +66,7 @@ class RnetControl(threading.Thread):
                 mqtt_client.subscribe(action_horn.TOPIC_NAME)
                 mqtt_client.subscribe(action_max_speed.TOPIC_NAME)
                 mqtt_client.subscribe(joystick_state.TOPIC_NAME)
+                mqtt_client.subscribe(action_actuator_ctrl.TOPIC_NAME)
             else:
                 logger.info(f"Connection failed with code {rc}")
 
@@ -120,6 +121,7 @@ class RnetControl(threading.Thread):
                 actuator_data = deserialize(msg.payload)
                 self.RnetActuatorCtrl.set_data(actuator_data.actuator_num, actuator_data.direction)
                 self.actuator_watchdog = self.ACTUATOR_WATCHDOG_TIMEOUT
+                logger.info("Actuator topic received : %r, %r" %(actuator_data.actuator_num, actuator_data.direction))
 
 
             else:
@@ -173,9 +175,13 @@ class RnetControl(threading.Thread):
 
     def start_threads(self):
         logger.info("Starting Rnet joystick position thread")
-        thread = threading.Thread(target=self.rnet_joystick_thread, daemon=True)
-        thread.start()
-        return thread
+        thread_joy = threading.Thread(target=self.rnet_joystick_thread, daemon=True)
+        thread_joy.start()
+        thread_act = threading.Thread(target=self.actuator_ctrl_thread, daemon=True)
+        thread_act.start()
+        thread_batt = threading.Thread(target=self.rnet_status_thread, daemon=True)
+        thread_batt.start()
+        return [thread_joy, thread_act, thread_batt]
 
 
     """
@@ -243,5 +249,6 @@ if __name__ == "__main__":
     rnet = RnetControl(args.testmode)
 
     # Send JSM init sequence 'power on'
-    thread = rnet.power_on()
-    thread.join()
+    threads = rnet.power_on()
+    for thread in threads:
+        thread.join()
