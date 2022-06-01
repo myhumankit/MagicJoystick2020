@@ -22,6 +22,13 @@ class joystick_state(base_mqtt_message):
         self.y = y
         self.long_click = long_click    # 0: Short click, 1: lobg click
 
+class action_actuator_ctrl(base_mqtt_message):
+    # Publication shall be 2Hz periodic
+    TOPIC_NAME = "action/actuator_ctrl"
+    def __init__(self, actuator_num, direction):
+        self.direction = direction
+        self.actuator_num = actuator_num
+
 class action_drive(base_mqtt_message):
     TOPIC_NAME = "action/drive"
     def __init__(self, on):

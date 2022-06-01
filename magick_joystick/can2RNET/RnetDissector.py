@@ -26,7 +26,8 @@ RNET_FRAME_TYPE={
     'PMTX_HEATBEAT' : (0x0C14, 0x0000),
     'BATTERY_LEVEL' : (0x1C0C, 0x0000),
     'HORN'          : (0x0C04, 0x0000),
-    'PLAY_TONE'     : (0x181c, 0x0D00)
+    'PLAY_TONE'     : (0x181c, 0x0D00),
+    'ACTUATOR_CTRL' : (0x0808, 0x0000),
 }
 
 RNET_FRAME_TYPE_R = RNET_FRAME_TYPE.__class__(map(reversed, RNET_FRAME_TYPE.items()))
@@ -175,6 +176,56 @@ class RnetMotorMaxSpeed:
 
         frame.set_data(data)
 
+        return frame.get_raw_frame()
+
+
+# --------------------------
+# Actuator Control
+# Controls the different wheelchair actuators
+# Input: 
+#   - Actuator number : 0x00..0x7F
+#   - Direction       : 0 / 1
+#   - Subtype_ID      : Depends on the wheelchair config
+# --------------------------
+class RnetActuatorCtrl :
+
+    Actuator_t = cs.Struct(
+        "ctrl" / cs.Int8ub
+    )
+    
+    def __init__(self, act_number=0, direction = 0, subtype=0): 
+        
+        # Manage error case:
+        self.set_data(act_number, direction)        
+        self.type = RNET_FRAME_TYPE['ACTUATOR_CTRL'][TYPE]
+        self.subtype = subtype
+
+
+    def set_data(self, act_number=0, direction=0):
+        if act_number > 0x7F:
+            self.act_number = 0
+        else:
+            self.act_number = act_number
+
+        if direction not in [0,1]:
+            self.act_number = 0
+        else:
+            self.direction = direction
+
+
+    def get_data(self):
+        return self.act_number,self.direction
+
+
+    def encode(self):
+        frame = raw_frame(True, False, self.type, self.subtype)
+        print("actuator: %r, %r" %(self.act_number, self.direction))
+        data = self.Actuator_t.build(
+            dict(
+                ctrl = self.act_number + (self.direction<<7))
+        )
+
+        frame.set_data(data)
         return frame.get_raw_frame()
 
 
