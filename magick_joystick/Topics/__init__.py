@@ -44,6 +44,16 @@ class action_horn(base_mqtt_message):
     def __init__(self):
         pass
 
+class action_poweroff(base_mqtt_message):
+    TOPIC_NAME = "action/poweroff"
+    def __init__(self):
+        pass
+
+class action_poweron(base_mqtt_message):
+    TOPIC_NAME = "action/poweron"
+    def __init__(self):
+        pass
+
 class action_light(base_mqtt_message):
     TOPIC_NAME = "action/light"
     def __init__(self, light_id): 
