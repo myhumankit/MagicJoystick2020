@@ -41,6 +41,32 @@
         });
     }
 
+    function send_power(url)
+    {
+
+        $.ajax({
+            type: "POST",
+            url: url, 
+            success: function(data){},
+            error: function(errMsg){}
+        });
+    }
+    
+    
+    function change_power()
+    {
+        if($("#power").hasClass("on"))
+        {
+            $("#power").removeClass("on");
+            send_power("/action/poweroff");
+        }
+        else
+        {
+            $("#power").addClass("on");
+            send_power("/action/poweron");
+        }
+    }
+
     function change_speed()
     {
         var level = 0;
@@ -105,7 +131,7 @@
             /* clear existing periodic send_actuator_ctrl in case we missed a mouse up */
             clearInterval(interval)   
         }
-        /* TODO: set frequency with a static variable -> command must be sended every 500 ms as a safety measure */
+        /* TODO: set frequency with a static variable -> command must be sent every 500 ms as a safety measure */
         interval = setInterval(send_actuator_ctrl, 500, actuator_num, direction)
     }
 
@@ -143,6 +169,7 @@
     $("#back").on("click", function() {window.location = "index.html";})
     $("#back-wheelchair").on("click", function() {window.location = "wheelchair.html";})
     $("#light").on("click", change_light)
+    $("#power").on("click", change_power)
     $("#speed").on("click", change_speed)
     $("#drive").on("click", function() {$.post("/action/drive")})
     $("#horn").on("click", function() {$.post("/action/horn")})

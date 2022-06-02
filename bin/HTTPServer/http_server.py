@@ -53,6 +53,10 @@ class Actions(Resource):
             msg = action_horn()
         elif action == "actuator_ctrl":
             msg = action_actuator_ctrl(data["actuator_num"], data["direction"])
+        elif action == "poweroff":
+            msg = action_poweroff()
+        elif action == "poweron":
+            msg = action_poweron()
         else:
             return "", 404
             

@@ -205,6 +205,10 @@ div.body.actuator > div > div {
     color: #FFFF00;
 }
 
+#power.on {
+    color: #00FF00;
+}
+
 #lvl1.on {
     background-color: #00FF00;
 }
