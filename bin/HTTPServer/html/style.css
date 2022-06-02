@@ -108,7 +108,72 @@ div.body.wheelchair > div > div {
     height: 100%;
 }
 
-#jack,
+div.body.actuator {
+    width: 100%;
+    height: 95%;
+}
+
+div.body.actuator > div {
+    height: calc(100% / 7);
+}
+
+div.body.actuator > div > div {
+    width: 50%;
+    height: 100%;
+}
+
+#actuator_0_0 {
+    background-image: url("actuator_0_0.svg");
+}
+
+#actuator_0_1 {
+    background-image: url("actuator_0_1.svg");
+}
+
+#actuator_1_0 {
+    background-image: url("actuator_1_0.svg");
+}
+
+#actuator_1_1 {
+    background-image: url("actuator_1_1.svg");
+}
+
+#actuator_2_0 {
+    background-image: url("actuator_2_0.svg");
+}
+
+#actuator_2_1 {
+    background-image: url("actuator_2_1.svg");
+}
+
+#actuator_3_0 {
+    background-image: url("actuator_3_0.svg");
+}
+
+#actuator_3_1 {
+    background-image: url("actuator_3_1.svg");
+}
+
+#actuator_4_0 {
+    background-image: url("actuator_4_0.svg");
+}
+
+#actuator_4_1 {
+    background-image: url("actuator_4_1.svg");
+}
+
+#actuator_5_0 {
+    background-image: url("actuator_5_0.svg");
+}
+
+#actuator_5_1 {
+    background-image: url("actuator_5_1.svg");
+}
+
+#actuator {
+    background-image: url("actuator.svg");
+}
+
 #wheelchair {
     background-image: url("button_wheelchair.png");
 }

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   id="Layer_1"
+   x="0px"
+   y="0px"
+   viewBox="0 0 600 600"
+   xml:space="preserve"
+   sodipodi:docname="actuator_4_0.svg"
+   width="600"
+   height="600"
+   inkscape:version="1.0.2 (e86c870879, 2021-01-15)"
+   inkscape:export-filename="/home/braillon/inria/fabrikarium/MagicJoystick2020/Interface/html/button_wheelchair.png"
+   inkscape:export-xdpi="32"
+   inkscape:export-ydpi="32"
+   inkscape:label="arrow01"><metadata
+   id="metadata159"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+   id="defs157" /><sodipodi:namedview
+   pagecolor="#000000"
+   bordercolor="#666666"
+   borderopacity="1"
+   objecttolerance="10"
+   gridtolerance="10"
+   guidetolerance="10"
+   inkscape:pageopacity="0"
+   inkscape:pageshadow="2"
+   inkscape:window-width="1920"
+   inkscape:window-height="1016"
+   id="namedview155"
+   showgrid="false"
+   inkscape:zoom="0.78666667"
+   inkscape:cx="338.18741"
+   inkscape:cy="372.39717"
+   inkscape:window-x="0"
+   inkscape:window-y="0"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="Layer_1"
+   inkscape:document-rotation="0" />
+
+
+
+<g
+   id="g124"
+   transform="translate(0,88.001)">
+</g>
+<g
+   id="g126"
+   transform="translate(0,88.001)">
+</g>
+<g
+   id="g128"
+   transform="translate(0,88.001)">
+</g>
+<g
+   id="g130"
+   transform="translate(0,88.001)">
+</g>
+<g
+   id="g132"
+   transform="translate(0,88.001)">
+</g>
+<g
+   id="g134"
+   transform="translate(0,88.001)">
+</g>
+<g
+   id="g136"
+   transform="translate(0,88.001)">
+</g>
+<g
+   id="g138"
+   transform="translate(0,88.001)">
+</g>
+<g
+   id="g140"
+   transform="translate(0,88.001)">
+</g>
+<g
+   id="g142"
+   transform="translate(0,88.001)">
+</g>
+<g
+   id="g144"
+   transform="translate(0,88.001)">
+</g>
+<g
+   id="g146"
+   transform="translate(0,88.001)">
+</g>
+<g
+   id="g148"
+   transform="translate(0,88.001)">
+</g>
+<g
+   id="g150"
+   transform="translate(0,88.001)">
+</g>
+<g
+   id="g152"
+   transform="translate(0,88.001)">
+</g>
+<rect
+   style="opacity:0.98000004;fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:18.555;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+   id="rect2065"
+   width="581.44489"
+   height="581.44489"
+   x="9.2775574"
+   y="9.2775574"
+   ry="115.40129" /><path
+   style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:17.70000076;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+   d="M 93.617512,130.49667 V 351.33095 H 271.63311 v -63.61143 l 254.66119,1.61117 v -93.33373 l -254.66119,0.11114 v -65.61143 z"
+   id="path4762"
+   inkscape:connector-curvature="0"
+   sodipodi:nodetypes="ccccccccc" /><path
+   style="fill:none;stroke:#ffffff;stroke-width:9.9;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+   d="m 458.54237,226.27119 v 34.95762 h 29.87288 v -34.95762 z"
+   id="path4764"
+   inkscape:connector-curvature="0"
+   sodipodi:nodetypes="ccccc" /><path
+   inkscape:connector-curvature="0"
+   id="path4793-8-2"
+   class="arrow0"
+   style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:13.69999981;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+   d="m 335.60591,415.3909 -122.02973,1.00935 48.09316,-25.8224 m 73.93657,24.81305 -122.02973,1.00935 48.51373,25.02332"
+   inkscape:label="arrow10" /><g
+   aria-label="1"
+   style="font-style:normal;font-weight:normal;font-size:92.31192017px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1"
+   id="text4768"
+   transform="translate(0,-1.62333)"
+   inkscape:label="a10"><path
+     d="m 375.61693,443.6086 h 14.87448 v -51.33949 l -16.18163,3.24534 v -8.29365 l 16.09148,-3.24534 h 9.10499 v 59.63314 h 14.87448 v 7.66261 h -38.7638 z"
+     style="stroke-width:1"
+     class="arrow0"
+     id="path4770"
+     inkscape:connector-curvature="0" /></g></svg>

@@ -10,7 +10,12 @@ class StaticPages(Resource):
         files = ["index.html", "wheelchair.html", "style.css",
                  "script.js", "button_default.png",
                  "button_wheelchair.png", "button_back.png",
-                 "jquery-3.6.0.min.js", "all.min.css"]
+                 "jquery-3.6.0.min.js", "all.min.css",
+                 "actuator.html", "actuator_0_0.svg", "actuator_0_1.svg",
+                 "actuator_1_0.svg", "actuator_1_1.svg", "actuator_2_0.svg",
+                 "actuator_2_1.svg", "actuator_3_0.svg", "actuator_3_1.svg",
+                 "actuator_4_0.svg", "actuator_4_1.svg", "actuator_5_0.svg",
+                 "actuator_5_1.svg", "actuator.svg"]
 
         fonts = ["fa-solid-900.woff2", "fa-brands-400.woff2"]
 
@@ -46,6 +51,8 @@ class Actions(Resource):
             msg = action_drive(True)
         elif action == "horn":
             msg = action_horn()
+        elif action == "actuator_ctrl":
+            msg = action_actuator_ctrl(data["actuator_num"], data["direction"])
         else:
             return "", 404
             
