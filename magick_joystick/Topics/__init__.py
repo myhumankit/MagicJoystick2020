@@ -46,8 +46,10 @@ class action_horn(base_mqtt_message):
 
 class action_light(base_mqtt_message):
     TOPIC_NAME = "action/light"
-    def __init__(self):
-        pass
+    def __init__(self, light_id): 
+        # ID of the light (headlights, flashing left/right, warnning... )
+        #No need of a enable/disable variable because the frames are the same to swich on/off
+        self.light_id = light_id
 
 class status_battery_level(base_mqtt_message):
     TOPIC_NAME = "status/battery_level"

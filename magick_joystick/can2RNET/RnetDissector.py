@@ -8,26 +8,30 @@ import binascii
 
 """
 FRAME_TYPE are known values for header_t.type
-    NAME :(type, subtype)
+    NAME :(type, deviceId, subtype)
     Note: subtype NULL as depends on device ID
     sepecific for each JMS/MOTOR
 """
 TYPE = 0
-SUBTYPE = 1
+DEVICE_ID = 1
+SUBTYPE = 2
 
 RNET_FRAME_TYPE={
-    'CONNECT'       : (0x0000, 0x000C),
-    'SERIAL'        : (0x0000, 0x000E),
-    'END_OF_INIT'   : (0x0000, 0x0060), # Processed as 0x006x with x masked to '0'
-    'JOY_POSITION'  : (0x0200, 0x0000),
-    'HEARTBEAT'     : (0x03c3, 0x0F0F),
-    'MAX_SPEED'     : (0x0A04, 0x0000),
-    'PMTX_CONNECT'  : (0x0C28, 0x0000),
-    'PMTX_HEATBEAT' : (0x0C14, 0x0000),
-    'BATTERY_LEVEL' : (0x1C0C, 0x0000),
-    'HORN'          : (0x0C04, 0x0000),
-    'PLAY_TONE'     : (0x181c, 0x0D00),
-    'ACTUATOR_CTRL' : (0x0808, 0x0000),
+    'CONNECT'       : (0x0000, 0x00, 0x0C),
+    'SERIAL'        : (0x0000, 0x00, 0x0E),
+    'END_OF_INIT'   : (0x0000, 0x00, 0x60), # Processed as 0x006x with x masked to '0'
+    'JOY_POSITION'  : (0x0200, 0x00, 0x00),
+    'HEARTBEAT'     : (0x03c3, 0x0F, 0x0F),
+    'MAX_SPEED'     : (0x0A04, 0x00, 0x00),
+    'PMTX_CONNECT'  : (0x0C28, 0x00, 0x00),
+    'PMTX_HEATBEAT' : (0x0C14, 0x00, 0x00),
+    'BATTERY_LEVEL' : (0x1C0C, 0x00, 0x00),
+    'HORN'          : (0x0C04, 0x00, 0x00),
+    'PLAY_TONE'     : (0x181c, 0x0D, 0x00),
+    'ACTUATOR_CTRL' : (0x0808, 0x00, 0x00),
+    'LIGHT_CTRL'    : (0x0C00, 0x00, 0x00),
+    'CHAIR_SPEED'   : (0x1430, 0x00, 0x00),
+    'CHAIR_DISTANCE': (0x1C30, 0x00, 0x00),
 }
 
 RNET_FRAME_TYPE_R = RNET_FRAME_TYPE.__class__(map(reversed, RNET_FRAME_TYPE.items()))
@@ -42,36 +46,37 @@ def getFrameType(rawFrame):
 
         frameType = raw.header.type & 0x3FFF
         frameSubtype = raw.header.subtype
+        device_id = raw.header.id
         allData  =raw.get_data(8)
 
         # Case where type is null ('short' headers):
         if frameType == 0:
             try:
-                frameName = RNET_FRAME_TYPE_R[(frameType, frameSubtype)]
+                frameName = RNET_FRAME_TYPE_R[(frameType, device_id, frameSubtype)]
             except:
                 # Exception for End of Init, mask subtype 4 LSbits:
                 try:
-                    frameName = RNET_FRAME_TYPE_R[(frameType, frameSubtype & 0xFFF0)]
+                    frameName = RNET_FRAME_TYPE_R[(frameType, device_id, frameSubtype & 0xFFF0)]
                     frameSubtype = frameSubtype & 0xFFF0
                 except:
                     frameName = 'Unknown'
         # Long header case:
         else:
             try:
-                frameName = RNET_FRAME_TYPE_R[(frameType, frameSubtype)]
+                frameName = RNET_FRAME_TYPE_R[(frameType, device_id, frameSubtype)]
             except:
                 try:
-                    frameName = RNET_FRAME_TYPE_R[(frameType, 0)]
+                    frameName = RNET_FRAME_TYPE_R[(frameType, 0, 0)]
                 except:
                     frameName = 'Unknown'
 
-        return frameType, frameSubtype, frameName, allData, idl, rtr
+        return frameType, frameSubtype, device_id, frameName, allData, idl, rtr
 
 
 
 def printFrame(rawFrame):
 
-    frameType, frameSubtype, frameName, allData, idl, rtr = getFrameType(rawFrame)
+    frameType, frameSubtype, device_id, frameName, allData, idl, rtr = getFrameType(rawFrame)
     if idl:
         idl = True
     else:
@@ -82,7 +87,7 @@ def printFrame(rawFrame):
         rtr = False
 
     data = binascii.hexlify(allData)
-    return "[%s]\t\t0x%x\t-\t0x%x\t\tDATA: %s - RAW: %s (idl=%r, rtr=%r)" % (frameName, frameType, frameSubtype, data, binascii.hexlify(rawFrame), idl, rtr)
+    return "[%s]\t\t0x%x\t-0x%x\t-\t0x%x\t\tDATA: %s - RAW: %s (idl=%r, rtr=%r)" % (frameName, frameType, device_id, frameSubtype, data, binascii.hexlify(rawFrame), idl, rtr)
 
 
 
@@ -96,11 +101,12 @@ class RnetConnect :
     
     def __init__(self): 
         self.type = 0x0000
-        self.subtype = RNET_FRAME_TYPE['CONNECT'][SUBTYPE]
+        self.subtype   = RNET_FRAME_TYPE['CONNECT'][SUBTYPE]
+        self.device_id = RNET_FRAME_TYPE['CONNECT'][DEVICE_ID]
 
 
     def encode(self):
-        frame = raw_frame(False, False, self.type, self.subtype)
+        frame = raw_frame(False, False, self.type, self.subtype, self.device_id)
         frame.set_data(None)
         return frame.get_raw_frame()
 
@@ -112,11 +118,12 @@ class RnetHeartbeat :
     
     def __init__(self): 
         self.type = RNET_FRAME_TYPE['HEARTBEAT'][TYPE]
-        self.subtype = 0x0F0F
+        self.subtype   = RNET_FRAME_TYPE['HEARTBEAT'][SUBTYPE]
+        self.device_id = RNET_FRAME_TYPE['HEARTBEAT'][DEVICE_ID]
 
 
     def encode(self):
-        frame = raw_frame(True, False, self.type, self.subtype)
+        frame = raw_frame(True, False, self.type, self.subtype, self.device_id)
         frame.set_data(b'\x87\x87\x87\x87\x87\x87\x87')
         return frame.get_raw_frame()
 
@@ -132,12 +139,13 @@ class RnetSerial:
 
     def __init__(self, serialNum=b'\x00\x00\x00\x00\x00\x00\x00\x00'): 
         self.type = 0x0000 
-        self.subtype = RNET_FRAME_TYPE['SERIAL'][SUBTYPE]
+        self.subtype   = RNET_FRAME_TYPE['SERIAL'][SUBTYPE]
+        self.device_id = RNET_FRAME_TYPE['SERIAL'][DEVICE_ID]
         self.serialNum = serialNum
 
 
     def encode(self):
-        frame = raw_frame(False, False, self.type, self.subtype)
+        frame = raw_frame(False, False, self.type, self.subtype, self.device_id)
         frame.set_data(self.serialNum)
         return frame.get_raw_frame()
 
@@ -151,9 +159,10 @@ class RnetMotorMaxSpeed:
         "maxSpeed" / cs.Int8ub,
     )
 
-    def __init__(self, maxSpeed, subtype): 
+    def __init__(self, maxSpeed, device_id): 
         self.type = RNET_FRAME_TYPE['MAX_SPEED'][TYPE]
-        self.subtype = subtype
+        self.subtype   = RNET_FRAME_TYPE['MAX_SPEED'][SUBTYPE]
+        self.device_id = device_id
         self.set_data(maxSpeed)
 
 
@@ -167,7 +176,7 @@ class RnetMotorMaxSpeed:
 
 
     def encode(self):
-        frame = raw_frame(True, False, self.type, self.subtype)
+        frame = raw_frame(True, False, self.type, self.subtype, self.device_id)
         
         data = self.maxSpeed_t.build(
             dict(
@@ -193,12 +202,13 @@ class RnetActuatorCtrl :
         "ctrl" / cs.Int8ub
     )
     
-    def __init__(self, act_number=0, direction = 0, subtype=0): 
+    def __init__(self, act_number=0, direction = 0, device_id=0): 
         
         # Manage error case:
         self.set_data(act_number, direction)        
         self.type = RNET_FRAME_TYPE['ACTUATOR_CTRL'][TYPE]
-        self.subtype = subtype
+        self.subtype = RNET_FRAME_TYPE['ACTUATOR_CTRL'][SUBTYPE]
+        self.device_id = device_id
 
 
     def set_data(self, act_number=0, direction=0):
@@ -218,8 +228,7 @@ class RnetActuatorCtrl :
 
 
     def encode(self):
-        frame = raw_frame(True, False, self.type, self.subtype)
-        print("actuator: %r, %r" %(self.act_number, self.direction))
+        frame = raw_frame(True, False, self.type, self.subtype, self.device_id)
         data = self.Actuator_t.build(
             dict(
                 ctrl = self.act_number + (self.direction<<7))
@@ -243,7 +252,8 @@ class RnetJoyPosition :
         self.X = x
         self.Y = y
         self.type = RNET_FRAME_TYPE['JOY_POSITION'][TYPE]
-        self.subtype = jsm_id
+        self.subtype = RNET_FRAME_TYPE['JOY_POSITION'][SUBTYPE]
+        self.jsm_id = jsm_id
 
 
     def set_data(self, x=0, y=0):
@@ -254,7 +264,7 @@ class RnetJoyPosition :
         return self.X,self.Y
 
     def encode(self):
-        frame = raw_frame(True, False, self.type, self.subtype)
+        frame = raw_frame(True, False, self.type, self.subtype, self.jsm_id)
 
         data = self.joyPosition_t.build(
             dict(
@@ -282,22 +292,22 @@ class RnetJoyPosition :
 class RnetHorn :
 
     def __init__(self, jsm_id=0): 
-        self.state = 0
         self.type = RNET_FRAME_TYPE['HORN'][TYPE]
-        self.subtype = 0x100 # ?? Seens not to be JSM ID...
+        self.subtype = RNET_FRAME_TYPE['HORN'][SUBTYPE]
+        self.jsm_id = jsm_id
 
     def toogle_state(self):
-        if self.state == 0:
-            self.state = 1
+        if self.subtype == 0:
+            self.subtype = 1
         else:
-            self.state = 0
+            self.subtype = 0
 
     def get_state(self):
-        return self.state
+        return self.subtype
 
 
     def encode(self):
-        frame = raw_frame(True, False, self.type, self.subtype + self.state)
+        frame = raw_frame(True, False, self.type, self.subtype, self.jsm_id)
         frame.set_data(None)
         return frame.get_raw_frame()
 
@@ -321,10 +331,11 @@ class RnetPlayTone :
     def __init__(self): 
         self.type = RNET_FRAME_TYPE['PLAY_TONE'][TYPE]
         self.subtype = RNET_FRAME_TYPE['PLAY_TONE'][SUBTYPE]
+        self.device_id = RNET_FRAME_TYPE['PLAY_TONE'][DEVICE_ID]
 
 
     def encode(self):
-        frame = raw_frame(True, False, self.type, self.subtype)
+        frame = raw_frame(True, False, self.type, self.subtype, self.device_id)
         data = self.tone_t.build(
             dict(
             tone0_length = 10,
@@ -350,16 +361,16 @@ class RnetBatteryLevel :
         "level" / cs.Int8ub,
     )
     
-    def __init__(self, level=0): 
+    def __init__(self): 
         self.level = 0
         self.raw = None
         self.type = RNET_FRAME_TYPE['BATTERY_LEVEL'][TYPE]
-        self.subtype = 0
+        self.subtype = RNET_FRAME_TYPE['BATTERY_LEVEL'][SUBTYPE]
+        self.device_id = RNET_FRAME_TYPE['BATTERY_LEVEL'][DEVICE_ID]
 
 
     def encode(self):
-        frame = raw_frame(True, False, self.type, self.subtype)
-
+        frame = raw_frame(True, False, self.type, self.subtype, self.device_id)
         data = self.batteryLevel_t.build(
             dict(level = self.level)
         )
@@ -369,14 +380,14 @@ class RnetBatteryLevel :
 
 
     def set_raw(self, rawFrame):
-        self.raw = raw_frame(False, False, self.type, self.subtype)
+        self.raw = raw_frame(False, False, self.type, self.subtype, self.device_id)
         self.raw.set_raw_frame(rawFrame)
 
 
     def decode(self):
         if self.raw is not None:
-            level = self.batteryLevel_t.parse(self.raw.get_data(1))
-        return level.level
+            self.level = (self.batteryLevel_t.parse(self.raw.get_data(1))).level
+        return self.level
 
 
 
@@ -393,14 +404,15 @@ class RnetEndOfInit :
         "data" / cs.Int32ub,
     )
     
-    def __init__(self, level=0): 
+    def __init__(self): 
         self.level = 0
         self.type = RNET_FRAME_TYPE['END_OF_INIT'][TYPE]
-        self.subtype = 0
+        self.subtype = RNET_FRAME_TYPE['END_OF_INIT'][SUBTYPE]
+        self.device_id = RNET_FRAME_TYPE['END_OF_INIT'][DEVICE_ID]
 
 
     def set_raw(self, rawFrame):
-        self.raw = raw_frame(False, False, self.type, self.subtype)
+        self.raw = raw_frame(False, False, self.type, self.subtype, self.device_id)
         self.raw.set_raw_frame(rawFrame)
 
 
@@ -419,14 +431,15 @@ class RnetPmTxConnect :
         "data" / cs.Int8ub,
     )
     
-    def __init__(self, level=0): 
+    def __init__(self): 
         self.level = 0
         self.type = RNET_FRAME_TYPE['PMTX_CONNECT'][TYPE]
-        self.subtype = 0
+        self.subtype = RNET_FRAME_TYPE['PMTX_CONNECT'][SUBTYPE]
+        self.device_id = RNET_FRAME_TYPE['PMTX_CONNECT'][DEVICE_ID]    
 
 
     def set_raw(self, rawFrame):
-        self.raw = raw_frame(False, False, self.type, self.subtype)
+        self.raw = raw_frame(False, False, self.type, self.subtype, self.device_id)
         self.raw.set_raw_frame(rawFrame)
 
 
@@ -445,20 +458,47 @@ class RnetPmTxHeartbeat :
         "data" / cs.Int8ub,
     )
     
-    def __init__(self, level=0): 
+    def __init__(self): 
         self.level = 0
         self.type = RNET_FRAME_TYPE['PMTX_HEARTBEAT'][TYPE]
-        self.subtype = 0
+        self.subtype = RNET_FRAME_TYPE['PMTX_HEARTBEAT'][SUBTYPE]
+        self.device_id = RNET_FRAME_TYPE['PMTX_HEARTBEAT'][DEVICE_ID]
 
 
     def set_raw(self, rawFrame):
-        self.raw = raw_frame(False, False, self.type, self.subtype)
+        self.raw = raw_frame(False, False, self.type, self.subtype, self.device_id)
         self.raw.set_raw_frame(rawFrame)
 
 
     def decode(self):
         data = self.RnetPmTxHeartbeat_t.parse(self.raw.get_data(1))
         return data.data
+
+
+# --------------------------
+# Chair light control frame
+# --------------------------
+class RnetLightCtrl :
+ 
+    def __init__(self, device_id=0): 
+        self.light_id = 0
+        self.type = RNET_FRAME_TYPE['LIGHT_CTRL'][TYPE]
+        self.subtype = RNET_FRAME_TYPE['LIGHT_CTRL'][SUBTYPE]
+        self.device_id = device_id
+
+
+    def set_data(self, light_id):
+        self.light_id = light_id
+
+
+    def get_data(self):
+        return self.light_id
+
+
+    def encode(self):
+        frame = raw_frame(True, False, self.type, self.light_id, self.device_id)
+        frame.set_data(None)
+        return frame.get_raw_frame()
 
 
 
@@ -474,7 +514,8 @@ class RnetPmTxHeartbeat :
 class raw_frame:
     header_t = cs.Struct(
 
-        "subtype" / cs.Int16ul,
+        "subtype" / cs.Int8ul,
+        "id" / cs.Int8ul,
         "type" / cs.Int16ul,
     )
 
@@ -488,7 +529,7 @@ class raw_frame:
         "value" / cs.Bytes(8),
     )
 
-    def __init__(self, Idl=False, Rtr=False, Type=0x0000, Subtype = 0x0000):
+    def __init__(self, Idl=False, Rtr=False, Type=0x0000, Subtype = 0x00, DeviceId = 0x00):
         IDL = 0
         RTR = 0
         if Idl:
@@ -498,7 +539,8 @@ class raw_frame:
         self.header = self.header_t.build(
             dict( 
                 type = Type | IDL | RTR,
-                subtype = Subtype
+                subtype = Subtype,
+                id = DeviceId
                 )
         )
 
@@ -548,13 +590,13 @@ if __name__ == "__main__":
     serial = RnetSerial(b'\x01\x02\x03\x04\x05\x06\x07\x08')
     print('RnetSerial: %r' %binascii.hexlify(serial.encode()))
 
-    speed = RnetMotorMaxSpeed(100, 0x1100)
+    speed = RnetMotorMaxSpeed(100, 0x11)
     print('RnetMotorMaxSpeed: %r' %binascii.hexlify(speed.encode()))
     # Max speed bug test
-    speed = RnetMotorMaxSpeed(255555, 0x1100)
+    speed = RnetMotorMaxSpeed(255555, 0x11)
     print('RnetMotorMaxSpeed: %r' %binascii.hexlify(speed.encode()))
 
-    pos =  RnetJoyPosition(255,254,0x1100)
+    pos =  RnetJoyPosition(255,254,0x11)
     print('RnetJoyPosition: %r' %binascii.hexlify(pos.encode()))
 
     vbat = RnetBatteryLevel()
@@ -563,26 +605,26 @@ if __name__ == "__main__":
     print('battery level: %d' %level)
 
 
-    frameType, frameSubtype, frameName, _ = getFrameType(binascii.unhexlify('0000288c010000000000000000000000'))
-    print('Frame type: 0x%x, subtype: 0x%x, Frame name: %r' %(frameType, frameSubtype, frameName))
+    frameType, frameSubtype, device_id, frameName, _, _, _ = getFrameType(binascii.unhexlify('0000288c010000000000000000000000'))
+    print('Frame type: 0x%x, subtype: 0x%x, device_id: 0x%x, Frame name: %r' %(frameType, frameSubtype, device_id, frameName))
 
-    frameType, frameSubtype, frameName, _ = getFrameType(binascii.unhexlify('0000148c010000000000000000000000'))
-    print('Frame type: 0x%x, subtype: 0x%x, Frame name: %r' %(frameType, frameSubtype, frameName))
+    frameType, frameSubtype, device_id, frameName, _, _, _ = getFrameType(binascii.unhexlify('0000148c010000000000000000000000'))
+    print('Frame type: 0x%x, subtype: 0x%x, device_id: 0x%x, Frame name: %r' %(frameType, frameSubtype, device_id, frameName))
     
-    frameType, frameSubtype, frameName, _ = getFrameType(binascii.unhexlify('60000000040000001100000200000000'))
-    print('Frame type: 0x%x, subtype: 0x%x, Frame name: %r' %(frameType, frameSubtype, frameName))
+    frameType, frameSubtype, device_id, frameName, _, _, _ = getFrameType(binascii.unhexlify('60000000040000001100000200000000'))
+    print('Frame type: 0x%x, subtype: 0x%x, device_id: 0x%x, Frame name: %r' %(frameType, frameSubtype, device_id, frameName))
 
-    frameType, frameSubtype, frameName, _ = getFrameType(binascii.unhexlify('0f0fc383070000008787878787878700'))
-    print('Frame type: 0x%x, subtype: 0x%x, Frame name: %r' %(frameType, frameSubtype, frameName))
+    frameType, frameSubtype, device_id, frameName, _, _, _ = getFrameType(binascii.unhexlify('0f0fc383070000008787878787878700'))
+    print('Frame type: 0x%x, subtype: 0x%x, device_id: 0x%x, Frame name: %r' %(frameType, frameSubtype, device_id, frameName))
     
-    frameType, frameSubtype, frameName, _ = getFrameType(binascii.unhexlify('00000c9c010000006300000000000000'))
-    print('Frame type: 0x%x, subtype: 0x%x, Frame name: %r' %(frameType, frameSubtype, frameName))
+    frameType, frameSubtype, device_id, frameName, _, _, _ = getFrameType(binascii.unhexlify('00000c9c010000006300000000000000'))
+    print('Frame type: 0x%x, subtype: 0x%x, device_id: 0x%x, Frame name: %r' %(frameType, frameSubtype, device_id, frameName))
 
-    frameType, frameSubtype, frameName, _ = getFrameType(binascii.unhexlify('0011008202000000fffe000000000000'))
-    print('Frame type: 0x%x, subtype: 0x%x, Frame name: %r' %(frameType, frameSubtype, frameName))
+    frameType, frameSubtype, device_id, frameName, _, _, _ = getFrameType(binascii.unhexlify('0011008202000000fffe000000000000'))
+    print('Frame type: 0x%x, subtype: 0x%x, device_id: 0x%x, Frame name: %r' %(frameType, frameSubtype, device_id, frameName))
 
-    frameType, frameSubtype, frameName, _ = getFrameType(binascii.unhexlify('0011048a010000006400000000000000'))
-    print('Frame type: 0x%x, subtype: 0x%x, Frame name: %r\n' %(frameType, frameSubtype, frameName))
+    frameType, frameSubtype, device_id, frameName, _, _, _ = getFrameType(binascii.unhexlify('0011048a010000006400000000000000'))
+    print('Frame type: 0x%x, subtype: 0x%x, device_id: 0x%x, Frame name: %r\n' %(frameType, frameSubtype, device_id, frameName))
 
     printFrame(binascii.unhexlify('0c000000000000000000000000000000'))
     printFrame(binascii.unhexlify('ADDEEFBE00000000000000000000000000'))

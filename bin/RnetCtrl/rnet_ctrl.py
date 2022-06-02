@@ -80,7 +80,10 @@ class RnetControl(threading.Thread):
 
             # ENABLE/DISABLE LIGHTS COMMAND
             elif msg.topic == action_light.TOPIC_NAME:
-                logger.info("[recv %s] Switch ON lights" %(msg.topic))
+                action_light_obj = deserialize(msg.payload)
+                logger.info("[recv %s] Light swich Light #%d" %(msg.topic, action_light_obj.light_id))               
+                self.RnetLight.set_data(action_light_obj.light_id) #Create only once
+                self.cansend(self.rnet_can.motor_cansocket, self.RnetLight.encode(logger))
 
             # HORN
             elif msg.topic == action_horn.TOPIC_NAME:
@@ -156,6 +159,7 @@ class RnetControl(threading.Thread):
         self.rnet_can.set_battery_level_callback(self.update_battery_level)        
         self.RnetHorn = RnetDissector.RnetHorn(self.rnet_can.jsm_subtype)
         self.RnetJoyPosition = RnetDissector.RnetJoyPosition(0,0,self.rnet_can.jsm_subtype)
+        self.RnetLight = RnetDissector.RnetLightCtrl(self.rnet_can.jsm_subtype)
         self.RnetBatteryLevel = RnetDissector.RnetBatteryLevel()
         self.RnetMotorMaxSpeed = RnetDissector.RnetMotorMaxSpeed(20, self.rnet_can.jsm_subtype)
         self.RnetActuatorCtrl = RnetDissector.RnetActuatorCtrl(0, 0, self.rnet_can.jsm_subtype)

@@ -84,15 +84,13 @@ class RnetCan(threading.Thread):
     """
     def rnet_daemon(self, listensock, sendsock, logger_tag):
         logger.debug("RnetListener daemon started")
-        is_motor = False
-        is_serial = False
 
         while True:
             rnetFrame = can2RNET.canrecv(listensock)
-            frameToLog  = binascii.hexlify(rnetFrame)
+            #frameToLog  = binascii.hexlify(rnetFrame)
             #logger.debug('%s:%s:%s\n' %(time.time(), logger_tag, frameToLog))
 
-            __, subType, frameName, data, __, __ = RnetDissector.getFrameType(rnetFrame)
+            __, subType, device_id, frameName, data, __, __ = RnetDissector.getFrameType(rnetFrame)
            
             # Trash all joy position frames if not in JSM mode enabled
             if (self.jsm_mode is False) and (frameName == 'JOY_POSITION'):
@@ -108,7 +106,7 @@ class RnetCan(threading.Thread):
                 # Wait for a joy position to record JSM ID
                 if frameName == 'JOY_POSITION':
                     #logger.debug('********** Got JMS ID: 0x%x **********\n' %subType)
-                    self.jsm_subtype = subType
+                    self.jsm_subtype = device_id
                 
                 if (self.jsm_subtype is not None) and (self.jsm_cansocket is not None):
                     self.init_done = True
