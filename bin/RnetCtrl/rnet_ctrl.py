@@ -1,3 +1,4 @@
+import binascii
 import threading
 import argparse
 import time
@@ -11,7 +12,7 @@ from magick_joystick.Topics import *
 
 logger = can2RNET.logger
 
-
+#TODO : When poweroff received put the soft in a de-init state
 
 """
 Main R-net class to send joystick frames on the bus
@@ -24,7 +25,9 @@ class RnetControl(threading.Thread):
     STATUS_FREQUENCY = 1        # 1Hz
     JOY_WATCHDOG_TIMEOUT = 20   # Force joystick position to [0,0] after 200ms without data.
     ACTUATOR_FREQUENCY = 0.05   # 20 Hz
-    ACTUATOR_WATCHDOG_TIMEOUT = 14 # 700ms (assume mqtt publish every 2Hz / 500ms)
+    ACTUATOR_WATCHDOG_TIMEOUT = 6 # 700ms (assume mqtt publish every 2Hz / 500ms)
+    SERIAL_FREQUENCY = 0.05     # 50 ms period
+    joy_daemon_status = True
 
     def __init__(self, testmode = False):
         self.RnetHorn = None
@@ -67,6 +70,8 @@ class RnetControl(threading.Thread):
                 mqtt_client.subscribe(action_max_speed.TOPIC_NAME)
                 mqtt_client.subscribe(joystick_state.TOPIC_NAME)
                 mqtt_client.subscribe(action_actuator_ctrl.TOPIC_NAME)
+                mqtt_client.subscribe(action_poweroff.TOPIC_NAME)
+                mqtt_client.subscribe(action_poweron.TOPIC_NAME)
             else:
                 logger.info(f"Connection failed with code {rc}")
 
@@ -83,7 +88,26 @@ class RnetControl(threading.Thread):
                 action_light_obj = deserialize(msg.payload)
                 logger.info("[recv %s] Light swich Light #%d" %(msg.topic, action_light_obj.light_id))               
                 self.RnetLight.set_data(action_light_obj.light_id) #Create only once
-                self.cansend(self.rnet_can.motor_cansocket, self.RnetLight.encode(logger))
+                self.cansend(self.rnet_can.motor_cansocket, self.RnetLight.encode())
+
+            # POWER ON
+            elif msg.topic == action_poweron.TOPIC_NAME:
+                logger.info("[recv %s] Power On" %(msg.topic))
+                cmd = RnetDissector.RnetPowerOn()
+                # time.sleep()
+                self.cansend(self.rnet_can.cansocket0, serial.encode())
+                self.cansend(self.rnet_can.cansocket1, serial.encode())
+                thread_serial = threading.Thread(target=self.serial_thread, daemon=True)
+                thread_serial.start()
+
+
+            # POWER OFF
+            elif msg.topic == action_poweroff.TOPIC_NAME:
+                logger.info("[recv %s] Power Off" %(msg.topic))
+                cmd = RnetDissector.RnetPowerOff()
+                self.joy_daemon_status = False
+                time.sleep(self.POSITION_FREQUENCY)
+                self.cansend(self.rnet_can.motor_cansocket, cmd.encode())
 
             # HORN
             elif msg.topic == action_horn.TOPIC_NAME:
@@ -211,12 +235,21 @@ class RnetControl(threading.Thread):
             time.sleep(self.ACTUATOR_FREQUENCY)
 
 
+    def serial_thread(self):
+        logger.info("Serial periodic Thread")
+        while True:
+            serial = RnetDissector.RnetSerial(binascii.unhexlify("9700148100000000"))
+            self.cansend(self.rnet_can.cansocket0, serial.encode())
+            self.cansend(self.rnet_can.cansocket1, serial.encode())
+            time.sleep(self.SERIAL_FREQUENCY)
+
+
     """
     Endless loop that sends periodically Rnet joystick position frames
     """
     def rnet_joystick_thread(self):
         logger.info("Rnet joystick thread started")
-        while True:
+        while self.joy_daemon_status:
             joyframe = self.RnetJoyPosition.encode()
             self.cansend(self.rnet_can.motor_cansocket, joyframe)
             

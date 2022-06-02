@@ -16,6 +16,7 @@ TYPE = 0
 DEVICE_ID = 1
 SUBTYPE = 2
 
+#TODO : Add IDL/RTR in dict
 RNET_FRAME_TYPE={
     'CONNECT'       : (0x0000, 0x00, 0x0C),
     'SERIAL'        : (0x0000, 0x00, 0x0E),
@@ -32,6 +33,8 @@ RNET_FRAME_TYPE={
     'LIGHT_CTRL'    : (0x0C00, 0x00, 0x00),
     'CHAIR_SPEED'   : (0x1430, 0x00, 0x00),
     'CHAIR_DISTANCE': (0x1C30, 0x00, 0x00),
+    'POWER_OFF'     : (0x0000, 0x00, 0x02),
+    'POWER_ON'      : (0x0000, 0x00, 0x0C),
 }
 
 RNET_FRAME_TYPE_R = RNET_FRAME_TYPE.__class__(map(reversed, RNET_FRAME_TYPE.items()))
@@ -126,6 +129,40 @@ class RnetHeartbeat :
         frame = raw_frame(True, False, self.type, self.subtype, self.device_id)
         frame.set_data(b'\x87\x87\x87\x87\x87\x87\x87')
         return frame.get_raw_frame()
+
+
+# --------------------------
+# Poweroff message
+# --------------------------
+class RnetPowerOff :
+    
+    def __init__(self): 
+        self.type = RNET_FRAME_TYPE['POWER_OFF'][TYPE]
+        self.subtype   = RNET_FRAME_TYPE['POWER_OFF'][SUBTYPE]
+        self.device_id = RNET_FRAME_TYPE['POWER_OFF'][DEVICE_ID]
+
+
+    def encode(self):
+        frame = raw_frame(False, False, self.type, self.subtype, self.device_id)
+        frame.set_data(None)
+        return frame.get_raw_frame()
+
+
+# --------------------------
+# Poweron message
+# --------------------------
+class RnetPowerOn :
+    
+    def __init__(self): 
+        self.type = RNET_FRAME_TYPE['POWER_ON'][TYPE]
+        self.subtype   = RNET_FRAME_TYPE['POWER_ON'][SUBTYPE]
+        self.device_id = RNET_FRAME_TYPE['POWER_ON'][DEVICE_ID]
+
+    def encode(self):
+        frame = raw_frame(False, False, self.type, self.subtype, self.device_id)
+        frame.set_data(None)
+        return frame.get_raw_frame()
+
 
 
 # --------------------------
