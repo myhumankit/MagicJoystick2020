@@ -4,7 +4,7 @@
 hciconfig hci0 up
 
 # Set device name
-hciconfig hci0 name MagickJoysticik
+hciconfig hci0 name MagickJoystick
 
 # Configure device as HID Mouse
 hciconfig hci0 class 2580
