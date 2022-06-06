@@ -44,6 +44,7 @@ dtoverlay=mcp2515-can0,oscillator=16000000,interrupt=25\n
 dtoverlay=mcp2515-can1,oscillator=16000000,interrupt=24\n
 dtoverlay=spi1-hw-cs\n
 dtoverlay=spi0-hw-cs\n
+dtparam=krnbt=on\n
 # MagicJoy config stops =============\n
 EOF
 
@@ -91,15 +92,27 @@ export LC_MODULES
 
 remote 'echo -ne $LC_MODULES | sudo tee -a /etc/modules > /dev/null' LC_MODULES
 
+# Configure bluetooth daemon startup
+echo " -> Modify bluetooth daemon options"
+remote 'sudo sed -i "s/ExecStart=.*/ExecStart=\/usr\/libexec\/bluetooth\/bluetoothd --noplugin=\*/g" /lib/systemd/system/bluetooth.service'
+
+# Setup bluetooth configuration
+echo " -> Configure bluetooth"
+remote 'sudo sed -i "s/\[General\]/\[General\]\nName = MagickJoystick\nClass = 0x002580\nAlwaysPairable = true\nDiscoverableTimeout = 0\n/g" /etc/bluetooth/main.conf'
+
 # Add extra packages
 echo " -> Adding extra packages"
 remote "sudo apt-get -y update > /dev/null"
-remote "sudo apt-get -y install can-utils build-essential python3-dev git python3-pip cmake mosquitto bluez libcap2-bin libdbus-1-dev libglib2.0-dev python3-gi libbluetooth-dev > /dev/null"
+remote "sudo apt-get -y install can-utils build-essential python3-dev git python3-pip cmake mosquitto bluez libcap2-bin libdbus-1-dev libglib2.0-dev python3-gi libbluetooth-dev pi-bluetooth > /dev/null"
 
 # Add python packages
 echo " -> Adding extra python packages"
 remote_cp requirements.txt .
 remote "sudo pip3 install -q -r requirements.txt && rm requirements.txt"
+
+# Set python capability to bin to bluetooth even if non root
+echo " -> Set python cabability"
+remote 'sudo setcap CAP_NET_BIND_SERVICE=+eip $(readlink -f /usr/bin/python3)'
 
 # Install current code
 echo " -> Installing Magic Joystick python library"
@@ -116,7 +129,7 @@ echo " -> Launch applications at startup"
 remote_cp start_magick_joystick.sh .
 remote_cp supervisord.conf .
 remote_cp magick_joystick.service /tmp
-remote 'cat /tmp/magick_joystick.service | sed "s|@PWD@|$PWD|g" | sudo tee /etc/systemd/system/magick_joystick.service > /dev/null'
+remote 'cat /tmp/magick_joystick.service | sed "s|@PWD@|$PWD|g" | sudo tee /lib/systemd/system/magick_joystick.service > /dev/null'
 remote 'rm /tmp/magick_joystick.service'
 remote 'sudo systemctl daemon-reload > /dev/null'
 remote 'sudo systemctl enable magick_joystick > /dev/null'

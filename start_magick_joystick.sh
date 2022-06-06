@@ -5,7 +5,12 @@ if [ "$EUID" -ne 0 ]
   exit
 fi
 
-./bin/Bluetooth/prepare_bluetooth.sh
+# TODO: see if we can make this the default behaviour in bluetooth configuration
+# Make bluetooth discoverable
+hciconfig hci0 name MagickJoystick
+hciconfig hci0 class 0x2580
+hciconfig hci0 noauth
+hciconfig hci0 piscan
 
 # Create log directory
 mkdir -p /var/log/magick_joy/log

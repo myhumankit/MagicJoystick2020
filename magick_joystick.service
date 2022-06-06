@@ -1,12 +1,12 @@
 [Unit]
 Description=Magick Joystick Service
-Requires=bluetooth.service
-After=bluetooth.service
+Requires=hciuart.service bluetooth.service
+After=hciuart.service bluetooth.service
 
 [Service]
 Restart=always
 WorkingDirectory=@PWD@
-ExecStart=start_magick_joystick.sh
+ExecStart=bash start_magick_joystick.sh
 ExecStop=supervisorctl shutdown
 
 [Install]

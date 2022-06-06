@@ -2,6 +2,7 @@ import dbus
 import dbus.service
 import os
 import socket
+from bluetooth import BluetoothSocket, L2CAP
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
 import paho.mqtt.client as mqtt
@@ -46,8 +47,8 @@ class BluetoothHIDService(object):
     PORT = 1
 
     def __init__(self):
-        self.P_CTRL = 0x0011
-        self.P_INTR = 0x0013
+        self.P_CTRL = 0x0011 # Must match sdp_record.xml
+        self.P_INTR = 0x0013 # Must match sdp_record.xml
         bus = dbus.SystemBus()
         bluez_obj = bus.get_object("org.bluez", "/org/bluez")
         manager = dbus.Interface(bluez_obj, "org.bluez.ProfileManager1")
@@ -56,23 +57,22 @@ class BluetoothHIDService(object):
         opts = {
             "AutoConnect": True,
             "ServiceRecord": open("sdp_record.xml", "r").read(),
-            "Name": "BTKeyboardProfile",
             "RequireAuthentication": False,
             "RequireAuthorization": False,
-            "Service": "MY BTKBD",
             "Role": "server"
         }
-
-        sock_control = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_SEQPACKET, socket.BTPROTO_L2CAP)
-        sock_control.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock_inter = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_SEQPACKET, socket.BTPROTO_L2CAP)
-        sock_inter.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock_control.bind((socket.BDADDR_ANY, self.P_CTRL))
-        sock_inter.bind((socket.BDADDR_ANY, self.P_INTR))
+        
         manager.RegisterProfile(self.PROFILE_PATH, "00001124-0000-1000-8000-00805f9b34fb", opts)
+
+        sock_control = BluetoothSocket(L2CAP)
+        sock_control.bind((socket.BDADDR_ANY, self.P_CTRL))
+
+        sock_inter = BluetoothSocket(L2CAP)
+        sock_inter.bind((socket.BDADDR_ANY, self.P_INTR))
+
         print("Registered")
-        sock_control.listen(1)
-        sock_inter.listen(1)
+        sock_control.listen(5)
+        sock_inter.listen(5)
         print("waiting for connection")
         self.ccontrol, cinfo = sock_control.accept()
         print("Control channel connected to " + cinfo[self.HOST])
