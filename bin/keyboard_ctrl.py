@@ -10,6 +10,7 @@ PERIOD_JOY = 1/30
 PERIOD_ACT = 1/20
 TOUT_VALUE_JOY = 15
 TOUT_VALUE_ACT = 10
+HELPSPACE = "  "
 
 KEYS_ACT = ['&','é','"','\'','(','-','è','_','ç','à',')','=']
 KEYS_ARROW = ['\x1b[D','\x1b[A','\x1b[C','\x1b[B'] #LEFT UP RIGHT DOWN
@@ -31,40 +32,66 @@ state = {
     'RUNNING' : True,
     'ACT' : [-1, -1, -1], #Numero, direction, timeout
     'JOY' : [0, 0, 0, -1], # x, y, timeout, id_direction (-1 center, 0 left, 1 up...)
-    'LIGHT' : [False,False,False,False] # Left Right WARNNING SPOTS
+    'LIGHT' : [False,False,False,False], # Left Right WARNNING SPOTS
+    'MAX_SPEED' : 1,
+    'HELP' : False
 }
 
 
-def print_state(doHelp=False):
+
+def print_state():
     global state
+    doHelp = state['HELP']
 
     string = "\x1b[2J\x1b[H\n" # Clear sequence
+
+    #JOYSTICK
     string += "JOY : " + ARROW_CHAR[state['JOY'][3]] + '\r\n'
 
+    #ACTUATORS
     act_id, direction_id, _ = state['ACT']
     act = ACT_NAME[act_id][0]
     direction = ACT_NAME[act_id][1][direction_id]
     string += "ACT : " + act + ' ' + direction + '\r\n'
 
+    #LIGHTS
     lstr = '\u21E6 ' if (state['LIGHT'][0]) else '  '
     lstr += '\u21E8 ' if (state['LIGHT'][1]) else '  '
     lstr += '\u29CB ' if (state['LIGHT'][2]) else '  '
     lstr += '\u2600 ' if (state['LIGHT'][3]) else '  '
     string += "LIGHT : " + lstr + '\r\n'
 
-    print(string + '\n') 
+    #MAX_SPEED
+    speedVal = state['MAX_SPEED']
+    speedStr = '\u2595' #Start of the speed bar
+    for i in range(1,6): # i € [1,5]
+        speedStr += '\u2588' if (i <= speedVal) else '\u2591'
+    string += 'MAX_SPEED : ' + speedStr + '\u258f %d/5\r\n' % (speedVal)
+
+    string += "\r\nToggle help with 'h'\r\n"
+    if doHelp:
+        string += HELPSPACE + "Move the weelchair with " + str(ARROW_CHAR[0:4]) + '\r\n'
+        string += HELPSPACE + "Move actuators with keys from '&' to '='" + '\r\n'
+        string += HELPSPACE + "Toggle Lights [o-\u21E6] [p-\u21E8] [w-\u29CB] [l-\u2600]" + '\r\n'
+        string += HELPSPACE + "Change max speed with 's'" + '\r\n'
+        string += HELPSPACE + "Use the Horn with 'k'" + '\r\n'
+    print(string + '\r\n') 
     return
+
+
 
 def light_handler(client, key):
     lid = KEYS_LIGHT.index(key)
     light = action_light(lid)
     if lid <= 2: # Turn off left right or warn when one of them is changed
-        state['LIGHT'][0] = (not state['LIGHT'][0]) and lid==0
-        state['LIGHT'][1] = (not state['LIGHT'][1]) and lid==1
-        state['LIGHT'][2] = (not state['LIGHT'][2]) and lid==2
+        state['LIGHT'][0] = (not state['LIGHT'][0]) and lid==0 # Left
+        state['LIGHT'][1] = (not state['LIGHT'][1]) and lid==1 # Right
+        state['LIGHT'][2] = (not state['LIGHT'][2]) and lid==2 # Warn
     else :
         state['LIGHT'][lid] = not state['LIGHT'][lid]
     client.publish(light.TOPIC_NAME, light.serialize())
+
+
 
 def get_kbd(client):
     global state
@@ -77,7 +104,6 @@ def get_kbd(client):
             id = KEYS_ACT.index(key)
             num, direction = id//2, id%2
             state['ACT'] = [num, direction,TOUT_VALUE_ACT]
-            #print("[GET INPUT] : ACT No=%d,Dir=%d" % (num, direction))
         
         if key in KEYS_ARROW:
             id = KEYS_ARROW.index(key)            
@@ -85,6 +111,18 @@ def get_kbd(client):
         
         if key in KEYS_LIGHT:
             light_handler(client, key)
+        
+        if key == 's':
+            state['MAX_SPEED'] = state['MAX_SPEED']%5 + 1
+            sped = action_max_speed(state['MAX_SPEED'])
+            client.publish(sped.TOPIC_NAME, sped.serialize())
+        
+        if key == 'k':
+            horn = action_horn()
+            client.publish(horn.TOPIC_NAME, horn.serialize())
+        
+        if key == 'h':
+            state['HELP'] = not state['HELP']
 
         elif (key == 'q'):
             state['RUNNING'] = False
@@ -105,6 +143,8 @@ def actuator_thread(client):
             state['ACT'][2] -= 1 #Reduce the watchdog
         time.sleep(PERIOD_ACT)
 
+
+
 def joystick_thread(client):
     global state
     while state['RUNNING']:
@@ -117,6 +157,7 @@ def joystick_thread(client):
         client.publish(joy_data.TOPIC_NAME, joy_data.serialize())
         state['JOY'][2] -= 1 #Reduce the watchdog
         time.sleep(PERIOD_JOY)
+
 
 client = mqtt.Client()
 client.connect("localhost", 1883, 60)
