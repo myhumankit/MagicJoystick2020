@@ -39,6 +39,7 @@ class RnetControl(threading.Thread):
         self.actuator_watchdog = 0
         threading.Thread.__init__(self)
         
+        logger.info("========== START ========== ")
         try:
             self.mqtt_client = mqtt.Client() 
             self.mqtt_client.on_connect = self.on_connect 
@@ -198,7 +199,7 @@ class RnetControl(threading.Thread):
     def update_battery_level(self, raw_frame):
         self.RnetBatteryLevel.set_raw(raw_frame)
         self.battery_level = self.RnetBatteryLevel.decode()
-        logger.debug("Got battery level info: %d" %self.battery_level)
+        #logger.debug("Got battery level info: %d" %self.battery_level)
 
 
     def start_threads(self):
