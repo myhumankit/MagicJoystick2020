@@ -130,7 +130,7 @@ if __name__ == "__main__":
 
     def send_mouse():
         global mouse_x, mouse_y, mouse_buttons
-        bthid_srv.send(struct.pack("BBBbb", 0xA1, 0x02, mouse_buttons, mouse_x, mouse_y))
+        bthid_srv.send(struct.pack("BBbb", 0xA1, mouse_buttons, mouse_x, mouse_y))
         return True
 
     GLib.timeout_add(30, send_mouse)
