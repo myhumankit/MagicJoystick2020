@@ -15,10 +15,12 @@ HELPSPACE = "  "
 KEYS_ACT = ['&','é','"','\'','(','-','è','_','ç','à',')','=']
 KEYS_ARROW = ['\x1b[D','\x1b[A','\x1b[C','\x1b[B'] #LEFT UP RIGHT DOWN
 ARROW_XY = [[155,0],[0,100],[100,0],[0,155]]
-KEYS_LIGHT = ['o','p','w','l'] # LIGHTS : left right warn spots
+KEYS_LIGHT = ['o','p','w','l'] # LIGHTS (in order) :  flashing left/right, warn, spots
 
 ARROW_CHAR = ['\u2190','\u2191','\u2192','\u2193','\u25c9'] #LEFT UP RIGHT DOWN CENTER
-ACT_NAME = [ #Pour la fct print_state()
+ACT_NAME = 0
+ACT_DIR = 1
+ACT_INFO = [ #Pour la fct print_state()
     ["Seat",('Down','Up')],
     ["Back",('Down','Up')],
     ["Seat",('Back-Rotation','Front-Rotation')],
@@ -32,14 +34,14 @@ state = {
     'RUNNING' : True,
     'ACT' : [-1, -1, -1], #Numero, direction, timeout
     'JOY' : [0, 0, 0, -1], # x, y, timeout, id_direction (-1 center, 0 left, 1 up...)
-    'LIGHT' : [False,False,False,False], # Left Right WARNNING SPOTS
+    'LIGHT' : [False,False,False,False], # flashing Left/Right, WARNNING, SPOTS
     'MAX_SPEED' : 1,
     'HELP' : False
 }
 
 
-
 def print_state():
+    """Function used to print the current state"""
     global state
     doHelp = state['HELP']
 
@@ -50,9 +52,9 @@ def print_state():
 
     #ACTUATORS
     act_id, direction_id, _ = state['ACT']
-    act = ACT_NAME[act_id][0]
-    direction = ACT_NAME[act_id][1][direction_id]
-    string += "ACT : " + act + ' ' + direction + '\r\n'
+    act_name = ACT_INFO[act_id][ACT_NAME]
+    direction = ACT_INFO[act_id][ACT_DIR][direction_id]
+    string += "ACT : " + act_name + ' ' + direction + '\r\n'
 
     #LIGHTS
     lstr = '\u21E6 ' if (state['LIGHT'][0]) else '  '
@@ -81,11 +83,12 @@ def print_state():
 
 
 def light_handler(client, key):
+    """Turns the lights on or off depending on the input key"""
     lid = KEYS_LIGHT.index(key)
-    light = action_light(lid)
-    if lid <= 2: # Turn off left right or warn when one of them is changed
-        state['LIGHT'][0] = (not state['LIGHT'][0]) and lid==0 # Left
-        state['LIGHT'][1] = (not state['LIGHT'][1]) and lid==1 # Right
+    light = action_light(lid+1) #ID begins with 1
+    if lid <= 2: # Turn off flashing left/right or warn when one of them is changed
+        state['LIGHT'][0] = (not state['LIGHT'][0]) and lid==0 # flashing Left
+        state['LIGHT'][1] = (not state['LIGHT'][1]) and lid==1 # flashing Right
         state['LIGHT'][2] = (not state['LIGHT'][2]) and lid==2 # Warn
     else :
         state['LIGHT'][lid] = not state['LIGHT'][lid]
@@ -94,6 +97,7 @@ def light_handler(client, key):
 
 
 def get_kbd(client):
+    """Get an input keys in a loop, and performs the corresponding actions"""
     global state
     while state['RUNNING']:
 
@@ -131,6 +135,7 @@ def get_kbd(client):
 
 
 def actuator_thread(client):
+    """Sends the frames of the actuators in a loop as long as the corresponding key remains pressed."""
     global state
     while state['RUNNING']:
         num, direction, watchDog = state['ACT']
@@ -146,6 +151,7 @@ def actuator_thread(client):
 
 
 def joystick_thread(client):
+    """Sends the frames of the joystick in a loop as long as the corresponding key remains pressed."""
     global state
     while state['RUNNING']:
         x, y, watchDog, _ = state['JOY']

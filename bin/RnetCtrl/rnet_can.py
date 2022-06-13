@@ -15,6 +15,7 @@ class RnetCan(threading.Thread):
     init_done = False
     jsm_mode = False
     jsm_subtype = None
+    joy_subtype = None
     motor_cansocket = None
     jsm_cansocket = None
     battery_level = None
@@ -89,7 +90,7 @@ class RnetCan(threading.Thread):
             __, subType, device_id, frameName, data, __, __ = RnetDissector.getFrameType(rnetFrame)
            
             # Trash all joy position frames if not in JSM mode enabled
-            if (self.jsm_mode is False) and (frameName == 'JOY_POSITION'):
+            if (frameName == 'JOY_POSITION'):
                 pass
             else:
                 can2RNET.cansendraw(sendsock, rnetFrame)
@@ -102,7 +103,8 @@ class RnetCan(threading.Thread):
                 # Wait for a joy position to record JSM ID
                 if frameName == 'JOY_POSITION':
                     #logger.debug('********** Got JMS ID: 0x%x **********\n' %subType)
-                    self.jsm_subtype = device_id
+                    self.jsm_subtype = device_id & 0x0F
+                    self.joy_subtype = device_id
                 
                 if (self.jsm_subtype is not None) and (self.jsm_cansocket is not None):
                     self.init_done = True
@@ -111,4 +113,9 @@ class RnetCan(threading.Thread):
                 if self.battery_level is not None:
                     self.battery_level(rnetFrame)
 
+    def logframe(self, frameName, listensock):
+        if self.motor_cansocket == listensock:
+            print("MOTOR: %s" %frameName)
+        else:
+            print("JSM  : %s" %frameName)
 
