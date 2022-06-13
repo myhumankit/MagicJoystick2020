@@ -15,7 +15,7 @@ class StaticPages(Resource):
                  "actuator_1_0.svg", "actuator_1_1.svg", "actuator_2_0.svg",
                  "actuator_2_1.svg", "actuator_3_0.svg", "actuator_3_1.svg",
                  "actuator_4_0.svg", "actuator_4_1.svg", "actuator_5_0.svg",
-                 "actuator_5_1.svg", "actuator.svg"]
+                 "actuator_5_1.svg", "actuator.svg", "light.html"]
 
         fonts = ["fa-solid-900.woff2", "fa-brands-400.woff2"]
 
@@ -44,7 +44,7 @@ class Actions(Resource):
         data = request.get_json()
 
         if action == "light":
-            msg = action_light()
+            msg = action_light(data["light_id"])
         elif action == "max_speed":
             msg = action_max_speed(data["max_speed"])
         elif action == "drive":

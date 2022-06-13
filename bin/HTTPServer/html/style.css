@@ -122,6 +122,20 @@ div.body.actuator > div > div {
     height: 100%;
 }
 
+div.body.light {
+    width: 100%;
+    height: 100%;
+}
+
+div.body.light > div {
+    height: calc(100% / 3);
+}
+
+div.body.light > div > div {
+    width: 50%;
+    height: 100%;
+}
+
 #actuator_0_0 {
     background-image: url("actuator_0_0.svg");
 }
@@ -201,13 +215,27 @@ div.body.actuator > div > div {
     margin-right: 2.5%;
 }
 
-#light.on {
+#light_1.on {
+    color: #FFFF00;
+}
+
+#light_2.on {
+    color: #FFFF00;
+}
+
+#light_3.on {
+    color: #FFFF00;
+}
+
+#light_4.on {
     color: #FFFF00;
 }
 
 #power.on {
     color: #00FF00;
 }
+
+
 
 #lvl1.on {
     background-color: #00FF00;

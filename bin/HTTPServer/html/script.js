@@ -9,31 +9,18 @@
 
     function display_time()
     {   
-        var now = new Date();
+        let now = new Date();
 
         str = "" + pad(now.getHours()) +":" + pad(now.getMinutes());
         $("#time").html(str);
     }
 
-    function change_light()
+    function send_light(light_id)
     {
-        var on;
-
-        if($("#light").hasClass("on"))
-        {
-            $("#light").removeClass("on");
-            on = false;
-        }
-        else
-        {
-            $("#light").addClass("on");
-            on = true;
-        }
-
         $.ajax({
             type: "POST",
             url: "/action/light", 
-            data: JSON.stringify({on: (on?1:0)}),
+            data: JSON.stringify({"light_id": light_id}),
             contentType: "application/json; charset=utf-8",
             dataType: "json",
             success: function(data){},
@@ -41,9 +28,24 @@
         });
     }
 
+    function change_light(light_id)
+    {
+        let light = 'light_' + light_id;
+        if($("#" + light).hasClass("on"))
+        {
+            sessionStorage.setItem(light, "false")
+            $("#" + light).removeClass("on");
+        }
+        else
+        {
+            sessionStorage.setItem(light, "true")
+            $("#" + light).addClass("on");
+        }
+        send_light(light_id)
+    }
+
     function send_power(url)
     {
-
         $.ajax({
             type: "POST",
             url: url, 
@@ -57,11 +59,13 @@
     {
         if($("#power").hasClass("on"))
         {
+            sessionStorage.setItem("power", "false")
             $("#power").removeClass("on");
             send_power("/action/poweroff");
         }
         else
         {
+            sessionStorage.setItem("power", "true")
             $("#power").addClass("on");
             send_power("/action/poweron");
         }
@@ -69,7 +73,7 @@
 
     function change_speed()
     {
-        var level = 0;
+        let level = 0;
 
         for(var i = 1; i <= 5; i++)
         {
@@ -135,6 +139,19 @@
         interval = setInterval(send_actuator_ctrl, 500, actuator_num, direction)
     }
 
+    function set_icons_status()
+    {
+        if (sessionStorage.getItem('power') === 'true') {
+            $("#power").addClass("on");
+        }
+        for (let step = 1; step < 5; step++) {
+            let light = "light_" + step
+            if (sessionStorage.getItem(light) === "true") {
+                $("#" + light).addClass("on");
+            }
+        }
+    }
+
     /* Clock */
     display_time();
     setInterval(display_time, 1000);
@@ -168,11 +185,16 @@
     $("#wheelchair").on("click", function() {window.location = "wheelchair.html";})
     $("#back").on("click", function() {window.location = "index.html";})
     $("#back-wheelchair").on("click", function() {window.location = "wheelchair.html";})
-    $("#light").on("click", change_light)
+    $("#light").on("click", function() {window.location = "light.html";})
+    $("#light_1").on("click", function() {change_light(1);})
+    $("#light_2").on("click", function() {change_light(2);})
+    $("#light_3").on("click", function() {change_light(3);})
+    $("#light_4").on("click", function() {change_light(4);})
     $("#power").on("click", change_power)
     $("#speed").on("click", change_speed)
     $("#drive").on("click", function() {$.post("/action/drive")})
     $("#horn").on("click", function() {$.post("/action/horn")})
+    $(window).on("load", set_icons_status)
 
 
 })()
