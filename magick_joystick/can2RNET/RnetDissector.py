@@ -15,9 +15,11 @@ FRAME_TYPE are known values for header_t.type
 TYPE = 0
 DEVICE_ID = 1
 SUBTYPE = 2
+IDL = 0
+RTR = 1
 
-#TODO : Add IDL/RTR in dict
-RNET_FRAME_TYPE={
+
+RNET_FRAME_TYPE = {
     'CONNECT'       : (0x0000, 0x00, 0x0C),
     'SERIAL'        : (0x0000, 0x00, 0x0E),
     'END_OF_INIT'   : (0x0000, 0x00, 0x60), # Processed as 0x006x with x masked to '0'
@@ -35,6 +37,27 @@ RNET_FRAME_TYPE={
     'CHAIR_DISTANCE': (0x1C30, 0x00, 0x00),
     'POWER_OFF'     : (0x0000, 0x00, 0x02),
     'POWER_ON'      : (0x0000, 0x00, 0x0C),
+}
+
+# Can't add this into RNET_FRAME_TYPE to not break the RNET_FRAME_TYPE_R reverse search in getFrameType()
+RNET_FRAME_IDLRTR = {
+    'CONNECT'       : (False, False),
+    'SERIAL'        : (False, False),
+    'END_OF_INIT'   : (False, False),
+    'JOY_POSITION'  : (True, False),
+    'HEARTBEAT'     : (True, False),
+    'MAX_SPEED'     : (True, False),
+    'PMTX_CONNECT'  : (False, False),
+    'PMTX_HEATBEAT' : (False, False),
+    'BATTERY_LEVEL' : (True, False),
+    'HORN'          : (True, False),
+    'PLAY_TONE'     : (True, False),
+    'ACTUATOR_CTRL' : (True, False),
+    'LIGHT_CTRL'    : (True, False),
+    'CHAIR_SPEED'   : (False, False),
+    'CHAIR_DISTANCE': (False, False),
+    'POWER_OFF'     : (False, False),
+    'POWER_ON'      : (False, False),
 }
 
 RNET_FRAME_TYPE_R = RNET_FRAME_TYPE.__class__(map(reversed, RNET_FRAME_TYPE.items()))
@@ -106,10 +129,12 @@ class RnetConnect :
         self.type = 0x0000
         self.subtype   = RNET_FRAME_TYPE['CONNECT'][SUBTYPE]
         self.device_id = RNET_FRAME_TYPE['CONNECT'][DEVICE_ID]
+        self.idl = RNET_FRAME_IDLRTR['CONNECT'][IDL]
+        self.rtr = RNET_FRAME_IDLRTR['CONNECT'][RTR]
 
 
     def encode(self):
-        frame = raw_frame(False, False, self.type, self.subtype, self.device_id)
+        frame = raw_frame(self.idl, self.rtr, self.type, self.subtype, self.device_id)
         frame.set_data(None)
         return frame.get_raw_frame()
 
@@ -123,10 +148,12 @@ class RnetHeartbeat :
         self.type = RNET_FRAME_TYPE['HEARTBEAT'][TYPE]
         self.subtype   = RNET_FRAME_TYPE['HEARTBEAT'][SUBTYPE]
         self.device_id = RNET_FRAME_TYPE['HEARTBEAT'][DEVICE_ID]
+        self.idl = RNET_FRAME_IDLRTR['HEARTBEAT'][IDL]
+        self.rtr = RNET_FRAME_IDLRTR['HEARTBEAT'][RTR]
 
 
     def encode(self):
-        frame = raw_frame(True, False, self.type, self.subtype, self.device_id)
+        frame = raw_frame(self.idl, self.rtr, self.type, self.subtype, self.device_id)
         frame.set_data(b'\x87\x87\x87\x87\x87\x87\x87')
         return frame.get_raw_frame()
 
@@ -140,10 +167,12 @@ class RnetPowerOff :
         self.type = RNET_FRAME_TYPE['POWER_OFF'][TYPE]
         self.subtype   = RNET_FRAME_TYPE['POWER_OFF'][SUBTYPE]
         self.device_id = RNET_FRAME_TYPE['POWER_OFF'][DEVICE_ID]
+        self.idl = RNET_FRAME_IDLRTR['POWER_OFF'][IDL]
+        self.rtr = RNET_FRAME_IDLRTR['POWER_OFF'][RTR]
 
 
     def encode(self):
-        frame = raw_frame(False, False, self.type, self.subtype, self.device_id)
+        frame = raw_frame(self.idl, self.rtr, self.type, self.subtype, self.device_id)
         frame.set_data(None)
         return frame.get_raw_frame()
 
@@ -157,9 +186,11 @@ class RnetPowerOn :
         self.type = RNET_FRAME_TYPE['POWER_ON'][TYPE]
         self.subtype   = RNET_FRAME_TYPE['POWER_ON'][SUBTYPE]
         self.device_id = RNET_FRAME_TYPE['POWER_ON'][DEVICE_ID]
+        self.idl = RNET_FRAME_IDLRTR['POWER_ON'][IDL]
+        self.rtr = RNET_FRAME_IDLRTR['POWER_ON'][RTR]
 
     def encode(self):
-        frame = raw_frame(False, False, self.type, self.subtype, self.device_id)
+        frame = raw_frame(self.idl, self.rtr, self.type, self.subtype, self.device_id)
         frame.set_data(None)
         return frame.get_raw_frame()
 
@@ -179,10 +210,12 @@ class RnetSerial:
         self.subtype   = RNET_FRAME_TYPE['SERIAL'][SUBTYPE]
         self.device_id = RNET_FRAME_TYPE['SERIAL'][DEVICE_ID]
         self.serialNum = serialNum
+        self.idl = RNET_FRAME_IDLRTR['SERIAL'][IDL]
+        self.rtr = RNET_FRAME_IDLRTR['SERIAL'][RTR]
 
 
     def encode(self):
-        frame = raw_frame(False, False, self.type, self.subtype, self.device_id)
+        frame = raw_frame(self.idl, self.rtr, self.type, self.subtype, self.device_id)
         frame.set_data(self.serialNum)
         return frame.get_raw_frame()
 
@@ -201,6 +234,8 @@ class RnetMotorMaxSpeed:
         self.subtype   = RNET_FRAME_TYPE['MAX_SPEED'][SUBTYPE]
         self.device_id = device_id
         self.set_data(maxSpeed)
+        self.idl = RNET_FRAME_IDLRTR['MAX_SPEED'][IDL]
+        self.rtr = RNET_FRAME_IDLRTR['MAX_SPEED'][RTR]
 
 
     def set_data(self, maxSpeed):
@@ -213,7 +248,7 @@ class RnetMotorMaxSpeed:
 
 
     def encode(self):
-        frame = raw_frame(True, False, self.type, self.subtype, self.device_id)
+        frame = raw_frame(self.idl, self.rtr, self.type, self.subtype, self.device_id)
         
         data = self.maxSpeed_t.build(
             dict(
@@ -246,6 +281,8 @@ class RnetActuatorCtrl :
         self.type = RNET_FRAME_TYPE['ACTUATOR_CTRL'][TYPE]
         self.subtype = RNET_FRAME_TYPE['ACTUATOR_CTRL'][SUBTYPE]
         self.device_id = device_id
+        self.idl = RNET_FRAME_IDLRTR['ACTUATOR_CTRL'][IDL]
+        self.rtr = RNET_FRAME_IDLRTR['ACTUATOR_CTRL'][RTR]
 
 
     def set_data(self, act_number=0, direction=0):
@@ -265,7 +302,7 @@ class RnetActuatorCtrl :
 
 
     def encode(self):
-        frame = raw_frame(True, False, self.type, self.subtype, self.device_id)
+        frame = raw_frame(self.idl, self.rtr, self.type, self.subtype, self.device_id)
         data = self.Actuator_t.build(
             dict(
                 ctrl = self.act_number + (self.direction<<7))
@@ -291,6 +328,8 @@ class RnetJoyPosition :
         self.type = RNET_FRAME_TYPE['JOY_POSITION'][TYPE]
         self.subtype = RNET_FRAME_TYPE['JOY_POSITION'][SUBTYPE]
         self.jsm_id = jsm_id
+        self.idl = RNET_FRAME_IDLRTR['JOY_POSITION'][IDL]
+        self.rtr = RNET_FRAME_IDLRTR['JOY_POSITION'][RTR]
 
 
     def set_data(self, x=0, y=0):
@@ -301,7 +340,7 @@ class RnetJoyPosition :
         return self.X,self.Y
 
     def encode(self):
-        frame = raw_frame(True, False, self.type, self.subtype, self.jsm_id)
+        frame = raw_frame(self.idl, self.rtr, self.type, self.subtype, self.jsm_id)
 
         data = self.joyPosition_t.build(
             dict(
@@ -332,6 +371,8 @@ class RnetHorn :
         self.type = RNET_FRAME_TYPE['HORN'][TYPE]
         self.subtype = RNET_FRAME_TYPE['HORN'][SUBTYPE]
         self.jsm_id = jsm_id
+        self.idl = RNET_FRAME_IDLRTR['HORN'][IDL]
+        self.rtr = RNET_FRAME_IDLRTR['HORN'][RTR]
 
     def toogle_state(self):
         if self.subtype == 0:
@@ -344,7 +385,7 @@ class RnetHorn :
 
 
     def encode(self):
-        frame = raw_frame(True, False, self.type, self.subtype, self.jsm_id)
+        frame = raw_frame(self.idl, self.rtr, self.type, self.subtype, self.jsm_id)
         frame.set_data(None)
         return frame.get_raw_frame()
 
@@ -369,10 +410,12 @@ class RnetPlayTone :
         self.type = RNET_FRAME_TYPE['PLAY_TONE'][TYPE]
         self.subtype = RNET_FRAME_TYPE['PLAY_TONE'][SUBTYPE]
         self.device_id = RNET_FRAME_TYPE['PLAY_TONE'][DEVICE_ID]
+        self.idl = RNET_FRAME_IDLRTR['PLAY_TONE'][IDL]
+        self.rtr = RNET_FRAME_IDLRTR['PLAY_TONE'][RTR]
 
 
     def encode(self):
-        frame = raw_frame(True, False, self.type, self.subtype, self.device_id)
+        frame = raw_frame(self.idl, self.rtr, self.type, self.subtype, self.device_id)
         data = self.tone_t.build(
             dict(
             tone0_length = 10,
@@ -404,10 +447,12 @@ class RnetBatteryLevel :
         self.type = RNET_FRAME_TYPE['BATTERY_LEVEL'][TYPE]
         self.subtype = RNET_FRAME_TYPE['BATTERY_LEVEL'][SUBTYPE]
         self.device_id = RNET_FRAME_TYPE['BATTERY_LEVEL'][DEVICE_ID]
+        self.idl = RNET_FRAME_IDLRTR['BATTERY_LEVEL'][IDL]
+        self.rtr = RNET_FRAME_IDLRTR['BATTERY_LEVEL'][RTR]
 
 
     def encode(self):
-        frame = raw_frame(True, False, self.type, self.subtype, self.device_id)
+        frame = raw_frame(self.idl, self.rtr, self.type, self.subtype, self.device_id)
         data = self.batteryLevel_t.build(
             dict(level = self.level)
         )
@@ -446,10 +491,12 @@ class RnetEndOfInit :
         self.type = RNET_FRAME_TYPE['END_OF_INIT'][TYPE]
         self.subtype = RNET_FRAME_TYPE['END_OF_INIT'][SUBTYPE]
         self.device_id = RNET_FRAME_TYPE['END_OF_INIT'][DEVICE_ID]
+        self.idl = RNET_FRAME_IDLRTR['END_OF_INIT'][IDL]
+        self.rtr = RNET_FRAME_IDLRTR['END_OF_INIT'][RTR]
 
 
     def set_raw(self, rawFrame):
-        self.raw = raw_frame(False, False, self.type, self.subtype, self.device_id)
+        self.raw = raw_frame(self.idl, self.rtr, self.type, self.subtype, self.device_id)
         self.raw.set_raw_frame(rawFrame)
 
 
@@ -472,11 +519,13 @@ class RnetPmTxConnect :
         self.level = 0
         self.type = RNET_FRAME_TYPE['PMTX_CONNECT'][TYPE]
         self.subtype = RNET_FRAME_TYPE['PMTX_CONNECT'][SUBTYPE]
-        self.device_id = RNET_FRAME_TYPE['PMTX_CONNECT'][DEVICE_ID]    
+        self.device_id = RNET_FRAME_TYPE['PMTX_CONNECT'][DEVICE_ID]
+        self.idl = RNET_FRAME_IDLRTR['PMTX_CONNECT'][IDL]
+        self.rtr = RNET_FRAME_IDLRTR['PMTX_CONNECT'][RTR]  
 
 
     def set_raw(self, rawFrame):
-        self.raw = raw_frame(False, False, self.type, self.subtype, self.device_id)
+        self.raw = raw_frame(self.idl, self.rtr, self.type, self.subtype, self.device_id)
         self.raw.set_raw_frame(rawFrame)
 
 
@@ -500,10 +549,12 @@ class RnetPmTxHeartbeat :
         self.type = RNET_FRAME_TYPE['PMTX_HEARTBEAT'][TYPE]
         self.subtype = RNET_FRAME_TYPE['PMTX_HEARTBEAT'][SUBTYPE]
         self.device_id = RNET_FRAME_TYPE['PMTX_HEARTBEAT'][DEVICE_ID]
+        self.idl = RNET_FRAME_IDLRTR['PMTX_HEARTBEAT'][IDL]
+        self.rtr = RNET_FRAME_IDLRTR['PMTX_HEARTBEAT'][RTR] 
 
 
     def set_raw(self, rawFrame):
-        self.raw = raw_frame(False, False, self.type, self.subtype, self.device_id)
+        self.raw = raw_frame(self.idl, self.rtr, self.type, self.subtype, self.device_id)
         self.raw.set_raw_frame(rawFrame)
 
 
@@ -522,6 +573,8 @@ class RnetLightCtrl :
         self.type = RNET_FRAME_TYPE['LIGHT_CTRL'][TYPE]
         self.subtype = RNET_FRAME_TYPE['LIGHT_CTRL'][SUBTYPE]
         self.device_id = device_id
+        self.idl = RNET_FRAME_IDLRTR['LIGHT_CTRL'][IDL]
+        self.rtr = RNET_FRAME_IDLRTR['LIGHT_CTRL'][RTR] 
 
 
     def set_data(self, light_id):
@@ -533,7 +586,7 @@ class RnetLightCtrl :
 
 
     def encode(self):
-        frame = raw_frame(True, False, self.type, self.light_id, self.device_id)
+        frame = raw_frame(self.idl, self.rtr, self.type, self.light_id, self.device_id)
         frame.set_data(None)
         return frame.get_raw_frame()
 
