@@ -51,3 +51,7 @@ Objectif N°2 : Capture des trames de controle de la signalisation (phares, ...)
 
 
 Objectif N°3 : Rejeu des 2 séquences d'init d'un JSM (Normal et sablier)
+
+DIVERS:
+	Commande pour voir les messages MQTT de topics précisés
+mosquitto_sub -t "action/max_speed" -t "action/drive" -t "action/horn" -t "action/poweroff" -t "action/poweron" -t "action/light" -t "action/actuator_ctrl"

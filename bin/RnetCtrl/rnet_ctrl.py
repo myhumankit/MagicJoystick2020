@@ -2,8 +2,6 @@ import binascii
 import threading
 import argparse
 import time
-import socket
-import sys
 import logging
 from rnet_can import  RnetCan
 import paho.mqtt.client as mqtt
@@ -27,7 +25,7 @@ class RnetControl(threading.Thread):
     ACTUATOR_FREQUENCY = 0.05   # 20 Hz
     ACTUATOR_WATCHDOG_TIMEOUT = 6 # 700ms (assume mqtt publish every 2Hz / 500ms)
     SERIAL_FREQUENCY = 0.05     # 50 ms period
-    joy_daemon_status = True
+    power_state = True
 
     def __init__(self, testmode = False):
         self.RnetHorn = None
@@ -39,6 +37,7 @@ class RnetControl(threading.Thread):
         self.actuator_watchdog = 0
         threading.Thread.__init__(self)
         
+        logger.info("========== START ========== ")
         try:
             self.mqtt_client = mqtt.Client() 
             self.mqtt_client.on_connect = self.on_connect 
@@ -92,22 +91,25 @@ class RnetControl(threading.Thread):
 
             # POWER ON
             elif msg.topic == action_poweron.TOPIC_NAME:
-                logger.info("[recv %s] Power On" %(msg.topic))
-                cmd = RnetDissector.RnetPowerOn()
-                # time.sleep()
-                self.cansend(self.rnet_can.cansocket0, serial.encode())
-                self.cansend(self.rnet_can.cansocket1, serial.encode())
-                thread_serial = threading.Thread(target=self.serial_thread, daemon=True)
-                thread_serial.start()
+                logger.info("[recv %s] Power On - NOT WORKING NO FRAME SENT" %(msg.topic))
+                
+                # cmd = RnetDissector.RnetPowerOn()
+                # self.power_state = True
+                # self.cansend(self.rnet_can.cansocket0, cmd.encode())
+                # self.cansend(self.rnet_can.cansocket1, cmd.encode())
+                # thread_serial = threading.Thread(target=self.serial_thread, daemon=True)
+                # thread_serial.start()
 
 
             # POWER OFF
             elif msg.topic == action_poweroff.TOPIC_NAME:
                 logger.info("[recv %s] Power Off" %(msg.topic))
                 cmd = RnetDissector.RnetPowerOff()
-                self.joy_daemon_status = False
-                time.sleep(self.POSITION_FREQUENCY)
                 self.cansend(self.rnet_can.motor_cansocket, cmd.encode())
+                # Need to sleep some time before ending threads, to let the ending frame exchange end
+                time.sleep(0.2)
+                self.power_state = False
+                # All threads end --> join() end --> reboot using supervisor
 
             # HORN
             elif msg.topic == action_horn.TOPIC_NAME:
@@ -182,7 +184,7 @@ class RnetControl(threading.Thread):
         # Initialize required Rnet frame objects and callbacks:
         self.rnet_can.set_battery_level_callback(self.update_battery_level)        
         self.RnetHorn = RnetDissector.RnetHorn(self.rnet_can.jsm_subtype)
-        self.RnetJoyPosition = RnetDissector.RnetJoyPosition(0,0,self.rnet_can.jsm_subtype)
+        self.RnetJoyPosition = RnetDissector.RnetJoyPosition(0,0,self.rnet_can.joy_subtype)
         self.RnetLight = RnetDissector.RnetLightCtrl(self.rnet_can.jsm_subtype)
         self.RnetBatteryLevel = RnetDissector.RnetBatteryLevel()
         self.RnetMotorMaxSpeed = RnetDissector.RnetMotorMaxSpeed(20, self.rnet_can.jsm_subtype)
@@ -198,7 +200,7 @@ class RnetControl(threading.Thread):
     def update_battery_level(self, raw_frame):
         self.RnetBatteryLevel.set_raw(raw_frame)
         self.battery_level = self.RnetBatteryLevel.decode()
-        logger.debug("Got battery level info: %d" %self.battery_level)
+        #logger.debug("Got battery level info: %d" %self.battery_level)
 
 
     def start_threads(self):
@@ -217,7 +219,7 @@ class RnetControl(threading.Thread):
     """
     def rnet_status_thread(self):
         logger.info("Rnet status thread started")
-        while True:
+        while self.power_state:
             status = status_battery_level(self.battery_level)
             self.mqtt_client.publish(status.TOPIC_NAME, status.serialize())
             time.sleep(self.STATUS_FREQUENCY)
@@ -225,7 +227,7 @@ class RnetControl(threading.Thread):
 
     def actuator_ctrl_thread(self):
         logger.info("Rnet actuator_ctrl thread started")
-        while True:
+        while self.power_state:
             # Decrement actuator watchdog
             if self.actuator_watchdog != 0 :
                 actuatorframe = self.RnetActuatorCtrl.encode()
@@ -237,7 +239,7 @@ class RnetControl(threading.Thread):
 
     def serial_thread(self):
         logger.info("Serial periodic Thread")
-        while True:
+        while self.power_state:
             serial = RnetDissector.RnetSerial(binascii.unhexlify("9700148100000000"))
             self.cansend(self.rnet_can.cansocket0, serial.encode())
             self.cansend(self.rnet_can.cansocket1, serial.encode())
@@ -249,7 +251,7 @@ class RnetControl(threading.Thread):
     """
     def rnet_joystick_thread(self):
         logger.info("Rnet joystick thread started")
-        while self.joy_daemon_status:
+        while self.power_state:
             joyframe = self.RnetJoyPosition.encode()
             self.cansend(self.rnet_can.motor_cansocket, joyframe)
             
@@ -283,9 +285,8 @@ if __name__ == "__main__":
         logger.setLevel(logging.DEBUG)
 
     # Connect to piCan and initialize Rnet controller,
-    rnet = RnetControl(args.testmode)
-
-    # Send JSM init sequence 'power on'
+    rnet = RnetControl(args.testmode) # Send JSM init sequence 'power on'
     threads = rnet.power_on()
     for thread in threads:
         thread.join()
+    logger.info("All threads joined, rebooting <rnet_ctrl.py> using supervisord ..")
