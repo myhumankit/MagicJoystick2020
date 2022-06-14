@@ -13,7 +13,7 @@
    y="0px"
    viewBox="0 0 600 600"
    xml:space="preserve"
-   sodipodi:docname="actuator_3_0.svg"
+   sodipodi:docname="actuator_3_1.svg"
    width="600"
    height="600"
    inkscape:version="1.0.2 (e86c870879, 2021-01-15)"
@@ -122,10 +122,8 @@
    inkscape:connector-curvature="0"
    sodipodi:nodetypes="ccccccccc" /><path
    inkscape:connector-curvature="0"
-   id="path4793-8-2-3"
-   class="arrow1"
+   id="path4793-8-2"
+   class="arrow0"
    style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:13.69999981;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-   d="m 191.83883,439.39981 66.26881,102.47301 -47.57996,-26.75623 m -18.68885,-75.71678 66.26881,102.47301 -4.88287,-54.36823"
-   inkscape:label="arrow11"
-   inkscape:transform-center-x="138.53255"
-   inkscape:transform-center-y="-188.09394" /></svg>
+   d="M 108.15704,353.53473 41.88823,251.06172 89.46819,277.81795 m 18.68885,75.71678 -66.26881,-102.47301 4.88287,54.36824"
+   inkscape:label="arrow10" /></svg>

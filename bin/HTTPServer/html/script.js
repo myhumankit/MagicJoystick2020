@@ -1,6 +1,8 @@
 (function()
 {
     var interval = 0;
+    var actuatorWatchdogTime = 500 // in ms
+
     /* Display time every second */
     function pad(n)
     {
@@ -136,7 +138,7 @@
             clearInterval(interval)   
         }
         /* TODO: set frequency with a static variable -> command must be sent every 500 ms as a safety measure */
-        interval = setInterval(send_actuator_ctrl, 500, actuator_num, direction)
+        interval = setInterval(send_actuator_ctrl, actuatorWatchdogTime, actuator_num, direction)
     }
 
     function set_icons_status()
