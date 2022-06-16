@@ -64,6 +64,8 @@ class BluetoothHIDService(object):
         
         manager.RegisterProfile(self.PROFILE_PATH, "00001124-0000-1000-8000-00805f9b34fb", opts)
 
+        
+    def wait_connect_device(self):
         sock_control = BluetoothSocket(L2CAP)
         sock_control.bind((socket.BDADDR_ANY, self.P_CTRL))
 
@@ -78,9 +80,13 @@ class BluetoothHIDService(object):
         print("Control channel connected to " + cinfo[self.HOST])
         self.cinter, cinfo = sock_inter.accept()
         print("Interrupt channel connected to " + cinfo[self.HOST])
+        
 
     def send(self, bytes_buf):
-        self.cinter.send(bytes_buf)
+        try :
+            self.cinter.send(bytes_buf)
+        except Exception:
+            self.wait_connect_device()
 
 drive_state = False
 mouse_x = 0
@@ -89,13 +95,13 @@ mouse_buttons = 0
 speed = 0.1
 
 def on_connect(client, userdata, flags, rc):
-  print("Connected to MQTT broker with result code " + str(rc))
-  client.subscribe(joystick_state.TOPIC_NAME)
-  client.subscribe(action_drive.TOPIC_NAME)
+    print("Connected to MQTT broker with result code " + str(rc))
+    client.subscribe(joystick_state.TOPIC_NAME)
+    client.subscribe(action_drive.TOPIC_NAME)
 
 
 def on_message(client, userdata, msg):
-    global drive_state, mouse_x, mouse_y, mouse_buttons, speed
+    global drive_state, mouse_buttons, mouse_x, mouse_y, speed
 
     if msg.topic == action_drive.TOPIC_NAME:
         drive_state = True
@@ -109,9 +115,9 @@ def on_message(client, userdata, msg):
             mouse_y = 0
             mouse_buttons = 0
         else:
-            mouse_x = int(joy_position.x * speed)
-            mouse_y = int(joy_position.y * speed)
             mouse_buttons = joy_position.buttons
+            mouse_x = int(speed * joy_position.x)
+            mouse_y = int(speed * joy_position.y)
 
 if __name__ == "__main__":
     # MQTT connexion
@@ -127,9 +133,12 @@ if __name__ == "__main__":
     DBusGMainLoop(set_as_default = True)
     
     bthid_srv = BluetoothHIDService()
+    bthid_srv.wait_connect_device()
 
     def send_mouse():
         global mouse_x, mouse_y, mouse_buttons
+        if( (mouse_x != 0) | (mouse_y != 0)| (mouse_buttons!=0) ):
+            print("mouse_send", mouse_buttons, mouse_x, mouse_y)
         bthid_srv.send(struct.pack("BBbb", 0xA1, mouse_buttons, mouse_x, mouse_y))
         return True
 

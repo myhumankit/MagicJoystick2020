@@ -10,12 +10,12 @@ import sys
 # Constants definition:
 DEFAULT_PERIOD = 0.01
 
-GPIO_LEFT_BUTTON = 23
-GPIO_RIGHT_BUTTON = 26
+GPIO_LEFT_BUTTON = 26
+GPIO_RIGHT_BUTTON = 23
 
-    # Instanciate logger:
+# Instanciate logger:
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.INFO, #log every message above INFO level (debug, info, warning, error, critical)
     format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
     handlers=[
         logging.StreamHandler()
@@ -31,7 +31,7 @@ logger.addHandler(h)
 # imports for ADC
 try:
     FORCE_JOY_TESTMODE = False
-    import Adafruit_ADS1x15
+    from ads1015 import ADS1015
 except Exception as e:
     FORCE_JOY_TESTMODE = True
     logger.error(str(e))
@@ -82,6 +82,7 @@ class Joystick():
     ADC_GAIN_SCALE          = 2048.0    # Scale the ADC value function of ADC_GAIN
     HYSTERESIS              = 30        # Used to generate a real 'zero' point 
     NB_SAMPLE               = 10        # number of samples for calibaration
+    ADS_GAIN                = 2048      # = ads.set_programmable_gain(), analogic gain, defaut value = 2048
 
 
     def __init__(self, sleeptime = DEFAULT_PERIOD, invert_x = False, invert_y = False, swap_xy = False, test = False):
@@ -99,8 +100,10 @@ class Joystick():
             self.kbdtest = kbdtest()
         else :
             self.kbdtest = None
-            # Create an ADS1115 ADC (16-bit) instance.
-            self.adc = Adafruit_ADS1x15.ADS1015()
+            # Create an ADS1015 ADC (16-bit) instance.
+            self.ads = ADS1015()
+            # reference = self.ads.get_reference_voltage()
+            # print("Reference voltage: {:6.3f}v \n".format(reference))
             self.calibrate()
             logger.info("Starting joy, calibration done")
 
@@ -111,11 +114,11 @@ class Joystick():
     """
     def get_xy(self):
         if self.swap_xy is False:
-            x = self.adc.read_adc(0, gain=self.ADC_GAIN)
-            y = self.adc.read_adc(1, gain=self.ADC_GAIN)
+            x = self.ads.get_voltage('in0/ref')
+            y = self.ads.get_voltage('in1/ref')
         else:
-            x = self.adc.read_adc(1, gain=self.ADC_GAIN)
-            y = self.adc.read_adc(0, gain=self.ADC_GAIN)
+            x = self.ads.get_voltage('in1/ref')
+            y = self.ads.get_voltage('in0/ref')
         return x, y
 
 
