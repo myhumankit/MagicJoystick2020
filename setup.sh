@@ -16,12 +16,17 @@ remote_cp()
 
 if [ $# -lt 3 ]; then
     echo "Usage: $0 ip user password"
+    echo "You can change Wifi SSID & Password by editing $0"
     exit
 fi
 
 IP=$1
 USER=$2
 PWD=$3
+IPRESO="192.168.42"
+SSID="MagicJostick-$2"
+WIFIPSWD="rpimagic123456"
+CHANNEL="1"
 
 # Get Raspberry Pi version
 
@@ -103,7 +108,89 @@ remote 'sudo sed -i "s/\[General\]/\[General\]\nName = MagickJoystick\nClass = 0
 # Add extra packages
 echo " -> Adding extra packages"
 remote "sudo apt-get -y update > /dev/null"
-remote "sudo apt-get -y install can-utils build-essential python3-dev git python3-pip cmake mosquitto bluez libcap2-bin libdbus-1-dev libglib2.0-dev python3-gi libbluetooth-dev pi-bluetooth > /dev/null"
+remote "sudo apt-get -y install can-utils build-essential python3-dev git python3-pip cmake mosquitto bluez libcap2-bin libdbus-1-dev libglib2.0-dev python3-gi libbluetooth-dev pi-bluetooth hostapd dnsmasq > /dev/null"
+
+
+# Setup Acces Point Configuration
+echo " -> Configure acces point files..."
+remote "sudo cp /etc/dhcpcd.conf /etc/dhcpcd.conf.bak"
+read -r -d '' LC_AP_DHCPCD << EOF
+# MagicJoy config starts =============\n
+# RaspAP wlan0 configuration\n
+interface wlan0\n
+static ip_address=$IPRESO.1/24\n
+static router=$IPRESO.1\n
+static domain_name_servers=$IPRESO.1 8.8.8.8\n
+# MagicJoy config stops =============\n
+EOF
+export LC_AP_DHCPCD
+remote 'echo -ne $LC_AP_DHCPCD | sudo tee -a /etc/dhcpcd.conf > /dev/null' LC_AP_DHCPCD
+remote 'sudo sed -i "s/^[ \t]*//" /etc/dhcpcd.conf' # Remove spaces that begin a line
+
+remote "sudo cp /etc/dnsmasq.conf /etc/dnsmasq.conf.bak"
+read -r -d '' LC_AP_DNSMASQ << EOF
+# MagicJoy config starts =============\n
+# Listening interface\n
+interface=wlan0\n
+# Pool of IP addresses served via DHCP\n
+dhcp-range=$IPRESO.2,$IPRESO.20,255.255.255.0,24h\n
+# Local wireless DNS domain\n
+domain=wlan\n
+# Alias for this router\n
+address=/gw.wlan/$IPRESO.1\n
+# MagicJoy config stops =============\n
+EOF
+export LC_AP_DNSMASQ
+remote 'echo -ne $LC_AP_DNSMASQ | sudo tee /etc/dnsmasq.conf > /dev/null' LC_AP_DNSMASQ
+remote 'sudo sed -i "s/^[ \t]*//" /etc/dnsmasq.conf' # Remove spaces that begin a line
+
+remote "sudo touch /etc/hostapd/hostapd.conf /etc/hostapd/hostapd.conf.bak"
+read -r -d '' LC_AP_HOSTAPD << EOF
+# MagicJoy config starts =============\n
+driver=nl80211\n
+ctrl_interface=/var/run/hostapd\n
+ctrl_interface_group=0\n
+beacon_int=100\n
+auth_algs=1\n
+wpa_key_mgmt=WPA-PSK\n
+wpa=2\n
+wpa_pairwise=CCMP\n
+wpa_pairwise=TKIP\n
+wpa_passphrase=$WIFIPSWD\n
+ssid=$SSID\n
+channel=$CHANNEL\n
+hw_mode=g\n
+interface=wlan0\n
+country_code=FR\n
+macaddr_acl=0\n
+ignore_broadcast_ssid=0\n
+# MagicJoy config stops =============\n
+EOF
+export LC_AP_HOSTAPD
+remote 'echo -ne $LC_AP_HOSTAPD | sudo tee /etc/hostapd/hostapd.conf > /dev/null' LC_AP_HOSTAPD
+remote 'sudo sed -i "s/^[ \t]*//" /etc/hostapd/hostapd.conf' # Remove spaces that begin a line
+
+remote "sudo cp /etc/default/hostapd /etc/default/hostapd.bak"
+read -r -d '' LC_AP_DEFHOSTAPD << EOF
+DAEMON_CONF="/etc/hostapd/hostapd.conf"\n
+EOF
+export LC_AP_DEFHOSTAPD
+remote 'echo -ne $LC_AP_DEFHOSTAPD | sudo tee /etc/default/hostapd > /dev/null' LC_AP_DEFHOSTAPD
+
+
+remote "sudo cp /etc/wpa_supplicant/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf.bak"
+read -r -d '' LC_AP_WPA << EOF
+country=fr\n
+EOF
+export LC_AP_WPA
+remote 'echo -ne $LC_AP_WPA | sudo tee -a /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null' LC_AP_WPA
+echo " -> Done configuring acces point files"
+
+echo " -> Lauching Hostapd service"
+remote 'sudo systemctl unmask hostapd'
+remote 'sudo systemctl enable hostapd'
+remote 'sudo rfkill unblock wlan'
+remote 'sudo service hostapd start'
 
 # Add python packages
 echo " -> Adding extra python packages"
