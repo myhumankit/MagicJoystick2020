@@ -31,7 +31,6 @@ running = True
 timeCpt = 0
 
 
-
 def get_kbd_mouve():
     global dx
     global dy
@@ -43,32 +42,25 @@ def get_kbd_mouve():
         key = getchar()
         timeCpt = 8
         if (key == ARR_U):
-            #print("Move UP")
             dx = 0
-            dy = -10
+            dy = -100
             print("up : [" + str(dx) + ";" + str(dy) + "]")
         elif (key == ARR_D):
-            #print("Move DOWN")
             dx = 0
-            dy = 10
+            dy = 100
             print("down : [" + str(dx) + ";" + str(dy) + "]")
         elif (key == ARR_L):
-            #print("Move LEFT")
-            dx = -10
+            dx = -100
             dy = 0
             print("left : [" + str(dx) + ";" + str(dy) + "]")
         elif (key == ARR_R):
-            #print("Move RIGHT")
-            dx = 10
+            dx = 100
             dy = 0
             print("right : [" + str(dx) + ";" + str(dy) + "]")
         elif (key == 'q'):
             dx = 0
             dy = 0
             button = 0x00
-            # joy_data = joystick_state(button, dx, dy, long_click)
-            # client.publish(joy_data.TOPIC_NAME, joy_data.serialize())
-            # time.sleep(PERIOD)
 
         elif (key == 's'): #normalement on utilise pas
             dx = 0
@@ -114,8 +106,6 @@ def get_click():
     btn_droite = Button(GPIO_RIGHT_BUTTON)
     btn_gauche = Button(GPIO_LEFT_BUTTON)
     while running:
-        #m = threading.Lock()
-        #m.acquire()
         if btn_droite.is_pressed:
             button = button | 0x02
             # joy_data = joystick_state(button, dx, dy, long_click)
@@ -147,20 +137,19 @@ def get_click():
                 #print("Delai: ", delai)
                 if delai > diff:
                     print("Appui long sur bouton 2 detecté", "\r")
-                    long_clic = 1
+                    long_click = 1
                     break
                 # joy_data = joystick_state(button, dx, dy, long_click)
                 # client.publish(joy_data.TOPIC_NAME, joy_data.serialize())
         else:
             button = 0x00
+            long_click = 0
             continue #on ne fait rien
 
         # button = 0x00
         # joy_data = joystick_state(button, dx, dy, long_click)
         # client.publish(joy_data.TOPIC_NAME, joy_data.serialize())
         # time.sleep(PERIOD)
-
-        #m.release()
 
 
 
@@ -178,7 +167,6 @@ daemon2.start()
 daemon_click = threading.Thread(target=get_click, daemon=True)
 daemon_click.start()
 
-# previous_state = None
 
 while running:
     joy_data = joystick_state(button, dx, dy, long_click)
