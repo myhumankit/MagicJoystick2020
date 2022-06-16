@@ -30,6 +30,20 @@ h.flush = sys.stdout.flush
 logger.addHandler(h)
 
 
+# Unsigned 8 bits to signed 8bits
+# input x      : 0..255 center on 127 unsigned
+def unsigned2signed(x):
+    # Case 'negative' range input 1..127 output 127..255 <=> -127..-1
+    if x < 128:
+        out = x + 127
+
+    # Case positive range input 128..255 output 0..127
+    else :
+        # Range 0..127
+        out = x - 128
+    return out
+
+
 class Joystick():
 
     ADS_GAIN = 2.048
@@ -128,19 +142,22 @@ class Joystick():
 
     def normalize_xy(self, x, y):
         if(x>self.offset_x):
-            x_res = (x-self.offset_x)/(self.x_max-self.offset_x) * 0.5
+            x_res = (x-self.offset_x)/(self.x_max-self.offset_x) * 0.5 + 0.5
         elif(x<=self.offset_x):
-            x_res = - (x-self.x_min)/(self.offset_x-self.x_min) * 0.5
+            x_res = (x-self.x_min)/(self.offset_x-self.x_min) * 0.5
         if(y>self.offset_y):
-            y_res = (y-self.offset_y)/(self.y_max-self.offset_y) * 0.5
+            y_res = (y-self.offset_y)/(self.y_max-self.offset_y) * 0.5 + 0.5
         elif(y<=self.offset_y):
-            y_res = - (y-self.y_min)/(self.offset_y-self.y_min) * 0.5
+            y_res = (y-self.y_min)/(self.offset_y-self.y_min) * 0.5
         return x_res, y_res
 
 
     def scale_xy(self, x, y):
         # Scale ADC range to 8bits range for rnet
-        return int(x*10), int(y*10)
+        return int(x*255), int(y*255)
+    
+    def rnet_xy(self, x, y):
+        return unsigned2signed(x), unsigned2signed(y)
 
 
 # # Instanciate joystick 
@@ -221,6 +238,11 @@ if __name__ == "__main__":
         
         #tmp_x, tmp_y = joy.normalize_xy(joy.offset_x, joy.offset_y)
         logger.debug("après scale_xy : " + str(state) + '''"      offset : [ %f ; %f ]" %(joy.scale_xy(tmp_x, tmp_y))''')
+        state[1], state[2] = joy.rnet_xy(state[1], state[2])
+        print("après rnet_xy" + str(state))
+        state[1] = unsigned2signed(state[1])
+        state[2] = unsigned2signed(state[2])
+        print("après conv unsigned to signed" + str(state))
 
         # if(save_state != state ):
         joy_data = joystick_state(state[0], state[1], state[2], state[3])
