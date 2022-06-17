@@ -41,17 +41,18 @@ class Actions(Resource):
             print(f"Connection failed with code {rc}")
 
     def post(self, action):
-        data = request.get_json()
-
         if action == "light":
+            data = request.get_json()
             msg = action_light(data["light_id"])
         elif action == "max_speed":
+            data = request.get_json()
             msg = action_max_speed(data["max_speed"])
         elif action == "drive":
             msg = action_drive(True)
         elif action == "horn":
             msg = action_horn()
         elif action == "actuator_ctrl":
+            data = request.get_json()
             msg = action_actuator_ctrl(data["actuator_num"], data["direction"])
         elif action == "poweroff":
             msg = action_poweroff()
