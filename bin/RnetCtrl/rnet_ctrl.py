@@ -10,8 +10,6 @@ from magick_joystick.Topics import *
 
 logger = can2RNET.logger
 
-#TODO : When poweroff received put the soft in a de-init state
-
 """
 Main R-net class to send joystick frames on the bus
 and take the control over the legacy JSM
@@ -85,7 +83,7 @@ class RnetControl(threading.Thread):
             # ENABLE/DISABLE LIGHTS COMMAND
             elif msg.topic == action_light.TOPIC_NAME:
                 action_light_obj = deserialize(msg.payload)
-                logger.info("[recv %s] Light swich Light #%d" %(msg.topic, action_light_obj.light_id))               
+                logger.info("[recv %s] Swich Light #%d" %(msg.topic, action_light_obj.light_id))               
                 self.RnetLight.set_data(action_light_obj.light_id) #Create only once
                 self.cansend(self.rnet_can.motor_cansocket, self.RnetLight.encode())
 
@@ -133,7 +131,20 @@ class RnetControl(threading.Thread):
                     # Data received from Joystck, reset watchdog
                     self.joy_watchdog = self.JOY_WATCHDOG_TIMEOUT
 
-                    #TODO : If incoherent data not in +/-100 range critical error kill the thread
+                    #If incoherent data not in +/-100 range critical error kill the thread
+                    x = joy_data.x
+                    y = joy_data.y
+                    if (x > 100) or (x < -100) or (y > 100) or (y < -100):
+                        logger.error("[recv %s] X=%d, Y=%d" %(msg.topic, x, y))
+                        logger.error("[CRITICAL ERROR] Invalid x or y, not in [-100;100], restart all services")
+                        from xmlrpc.client import ServerProxy #Reboot all services
+                        server = ServerProxy('http://localhost:9000/RPC2')
+                        server.supervisor.restart()
+
+                    # Change values from [-100;-1] to [128;255]
+                    # The eight least significant bits remain unchanged
+                    x = x & 0xFF
+                    y = y & 0xFF
 
                     # Check if long click is pressed to get out of drive mode
                     # and force position to neutral if true
@@ -141,16 +152,16 @@ class RnetControl(threading.Thread):
                         self.drive_mode = False
                         self.RnetJoyPosition.set_data(0, 0)
                     else:
-                        self.RnetJoyPosition.set_data(joy_data.x, joy_data.y)
-                        if joy_data.x or joy_data.y:
-                            logger.debug("[recv %s] X=%d, Y=%d" %(msg.topic, joy_data.x, joy_data.y))
+                        self.RnetJoyPosition.set_data(x, y)
+                        if x or y:
+                            logger.debug("[recv %s] X=%d, Y=%d" %(msg.topic, x, y))
 
             # ACTUATOR_CTRL
             elif msg.topic == action_actuator_ctrl.TOPIC_NAME:
                 actuator_data = deserialize(msg.payload)
                 self.RnetActuatorCtrl.set_data(actuator_data.actuator_num, actuator_data.direction)
                 self.actuator_watchdog = self.ACTUATOR_WATCHDOG_TIMEOUT
-                logger.info("Actuator topic received : %r, %r" %(actuator_data.actuator_num, actuator_data.direction))
+                logger.debug("Actuator topic received : %r, %r" %(actuator_data.actuator_num, actuator_data.direction))
 
 
             else:
@@ -200,11 +211,11 @@ class RnetControl(threading.Thread):
     def update_battery_level(self, raw_frame):
         self.RnetBatteryLevel.set_raw(raw_frame)
         self.battery_level = self.RnetBatteryLevel.decode()
-        #logger.debug("Got battery level info: %d" %self.battery_level)
+        logger.debug("Got battery level info: %d" %self.battery_level)
 
 
     def start_threads(self):
-        logger.info("Starting Rnet joystick position thread")
+        logger.info("Starting Rnet threads...")
         thread_joy = threading.Thread(target=self.rnet_joystick_thread, daemon=True)
         thread_joy.start()
         thread_act = threading.Thread(target=self.actuator_ctrl_thread, daemon=True)
@@ -283,6 +294,8 @@ if __name__ == "__main__":
 
     if args.debug:
         logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
 
     # Connect to piCan and initialize Rnet controller,
     rnet = RnetControl(args.testmode) # Send JSM init sequence 'power on'
