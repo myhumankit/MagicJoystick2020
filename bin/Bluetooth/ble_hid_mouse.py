@@ -104,12 +104,15 @@ def on_message(client, userdata, msg):
     global drive_state, mouse_buttons, mouse_x, mouse_y, speed
 
     if msg.topic == action_drive.TOPIC_NAME:
+        print("[recv %s] Switch to drive mode ON" %(msg.topic))
         drive_state = True
+        
     elif msg.topic == joystick_state.TOPIC_NAME:
         joy_position = deserialize(msg.payload)
 
         if drive_state:
             if joy_position.buttons == 1:
+                print("[CLIC] Switch to drive mode OFF")
                 drive_state = False
             mouse_x = 0
             mouse_y = 0
@@ -117,7 +120,7 @@ def on_message(client, userdata, msg):
         else:
             mouse_buttons = joy_position.buttons
             mouse_x = int(speed * joy_position.x)
-            mouse_y = int(speed * joy_position.y)
+            mouse_y = -int(speed * joy_position.y)
 
 if __name__ == "__main__":
     # MQTT connexion
