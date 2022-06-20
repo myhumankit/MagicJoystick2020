@@ -149,6 +149,7 @@ class RnetControl(threading.Thread):
                     # Check if long click is pressed to get out of drive mode
                     # and force position to neutral if true
                     if (joy_data.buttons == 1) :
+                        logger.info("[CLIC] Switch to drive mode OFF")
                         self.drive_mode = False
                         self.RnetJoyPosition.set_data(0, 0)
                     else:

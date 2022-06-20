@@ -48,7 +48,7 @@ class Actions(Resource):
             data = request.get_json()
             msg = action_max_speed(data["max_speed"])
         elif action == "drive":
-            msg = action_drive(True)
+            msg = action_drive()
         elif action == "horn":
             msg = action_horn()
         elif action == "actuator_ctrl":

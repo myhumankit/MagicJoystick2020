@@ -31,8 +31,8 @@ class action_actuator_ctrl(base_mqtt_message):
 
 class action_drive(base_mqtt_message):
     TOPIC_NAME = "action/drive"
-    def __init__(self, on):
-        self.on = on
+    def __init__(self):
+        pass
 
 class action_max_speed(base_mqtt_message):
     TOPIC_NAME = "action/max_speed"
