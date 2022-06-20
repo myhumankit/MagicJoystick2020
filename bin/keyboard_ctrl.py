@@ -8,15 +8,16 @@ from magick_joystick.Topics import *
 
 PERIOD_JOY = 1/30
 PERIOD_ACT = 1/20
-TOUT_VALUE_JOY = 15
-TOUT_VALUE_ACT = 10
+TOUT_VALUE_JOY = 5
+TOUT_VALUE_ACT = 5
+TOUT_VALUE_CLIC = 5
 TIMEOUT_ID = 2
 HELPSPACE = "  "
 
 # Movement / Joystick
 KEYS_ARROW = ['\x1b[D','\x1b[A','\x1b[C','\x1b[B'] #LEFT UP RIGHT DOWN
 ARROW_CHAR = ['\u2190','\u2191','\u2192','\u2193','\u25c9'] #LEFT UP RIGHT DOWN CENTER
-VALUES_XY = [[155,0],[0,100],[100,0],[0,155]]
+VALUES_XY = [[-100,0],[0,100],[100,0],[0,-100]]
 X = 0
 Y = 1
 
@@ -48,7 +49,9 @@ state_init = {
     'RUNNING' : True,
     'MOTOR_STATE' : "?", #Can be [?, OFF, ON/DRIVE, ON/NO_DRIVE]
     'ACT' : [-1, -1, -1], #Numero, direction, timeout
-    'JOY' : [0, 0, 0, -1], # x, y, timeout, id_direction (-1:center, 0:left, 1:up, 2:right, 3:down)
+    'JOY' : [0, 0, -1, -1], # x, y, timeout, id_direction (-1:center, 0:left, 1:up, 2:right, 3:down)
+    'SLOW' : False, # Tell if the Joy values in VALUES_XY must be divided by 2
+    'CLIC' : [0, 0], # simple left clic, long left clic
     'LIGHT' : [False,False,False,False], # flashing Left/Right, WARNNING, SPOTS
     'MAX_SPEED' : 1,
     'HELP' : False
@@ -67,7 +70,14 @@ def print_state():
     string += "MOTOR STATUS : " + state['MOTOR_STATE'] + '\r\n'
 
     #JOYSTICK
-    string += "JOY : " + ARROW_CHAR[state['JOY'][3]] + '\r\n'
+    string += "JOY : " + ARROW_CHAR[state['JOY'][3]] 
+    if state['SLOW']:
+        string += ' (slowed down)'
+    string += '\r\n'
+
+    #CLIC
+    clicChar = '\u25cf' if (state['CLIC'][0]==1 or state['CLIC'][1]==1) else '\u25ef'
+    string += "CLIC : " + clicChar + '\r\n'
 
     #ACTUATORS
     act_id, direction_id, _ = state['ACT']
@@ -91,13 +101,18 @@ def print_state():
 
     string += "\r\nToggle help with 'h'\r\n"
     if doHelp:
-        string += HELPSPACE + "Turn ON/OFF the wheelchair with '%c'/'%c'" % (KEYS_ONOFF[0],KEYS_ONOFF[1]) + '\r\n'
-        string += HELPSPACE + "Send drive action command with 'd'" + '\r\n'
-        string += HELPSPACE + "Move the weelchair with " + str(ARROW_CHAR[0:4]) + '\r\n'
-        string += HELPSPACE + "Move actuators with keys from '&' to '='" + '\r\n'
-        string += HELPSPACE + "Toggle Lights [%c-\u21E6] [%c-\u21E8] [%c-\u29CB] [%c-\u2600]" % (KEYS_LIGHT[0],KEYS_LIGHT[1],KEYS_LIGHT[2],KEYS_LIGHT[3]) + '\r\n'
-        string += HELPSPACE + "Change max speed with 's'" + '\r\n'
-        string += HELPSPACE + "Use the Horn with 'k'" + '\r\n'
+        string += HELPSPACE + "'%c'/'%c' : Turn ON/OFF the wheelchair with " % (KEYS_ONOFF[0],KEYS_ONOFF[1]) + '\r\n'
+        string += HELPSPACE + "'d' : Send action_drive command" + '\r\n'
+        string += HELPSPACE + "'"
+        for k in ARROW_CHAR[0:4]:
+            string += str(k)
+        string += "' : Move the weelchair/mouse" + '\r\n'
+        string += HELPSPACE + "'x' : Go half as fast" + '\r\n'        
+        string += HELPSPACE + "'c'/'v' : Do a short clic / Toggle long clic" + '\r\n'
+        string += HELPSPACE + "'&' to '=' : Move actuators " + '\r\n'
+        string += HELPSPACE + "[%c-\u21E6] [%c-\u21E8] [%c-\u29CB] [%c-\u2600] : Toggle lights" % (KEYS_LIGHT[0],KEYS_LIGHT[1],KEYS_LIGHT[2],KEYS_LIGHT[3]) + '\r\n'
+        string += HELPSPACE + "'s' : Change max speed" + '\r\n'
+        string += HELPSPACE + "'k' : Use the horn" + '\r\n'
     print(string + '\r\n') 
     return
 
@@ -136,19 +151,35 @@ def get_kbd(client):
             num, direction = id//2, id%2
             state['ACT'] = [num, direction,TOUT_VALUE_ACT]
         
-        if key in KEYS_ARROW:
-            id = KEYS_ARROW.index(key)            
-            state['JOY'] = [VALUES_XY[id][X], VALUES_XY[id][Y], TOUT_VALUE_JOY, id]
+        elif key in KEYS_ARROW:
+            id = KEYS_ARROW.index(key)
+            if state['SLOW']:
+                state['JOY'] = [VALUES_XY[id][X]//2, VALUES_XY[id][Y]//2, TOUT_VALUE_JOY, id]
+            else:
+                state['JOY'] = [VALUES_XY[id][X], VALUES_XY[id][Y], TOUT_VALUE_JOY, id]
         
-        if key in KEYS_LIGHT:
+        elif key == 'x' :
+            state['SLOW'] = not state['SLOW']
+        
+        elif key in KEYS_LIGHT:
             light_handler(client, key)
 
-        if key == 'd':
-            drive = action_drive(True)
+        elif key == 'd':
+            drive = action_drive()
             client.publish(drive.TOPIC_NAME, drive.serialize())
             state['MOTOR_STATE'] = 'ON/DRIVE'
         
-        if key in KEYS_ONOFF:
+        elif key == 'c':
+            state['CLIC'] = [1, 0]
+            state['MOTOR_STATE'] = 'ON/NO_DRIVE'
+        
+        elif key == 'v': #toggle long clic
+            long = state['CLIC'][1]
+            long = 1 if (long==0) else 0
+            state['CLIC'] = [0, long]
+            state['MOTOR_STATE'] = 'ON/NO_DRIVE'
+        
+        elif key in KEYS_ONOFF:
             if (key == KEYS_ONOFF[0]):
                 turn = action_poweron()
                 state['MOTOR_STATE'] = "ON/NO_DRIVE"
@@ -158,16 +189,16 @@ def get_kbd(client):
                 state['MOTOR_STATE'] = "OFF"
             client.publish(turn.TOPIC_NAME, turn.serialize())
         
-        if key == 's':
+        elif key == 's':
             state['MAX_SPEED'] = state['MAX_SPEED']%5 + 1
             sped = action_max_speed(state['MAX_SPEED'])
             client.publish(sped.TOPIC_NAME, sped.serialize())
         
-        if key == 'k':
+        elif key == 'k':
             horn = action_horn()
             client.publish(horn.TOPIC_NAME, horn.serialize())
         
-        if key == 'h':
+        elif key == 'h':
             state['HELP'] = not state['HELP']
 
         elif (key == 'q'):
@@ -196,14 +227,23 @@ def joystick_thread(client):
     """Sends the frames of the joystick in a loop as long as the corresponding key remains pressed."""
     global state
     while state['RUNNING']:
-        x, y, watchDog, _ = state['JOY']
-        if watchDog <= 0:
+        x, y, watchDog_XY, _ = state['JOY']
+        if watchDog_XY == 0:
             state['JOY'] = [0,0,0,-1] # To stop moving after 0.5s
-            if watchDog == 0: # Only actualize once the screen
-                print_state()
-        joy_data = joystick_state(0, x, y, 0)
+            print_state()
+        if watchDog_XY >= 0:
+            state['JOY'][TIMEOUT_ID] -= 1
+
+        clic, long = state['CLIC']
+        clic = 1 if (long==1) else clic #long_clic implique clic
+
+        joy_data = joystick_state(clic, x, y, long)
         client.publish(joy_data.TOPIC_NAME, joy_data.serialize())
-        state['JOY'][TIMEOUT_ID] -= 1
+
+        if (state['CLIC'][0] != state['CLIC'][1]): #Short clic
+            state['CLIC'][0] = 0 #Only one clic
+            print_state()
+        
         time.sleep(PERIOD_JOY)
 
 
