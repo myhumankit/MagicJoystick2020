@@ -9,7 +9,7 @@ class StaticPages(Resource):
     def get(self, filename = "index.html"):
         files = ["index.html", "wheelchair.html", "style.css",
                  "script.js", "button_default.png",
-                 "button_wheelchair.png", "button_back.png",
+                 "button_wheelchair.svg", "button_back.png",
                  "jquery-3.6.0.min.js", "all.min.css",
                  "actuator.html", "actuator_0_0.svg", "actuator_0_1.svg",
                  "actuator_1_0.svg", "actuator_1_1.svg", "actuator_2_0.svg",

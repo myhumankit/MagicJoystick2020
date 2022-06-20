@@ -184,7 +184,7 @@
     $("#actuator_5_0").mousedown(function() {actuator_ctrl(5, 0);})
     $("#actuator_5_1").mouseup(function() {clearInterval(interval);})
     $("#actuator_5_1").mousedown(function() {actuator_ctrl(5, 1);})
-    $("#wheelchair").on("click", function() {window.location = "wheelchair.html";})
+    $("#button_wheelchair").on("click", function() {window.location = "wheelchair.html";})
     $("#back").on("click", function() {window.location = "index.html";})
     $("#back-wheelchair").on("click", function() {window.location = "wheelchair.html";})
     $("#light").on("click", function() {window.location = "light.html";})

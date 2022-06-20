@@ -188,9 +188,13 @@ div.body.light > div > div {
     background-image: url("actuator.svg");
 }
 
-#wheelchair {
-    background-image: url("button_wheelchair.png");
+#button_wheelchair {
+    background-image: url("button_wheelchair.svg");
 }
+
+/* #button_back {
+    background-image: url("button_back.svg");
+} */
 
 #current_speed {
     background: none;
