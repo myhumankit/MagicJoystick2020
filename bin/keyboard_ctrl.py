@@ -54,7 +54,9 @@ state_init = {
     'CLIC' : [0, 0], # simple left clic, long left clic
     'LIGHT' : [False,False,False,False], # flashing Left/Right, WARNNING, SPOTS
     'MAX_SPEED' : 1,
-    'HELP' : False
+    'HELP' : False,
+    'CHAIR_SPEED' : 0.0,
+    'BATTERY' : 0.0,
 }
 
 # Need to reinit the state
@@ -98,6 +100,9 @@ def print_state():
     for i in range(1,6): # i € [1,5]
         speedStr += '\u2588' if (i <= speedVal) else '\u2591'
     string += 'MAX_SPEED : ' + speedStr + '\u258f %d/5\r\n' % (speedVal)
+
+    string += "CHAIR_SPEED : %.1f km/h\r\n" % (state['CHAIR_SPEED']*3.6)
+    string += "BATTERY : %d\r\n" % state['BATTERY']
 
     string += "\r\nToggle help with 'h'\r\n"
     if doHelp:
@@ -246,8 +251,26 @@ def joystick_thread(client):
         
         time.sleep(PERIOD_JOY)
 
+def on_connect(client, userdata, flags, rc):
+    client.subscribe(status_chair_speed.TOPIC_NAME)
+    client.subscribe(status_battery_level.TOPIC_NAME)
+
+def on_message(client, userdata, msg):
+    global state
+    data = deserialize(msg.payload)
+    if msg.topic == status_battery_level.TOPIC_NAME:
+        if state['BATTERY'] == data.battery_level:
+            return # To not re print the state
+        state['BATTERY'] = data.battery_level
+    elif msg.topic == status_chair_speed.TOPIC_NAME:
+        if state['CHAIR_SPEED'] == data.speedMps:
+            return
+        state['CHAIR_SPEED'] = data.speedMps
+    print_state()
 
 client = mqtt.Client()
+client.on_connect = on_connect 
+client.on_message = on_message
 client.connect("localhost", 1883, 60)
 client.loop_start()
 time.sleep(0.1)
