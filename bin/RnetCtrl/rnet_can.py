@@ -18,7 +18,8 @@ class RnetCan(threading.Thread):
     joy_subtype = None
     motor_cansocket = None
     jsm_cansocket = None
-    battery_level = None
+    battery_level_callback = None
+    chair_speed_callback = None
 
     def __init__(self, testmode = False):
         self.cansocket0 = None
@@ -72,7 +73,13 @@ class RnetCan(threading.Thread):
     Battery level display callback
     """
     def set_battery_level_callback(self, callback):
-        self.battery_level = callback
+        self.battery_level_callback = callback
+    
+    """
+    Chair speed callback
+    """
+    def set_chair_speed_callback(self, callback):
+        self.chair_speed_callback = callback
 
 
     """
@@ -110,8 +117,12 @@ class RnetCan(threading.Thread):
                     self.init_done = True
 
             if (frameName == 'BATTERY_LEVEL'):
-                if self.battery_level is not None:
-                    self.battery_level(rnetFrame)
+                if self.battery_level_callback is not None:
+                    self.battery_level_callback(rnetFrame)
+            
+            if (frameName == 'CHAIR_SPEED'):
+                if self.chair_speed_callback is not None:
+                    self.chair_speed_callback(rnetFrame)
 
     def logframe(self, frameName, listensock):
         if self.motor_cansocket == listensock:

@@ -18,7 +18,7 @@ and take the control over the legacy JSM
 class RnetControl(threading.Thread):
 
     POSITION_FREQUENCY = 0.01   # 100Hz - RNET requirement
-    STATUS_FREQUENCY = 1        # 1Hz
+    STATUS_FREQUENCY = 0.5        # 2Hz
     JOY_WATCHDOG_TIMEOUT = 20   # Force joystick position to [0,0] after 200ms without data.
     ACTUATOR_FREQUENCY = 0.05   # 20 Hz
     ACTUATOR_WATCHDOG_TIMEOUT = 6 # 700ms (assume mqtt publish every 2Hz / 500ms)
@@ -31,6 +31,7 @@ class RnetControl(threading.Thread):
         self.testmode = testmode
         self.drive_mode = False
         self.battery_level = 0
+        self.chair_speed = 0.0
         self.joy_watchdog = 0
         self.actuator_watchdog = 0
         threading.Thread.__init__(self)
@@ -136,10 +137,11 @@ class RnetControl(threading.Thread):
                     y = joy_data.y
                     if (x > 100) or (x < -100) or (y > 100) or (y < -100):
                         logger.error("[recv %s] X=%d, Y=%d" %(msg.topic, x, y))
-                        logger.error("[CRITICAL ERROR] Invalid x or y, not in [-100;100], restart all services")
-                        from xmlrpc.client import ServerProxy #Reboot all services
-                        server = ServerProxy('http://localhost:9000/RPC2')
-                        server.supervisor.restart()
+                        logger.error("[CRITICAL ERROR] Invalid x or y, not in [-100;100]")
+                        # TODO do it more gently
+                        # from xmlrpc.client import ServerProxy #Reboot all services
+                        # server = ServerProxy('http://localhost:9000/RPC2')
+                        # server.supervisor.restart()
 
                     # Change values from [-100;-1] to [128;255]
                     # The eight least significant bits remain unchanged
@@ -194,7 +196,8 @@ class RnetControl(threading.Thread):
         logger.info("Rnet Init complete, jsm_subtype id is: %x" %self.rnet_can.jsm_subtype)
 
         # Initialize required Rnet frame objects and callbacks:
-        self.rnet_can.set_battery_level_callback(self.update_battery_level)        
+        self.rnet_can.set_battery_level_callback(self.update_battery_level)  
+        self.rnet_can.set_chair_speed_callback(self.update_chair_speed)   
         self.RnetHorn = RnetDissector.RnetHorn(self.rnet_can.jsm_subtype)
         self.RnetJoyPosition = RnetDissector.RnetJoyPosition(0,0,self.rnet_can.joy_subtype)
         self.RnetLight = RnetDissector.RnetLightCtrl(self.rnet_can.jsm_subtype)
@@ -214,6 +217,11 @@ class RnetControl(threading.Thread):
         self.battery_level = self.RnetBatteryLevel.decode()
         logger.debug("Got battery level info: %d" %self.battery_level)
 
+    def update_chair_speed(self, rnetFrame):
+        data = RnetDissector.getFrameType(rnetFrame)[4]
+        speedStr = binascii.hexlify(data)[0:4]
+        self.chair_speed = int(speedStr[2:4],16) + (int(speedStr[0:2],16)/256)
+        logger.debug("Got chair speed info: %f" %self.chair_speed)
 
     def start_threads(self):
         logger.info("Starting Rnet threads...")
@@ -227,13 +235,16 @@ class RnetControl(threading.Thread):
 
 
     """
-    Endless loop that provides wheelchair statuses such as battery level...
+    Endless loop that provides wheelchair statuses such as battery level, chair speed...
     """
     def rnet_status_thread(self):
         logger.info("Rnet status thread started")
         while self.power_state:
             status = status_battery_level(self.battery_level)
             self.mqtt_client.publish(status.TOPIC_NAME, status.serialize())
+            speedStatus = status_chair_speed(self.chair_speed)
+            self.mqtt_client.publish(speedStatus.TOPIC_NAME, speedStatus.serialize())
+            logger.debug("Published chair status info: %.1fkm/h %d(battery)" % (self.chair_speed, self.battery_level))
             time.sleep(self.STATUS_FREQUENCY)
 
 
