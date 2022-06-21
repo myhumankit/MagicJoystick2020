@@ -1,7 +1,7 @@
 :root {
-    --header-height: 5vh;
-    --border-width: 20px;
-    --icon-size: 70px;
+    --header-height: 5vh; /* 5% de la hauteur pour le header */
+    --border-width: 10px;
+    --icon-size: min(18vmin, 100px);
 }
 
 
@@ -15,24 +15,16 @@ body {
     -webkit-user-select: none;                  /* prevent copy paste, to allow, change 'none' to 'text' */
     background-color:#222;
     font-family: system-ui, -apple-system, -apple-system-font, 'Segoe UI', 'Roboto', sans-serif;
-    font-size:12px;
     color: #EEE;
     height:100vh;
     width:100vw;
-
     margin:0px;
-    padding:0px;
-    border: none;
 }
 
 .header {
-    box-sizing: border-box;
     position: absolute;
-    top: 0px;
     width: 100%;
     height: var(--header-height);
-    padding: 0px;
-    margin: 0px;
 }
 
 #time, #battery {
@@ -62,21 +54,17 @@ div.body {
 
 div.body > div {
     width: 100%;
+    height: 95%;
 }
 
 div.body > div > div {
     display: inline-block;
-
-    padding: 0px;
-    margin: 0px;
-
     text-align: center;
-
     box-sizing: border-box;
-    border: transparent solid var(--border-width);
-    
-    background: url("button_default.png") no-repeat center;
-    background-size: contain;
+    border: transparent solid var(--border-width); 
+
+    width: 50%;
+    height: 90%;
 }
 
 div.body > div > div > i {
@@ -96,44 +84,18 @@ div.body.main > div {
 
 div.body.main > div > div {
     width: 100%;
-    height: 100%;
 }
 
 div.body.wheelchair > div {
     height: calc(100% / 5);
 }
 
-div.body.wheelchair > div > div {
-    width: 50%;
-    height: 100%;
-}
-
-div.body.actuator {
-    width: 100%;
-    height: 95%;
-}
-
 div.body.actuator > div {
     height: calc(100% / 7);
 }
 
-div.body.actuator > div > div {
-    width: 50%;
-    height: 100%;
-}
-
-div.body.light {
-    width: 100%;
-    height: 100%;
-}
-
 div.body.light > div {
-    height: calc(100% / 3);
-}
-
-div.body.light > div > div {
-    width: 50%;
-    height: 100%;
+    height: calc(100% / 4);
 }
 
 #actuator_0_0 {
@@ -188,8 +150,32 @@ div.body.light > div > div {
     background-image: url("actuator.svg");
 }
 
-#wheelchair {
-    background-image: url("button_wheelchair.png");
+#button_wheelchair {
+    background-image: url("button_wheelchair.svg");
+}
+
+#button_horn {
+    background-image: url("button_horn.svg");
+}
+
+#button_light {
+    background-image: url("button_light.svg");
+}
+
+#button_speed {
+    background-image: url("button_speed.svg");
+}
+
+#button_drive_mode {
+    background-image: url("button_drive_mode.svg");
+}
+
+#button_back {
+    background-image: url("button_back.svg");
+}
+
+#button_back_index {
+    background-image: url("button_back.svg");
 }
 
 #current_speed {
@@ -255,4 +241,15 @@ div.body.light > div > div {
 
 #lvl5.on {
     background-color: #FF0000;
+}
+
+
+.icon {
+    background: url("button_default.svg") no-repeat center;
+    background-size: contain;
+}
+
+.svg {
+    background: no-repeat center;
+    background-size: contain;
 }
