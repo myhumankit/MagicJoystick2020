@@ -31,6 +31,7 @@ class RnetControl(threading.Thread):
         self.testmode = testmode
         self.drive_mode = False
         self.battery_level = 0
+        self.chair_speed = 0.0
         self.joy_watchdog = 0
         self.actuator_watchdog = 0
         threading.Thread.__init__(self)
@@ -195,7 +196,8 @@ class RnetControl(threading.Thread):
         logger.info("Rnet Init complete, jsm_subtype id is: %x" %self.rnet_can.jsm_subtype)
 
         # Initialize required Rnet frame objects and callbacks:
-        self.rnet_can.set_battery_level_callback(self.update_battery_level)        
+        self.rnet_can.set_battery_level_callback(self.update_battery_level)  
+        self.rnet_can.set_chair_speed_callback(self.update_chair_speed)   
         self.RnetHorn = RnetDissector.RnetHorn(self.rnet_can.jsm_subtype)
         self.RnetJoyPosition = RnetDissector.RnetJoyPosition(0,0,self.rnet_can.joy_subtype)
         self.RnetLight = RnetDissector.RnetLightCtrl(self.rnet_can.jsm_subtype)
@@ -215,6 +217,11 @@ class RnetControl(threading.Thread):
         self.battery_level = self.RnetBatteryLevel.decode()
         logger.debug("Got battery level info: %d" %self.battery_level)
 
+    def update_chair_speed(self, rnetFrame):
+        data = RnetDissector.getFrameType(rnetFrame)[4]
+        speedStr = binascii.hexlify(data)[0:4]
+        self.chair_speed = int(speedStr[2:4],16) + (int(speedStr[0:2],16)/256)
+        logger.debug("Got chair speed info: %f" %self.chair_speed)
 
     def start_threads(self):
         logger.info("Starting Rnet threads...")
@@ -235,15 +242,9 @@ class RnetControl(threading.Thread):
         while self.power_state:
             status = status_battery_level(self.battery_level)
             self.mqtt_client.publish(status.TOPIC_NAME, status.serialize())
-
-            rawSpeed = self.rnet_can.chairSpeedData
-            if rawSpeed is not None: # Fixed Point format
-                speedStr = binascii.hexlify(rawSpeed)[0:4]
-                mps = int(speedStr[2:4],16) + (int(speedStr[0:2],16)/256)
-                logger.debug("Send actual speed %fm/s or %fkm/h"%(mps, mps*3.6))
-                speedStatus = status_chair_speed(mps)
-                self.mqtt_client.publish(speedStatus.TOPIC_NAME, speedStatus.serialize())
-
+            speedStatus = status_chair_speed(self.chair_speed)
+            self.mqtt_client.publish(speedStatus.TOPIC_NAME, speedStatus.serialize())
+            logger.debug("Published chair status info: %.1fkm/h %d(battery)" % (self.chair_speed, self.battery_level))
             time.sleep(self.STATUS_FREQUENCY)
 
 
