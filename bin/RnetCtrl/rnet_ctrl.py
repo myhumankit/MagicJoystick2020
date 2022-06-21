@@ -18,7 +18,7 @@ and take the control over the legacy JSM
 class RnetControl(threading.Thread):
 
     POSITION_FREQUENCY = 0.01   # 100Hz - RNET requirement
-    STATUS_FREQUENCY = 1        # 1Hz
+    STATUS_FREQUENCY = 0.5        # 2Hz
     JOY_WATCHDOG_TIMEOUT = 20   # Force joystick position to [0,0] after 200ms without data.
     ACTUATOR_FREQUENCY = 0.05   # 20 Hz
     ACTUATOR_WATCHDOG_TIMEOUT = 6 # 700ms (assume mqtt publish every 2Hz / 500ms)
@@ -136,10 +136,11 @@ class RnetControl(threading.Thread):
                     y = joy_data.y
                     if (x > 100) or (x < -100) or (y > 100) or (y < -100):
                         logger.error("[recv %s] X=%d, Y=%d" %(msg.topic, x, y))
-                        logger.error("[CRITICAL ERROR] Invalid x or y, not in [-100;100], restart all services")
-                        from xmlrpc.client import ServerProxy #Reboot all services
-                        server = ServerProxy('http://localhost:9000/RPC2')
-                        server.supervisor.restart()
+                        logger.error("[CRITICAL ERROR] Invalid x or y, not in [-100;100]")
+                        # TODO do it more gently
+                        # from xmlrpc.client import ServerProxy #Reboot all services
+                        # server = ServerProxy('http://localhost:9000/RPC2')
+                        # server.supervisor.restart()
 
                     # Change values from [-100;-1] to [128;255]
                     # The eight least significant bits remain unchanged
@@ -227,13 +228,22 @@ class RnetControl(threading.Thread):
 
 
     """
-    Endless loop that provides wheelchair statuses such as battery level...
+    Endless loop that provides wheelchair statuses such as battery level, chair speed...
     """
     def rnet_status_thread(self):
         logger.info("Rnet status thread started")
         while self.power_state:
             status = status_battery_level(self.battery_level)
             self.mqtt_client.publish(status.TOPIC_NAME, status.serialize())
+
+            rawSpeed = self.rnet_can.chairSpeedData
+            if rawSpeed is not None: # Fixed Point format
+                speedStr = binascii.hexlify(rawSpeed)[0:4]
+                mps = int(speedStr[2:4],16) + (int(speedStr[0:2],16)/256)
+                logger.debug("Send actual speed %fm/s or %fkm/h"%(mps, mps*3.6))
+                speedStatus = status_chair_speed(mps)
+                self.mqtt_client.publish(speedStatus.TOPIC_NAME, speedStatus.serialize())
+
             time.sleep(self.STATUS_FREQUENCY)
 
 

@@ -19,6 +19,7 @@ class RnetCan(threading.Thread):
     motor_cansocket = None
     jsm_cansocket = None
     battery_level = None
+    chairSpeedData = None
 
     def __init__(self, testmode = False):
         self.cansocket0 = None
@@ -94,6 +95,9 @@ class RnetCan(threading.Thread):
                 pass
             else:
                 can2RNET.cansendraw(sendsock, rnetFrame)
+
+            if (frameName == 'CHAIR_SPEED'):
+                self.chairSpeedData = data # Used in rnet_ctrl.py
 
             if self.init_done == False:
                 if frameName == 'PMTX_HEATBEAT':

@@ -65,3 +65,10 @@ class status_battery_level(base_mqtt_message):
     TOPIC_NAME = "status/battery_level"
     def __init__(self, battery_level):
         self.battery_level = battery_level
+
+class status_chair_speed(base_mqtt_message):
+    TOPIC_NAME = "status/chair_speed"
+    def __init__(self, speedMps):
+        self.speedMps = speedMps
+
+
