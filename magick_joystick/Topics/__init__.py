@@ -1,17 +1,16 @@
-import pickle
+import jsonpickle
 
 def deserialize(arrray):
-    return pickle.loads(arrray)
+    return jsonpickle.decode(arrray)
 
 # Base class for MQTT messages
 class base_mqtt_message:
     def __init__(self):
         pass
 
-    """ returns byte array representation of this object """
     def serialize(self):
-        # TODO : optimize serialization size
-        return pickle.dumps(self)
+        """ returns json-string representation of this object """
+        return jsonpickle.dumps(self)
 
 # Data format for each topic
 class joystick_state(base_mqtt_message):
