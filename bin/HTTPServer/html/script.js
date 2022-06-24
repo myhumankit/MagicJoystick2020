@@ -9,12 +9,26 @@
         return ("0" + n).slice(-2)
     }
 
-    function display_time()
+
+    function display_time_battery_speed()
     {   
         let now = new Date();
 
-        str = "" + pad(now.getHours()) +":" + pad(now.getMinutes());
-        $("#time").html(str);
+        $.ajax({
+            type: "GET",
+            url: "/current",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function(result){
+                str = "" + pad(now.getHours()) +":" + pad(now.getMinutes());
+                $("#time").html(str);
+                str = "" + result.BATTERY_LEVEL.toFixed() + "%";
+                $("#battery").html(str);
+                str = "" + result.CHAIR_SPEED.toFixed(1) + " km/h";
+                $("#current_speed").html(str);
+            },
+            error: function(errMsg){}
+            })
     }
 
     function send_light(light_id)
@@ -155,8 +169,8 @@
     }
 
     /* Clock */
-    display_time();
-    setInterval(display_time, 1000);
+    display_time_battery_speed();
+    setInterval(display_time_battery_speed, 1000);
 
     /* Register button callbacks */
     $("#actuator").on("click", function() {window.location = "actuator.html";})
