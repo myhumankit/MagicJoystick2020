@@ -53,6 +53,7 @@ state_init = {
     'SLOW' : False, # Tell if the Joy values in VALUES_XY must be divided by 2
     'CLIC' : [0, 0], # simple left clic, long left clic
     'LIGHT' : [False,False,False,False], # flashing Left/Right, WARNNING, SPOTS
+    'AUTO_LIGHT' : False,
     'MAX_SPEED' : 1,
     'HELP' : False,
     'CHAIR_SPEED' : 0.0,
@@ -67,7 +68,8 @@ def print_state():
     global state
     doHelp = state['HELP']
 
-    string = "\x1b[2J\x1b[H\n" # Clear sequence
+    string = ""
+    string += "\x1b[2J\x1b[H\n" # Clear sequence
 
     string += "MOTOR STATUS : " + state['MOTOR_STATE'] + '\r\n'
 
@@ -92,6 +94,7 @@ def print_state():
     lstr += '\u21E8 ' if (state['LIGHT'][FLASHING_RIGHT]) else '  '
     lstr += '\u29CB ' if (state['LIGHT'][WARNING_LIGHT]) else '  '
     lstr += '\u2600 ' if (state['LIGHT'][FRONT_LIGHTS]) else '  '
+    lstr += 'AUTO ' if (state['AUTO_LIGHT']) else '  '
     string += "LIGHT : " + lstr + '\r\n'
 
     #MAX_SPEED
@@ -116,6 +119,7 @@ def print_state():
         string += HELPSPACE + "'c'/'v' : Do a short clic / Toggle long clic" + '\r\n'
         string += HELPSPACE + "'&' to '=' : Move actuators " + '\r\n'
         string += HELPSPACE + "[%c-\u21E6] [%c-\u21E8] [%c-\u29CB] [%c-\u2600] : Toggle lights" % (KEYS_LIGHT[0],KEYS_LIGHT[1],KEYS_LIGHT[2],KEYS_LIGHT[3]) + '\r\n'
+        string += HELPSPACE + "'a' : Toggle automatic lights" + '\r\n'
         string += HELPSPACE + "'s' : Change max speed" + '\r\n'
         string += HELPSPACE + "'k' : Use the horn" + '\r\n'
     print(string + '\r\n') 
@@ -126,19 +130,27 @@ def print_state():
 def light_handler(client, key):
     """Turns the lights on or off depending on the input key"""
     lid = KEYS_LIGHT.index(key)
+    lightMsg = action_light(lid+1) #ID begins with 1
+
     if lid == FRONT_LIGHTS :
         state['LIGHT'][FRONT_LIGHTS] = not state['LIGHT'][FRONT_LIGHTS]
+        client.publish(lightMsg.TOPIC_NAME, lightMsg.serialize())
+        return # to Ignore the auto light state
+
+    if state['AUTO_LIGHT']: #Do not send Warn or flash changes if auto lights is on
+        return
+
     if lid == WARNING_LIGHT :
         state['LIGHT'][FLASHING_LEFT] = False 
         state['LIGHT'][FLASHING_RIGHT] = False 
         state['LIGHT'][WARNING_LIGHT] = (not state['LIGHT'][WARNING_LIGHT])
+    
     if lid < 2 and not state['LIGHT'][WARNING_LIGHT]: # Flashing (only if no Warn)
         state['LIGHT'][FLASHING_LEFT] = (not state['LIGHT'][FLASHING_LEFT]) and lid==FLASHING_LEFT
         state['LIGHT'][FLASHING_RIGHT] = (not state['LIGHT'][FLASHING_RIGHT]) and lid==FLASHING_RIGHT
-    
-    #In case of Flash change with Warn ON, send a useless frame
-    light = action_light(lid+1) #ID begins with 1
-    client.publish(light.TOPIC_NAME, light.serialize())
+
+    #In case of Flashing change with Warn ON, send a useless frame
+    client.publish(lightMsg.TOPIC_NAME, lightMsg.serialize())
 
 
 
@@ -168,6 +180,12 @@ def get_kbd(client):
         
         elif key in KEYS_LIGHT:
             light_handler(client, key)
+        
+        elif key == 'a':
+            state['AUTO_LIGHT'] = not state['AUTO_LIGHT']
+            auto = action_auto_light()
+            client.publish(auto.TOPIC_NAME, auto.serialize())
+            state['LIGHT'] = [False,False,False,state['LIGHT'][3]]
 
         elif key == 'd':
             drive = action_drive()
