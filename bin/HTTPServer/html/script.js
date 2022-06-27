@@ -27,7 +27,9 @@
                 str = "" + result.CHAIR_SPEED.toFixed(1) + " km/h";
                 $("#current_speed").html(str);
             },
-            error: function(errMsg){}
+            error: function(errMsg){
+                console.log(errMsg)
+            }
             })
     }
 
@@ -57,7 +59,10 @@
             sessionStorage.setItem(light, "true")
             $("#" + light).addClass("on");
         }
-        send_light(light_id)
+        if(light_id<5)
+            send_light(light_id)
+        else if(light=5)
+            $.post("/action/auto_light")
     }
 
     function send_power(url)
@@ -206,6 +211,7 @@
     $("#light_2").on("click", function() {change_light(2);})
     $("#light_3").on("click", function() {change_light(3);})
     $("#light_4").on("click", function() {change_light(4);})
+    $("#light_5").on("click", function() {change_light(5);})
     $("#power").on("click", change_power)
     $("#button_speed").on("click", change_speed)
     $("#button_drive_mode").on("click", function() {$.post("/action/drive")})

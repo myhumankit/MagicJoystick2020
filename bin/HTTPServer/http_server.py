@@ -45,6 +45,8 @@ class Actions(Resource):
         if action == "light":
             data = request.get_json()
             msg = action_light(data["light_id"])
+        elif action == "auto_light":
+            msg = action_auto_light()
         elif action == "max_speed":
             data = request.get_json()
             msg = action_max_speed(data["max_speed"])
