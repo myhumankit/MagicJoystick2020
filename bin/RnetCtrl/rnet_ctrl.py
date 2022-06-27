@@ -23,7 +23,11 @@ class RnetControl(threading.Thread):
     ACTUATOR_FREQUENCY = 0.05   # 20 Hz
     ACTUATOR_WATCHDOG_TIMEOUT = 6 # 700ms (assume mqtt publish every 2Hz / 500ms)
     SERIAL_FREQUENCY = 0.05     # 50 ms period
+    AUTO_LIGHT_PERIOD = 0.25
     power_state = True
+
+    light_state = [False,False,False] # flashing left, flashing right, Warnning
+    auto_light = False
 
     def __init__(self, testmode = False):
         self.RnetHorn = None
@@ -70,32 +74,59 @@ class RnetControl(threading.Thread):
                 mqtt_client.subscribe(action_actuator_ctrl.TOPIC_NAME)
                 mqtt_client.subscribe(action_poweroff.TOPIC_NAME)
                 mqtt_client.subscribe(action_poweron.TOPIC_NAME)
+                mqtt_client.subscribe(action_auto_light.TOPIC_NAME)
             else:
                 logger.info(f"Connection failed with code {rc}")
-
+            
+    def update_light_state(self, rnetLid):
+        if rnetLid == 4 :
+            return # Front light status is not save
+        elif rnetLid == 3: # Warning
+            self.light_state = [False, False, not self.light_state[2]]
+        elif rnetLid == 2 and not self.light_state[2]: # Can change flashing only if warn is off
+            self.light_state = [False, not self.light_state[1], False]
+        elif rnetLid == 1 and not self.light_state[2]:
+            self.light_state = [not self.light_state[0], False, False]
+        return
 
     # MQTT Message broker :
-    def on_message(self, mqtt_client, userdata, msg):         
+    def on_message(self, mqtt_client, userdata, msg):
+            if not self.rnet_can.init_done: # TODO Exception when turn ON message is receive
+                if not msg.topic == joystick_state.TOPIC_NAME:
+                    logger.info("[WARNING] : Recv %s but init of Rnet_can not done yet" % (msg.topic))
+                return
+
             # ENABLE DRIVE COMMAND
-            if msg.topic == action_drive.TOPIC_NAME:
+            elif msg.topic == action_drive.TOPIC_NAME:
                 logger.info("[recv %s] Switch to drive mode ON" %(msg.topic))
                 self.drive_mode = True
 
-            # ENABLE/DISABLE LIGHTS COMMAND
+            # ENABLE/DISABLE LIGHT 
             elif msg.topic == action_light.TOPIC_NAME:
                 action_light_obj = deserialize(msg.payload)
-                logger.info("[recv %s] Swich Light #%d" %(msg.topic, action_light_obj.light_id))               
-                self.RnetLight.set_data(action_light_obj.light_id) #Create only once
+                rnetLid = action_light_obj.light_id               
+                self.RnetLight.set_data(rnetLid) # Send to can
                 self.cansend(self.rnet_can.motor_cansocket, self.RnetLight.encode())
+                self.update_light_state(rnetLid)
+                logger.info("[recv %s] Swich Light #%d" %(msg.topic, rnetLid))
+            
+            # ENABLE/DISABLE AUTO LIGHTS
+            elif msg.topic == action_auto_light.TOPIC_NAME:
+                self.auto_light = not self.auto_light
+                if self.auto_light:
+                    thread_auto = threading.Thread(target=self.auto_light_thread, daemon=True)
+                    thread_auto.start()
+                    logger.info("[recv %s] Turn ON automatic lights" %(msg.topic))
+                else:
+                    logger.info("[recv %s] Turn OFF automatic lights" %(msg.topic))
 
             # POWER ON
             elif msg.topic == action_poweron.TOPIC_NAME:
                 logger.info("[recv %s] Power On - NOT WORKING NO FRAME SENT" %(msg.topic))
                 
                 # cmd = RnetDissector.RnetPowerOn()
-                # self.power_state = True
-                # self.cansend(self.rnet_can.cansocket0, cmd.encode())
-                # self.cansend(self.rnet_can.cansocket1, cmd.encode())
+                # thread_serial = threading.Thread(target=self.serial_thread, daemon=True)
+                # thread_serial.start()
                 # thread_serial = threading.Thread(target=self.serial_thread, daemon=True)
                 # thread_serial.start()
 
@@ -108,6 +139,7 @@ class RnetControl(threading.Thread):
                 # Need to sleep some time before ending threads, to let the ending frame exchange end
                 time.sleep(0.2)
                 self.power_state = False
+                self.auto_light = False
                 # All threads end --> join() end --> reboot using supervisor
 
             # HORN
@@ -142,11 +174,6 @@ class RnetControl(threading.Thread):
                         # from xmlrpc.client import ServerProxy #Reboot all services
                         # server = ServerProxy('http://localhost:9000/RPC2')
                         # server.supervisor.restart()
-
-                    # Change values from [-100;-1] to [128;255]
-                    # The eight least significant bits remain unchanged
-                    x = x & 0xFF
-                    y = y & 0xFF
 
                     # Check if long click is pressed to get out of drive mode
                     # and force position to neutral if true
@@ -287,6 +314,29 @@ class RnetControl(threading.Thread):
             
             time.sleep(self.POSITION_FREQUENCY)
 
+    def auto_light_thread(self):
+        logger.info("[AUTO LIGHT] Thread start")
+        lim = 10
+        while self.auto_light:
+            x, y = self.RnetJoyPosition.get_data()
+            logger.debug("[AUTO LIGHT] xy=(%d,%d) & %s"%(x,y, str(self.light_state)))
+            left, right, warn = self.light_state
+            low_x = (x<-lim)
+            heigh_x = (x>lim)
+            mid_x = not(low_x or heigh_x)
+            low_y = (y<-lim)
+            if (low_x and not left and not warn) or (mid_x and left):
+                lightMsg = action_light(1)
+                self.mqtt_client.publish(lightMsg.TOPIC_NAME, lightMsg.serialize())
+            if (heigh_x and not right and not warn) or (mid_x and right):
+                lightMsg = action_light(2)
+                self.mqtt_client.publish(lightMsg.TOPIC_NAME, lightMsg.serialize())
+            if (low_y and not warn) or (not low_y and warn):
+                lightMsg = action_light(3)
+                self.mqtt_client.publish(lightMsg.TOPIC_NAME, lightMsg.serialize())
+            time.sleep(self.AUTO_LIGHT_PERIOD)
+        logger.info("[AUTO LIGHT] Thread end")
+        return
 
 
 """

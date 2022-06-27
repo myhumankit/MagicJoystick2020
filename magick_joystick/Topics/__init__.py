@@ -60,6 +60,11 @@ class action_light(base_mqtt_message):
         #No need of a enable/disable variable because the frames are the same to swich on/off
         self.light_id = light_id
 
+class action_auto_light(base_mqtt_message):
+    TOPIC_NAME = "action/auto_light"
+    def __init__(self): 
+       pass
+
 class status_battery_level(base_mqtt_message):
     TOPIC_NAME = "status/battery_level"
     def __init__(self, battery_level):
