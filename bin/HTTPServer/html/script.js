@@ -30,14 +30,24 @@
             })
     }
 
-    function synchro_lights_speed()
+    function synchro_lights_speed_driveMode()
     {
         $.ajax({
             type: "GET",
-            url: "/current/lights-speed",
+            url: "/current/lights-speed-driveMode",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
             success: function(result){
+                if(result.DRIVE_MODE === true) {
+                    if (!($("#button_drive_mode").hasClass("on"))) {
+                        $("#button_drive_mode").addClass("on");
+                    }
+                } else {
+                        if($("#button_drive_mode").addClass("on")) {
+                            $("#button_drive_mode").removeClass("on");
+                        }
+                }
+
                 str = "" + result.CHAIR_SPEED.toFixed(1) + " km/h";
                 $("#current_speed").html(str);
 
@@ -205,7 +215,7 @@
 
     /* Clock */
     setInterval(display_time_battery, 2000);
-    setInterval(synchro_lights_speed, 500);
+    setInterval(synchro_lights_speed_driveMode, 500);
 
     /* Register button callbacks */
     $("#actuator").on("click", function() {window.location = "actuator.html";})

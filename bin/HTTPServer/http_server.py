@@ -5,6 +5,7 @@ from magick_joystick.Topics import *
 
 app = Flask(__name__)
 lights = [False, False, False, False]
+drive_mode = False
 battery_level = 7 #valeur d'init (fausse)
 chair_speed = -1.0 #valeur d'init (fausse)
 
@@ -82,13 +83,13 @@ class CurrentValues(Resource):
         pass
     
     def get(self, topic):
-        global battery_level, chair_speed
+        global battery_level, chair_speed, drive_mode
         if topic == "time-battery":
             return {"BATTERY_LEVEL": battery_level}
-        elif topic == "lights-speed":
+        elif topic == "lights-speed-driveMode":
             print("get request", lights)
-            return {"LIGHTS": lights, "CHAIR_SPEED" : chair_speed}
-
+            return {"DRIVE_MODE": drive_mode, "CHAIR_SPEED" : chair_speed, "LIGHTS": lights}
+            #return {"CHAIR_SPEED" : chair_speed, "LIGHTS": lights}
 
 def on_connect(client, userdata, flags, rc):
         if rc == 0:
@@ -96,11 +97,12 @@ def on_connect(client, userdata, flags, rc):
             client.subscribe(status_chair_speed.TOPIC_NAME)
             client.subscribe(status_battery_level.TOPIC_NAME)
             client.subscribe(action_light.TOPIC_NAME)
+            client.subscribe(action_drive.TOPIC_NAME)
         else:
             print(f"Connection failed with code {rc}")
 
 def on_message(client, userdata, msg):
-    global battery_level, chair_speed
+    global battery_level, chair_speed, drive_mode
     data_current = deserialize(msg.payload)
     if msg.topic == status_battery_level.TOPIC_NAME:
         #self.battery_level = json.dumps({"BATTERY_LEVEL": data_current.battery_level}).encode("utf8")
@@ -109,6 +111,9 @@ def on_message(client, userdata, msg):
     elif msg.topic == status_chair_speed.TOPIC_NAME:
         #self.chair_speed = json.dumps({"CHAIR_SPEED": data_current.speedMps*3.6}).encode("utf8")
         chair_speed = data_current.speedMps*3.6
+    
+    elif msg.topic == action_drive.TOPIC_NAME:
+        drive_mode = not drive_mode
 
     elif msg.topic == action_light.TOPIC_NAME:
         lid = data_current.light_id-1
