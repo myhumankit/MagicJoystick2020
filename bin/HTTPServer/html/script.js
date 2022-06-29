@@ -10,13 +10,12 @@
     }
 
 
-    function display_time_battery_speed()
+    function display_time_battery()
     {   
         let now = new Date();
-
         $.ajax({
             type: "GET",
-            url: "/current",
+            url: "/current/time-battery",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
             success: function(result){
@@ -24,8 +23,39 @@
                 $("#time").html(str);
                 str = "" + result.BATTERY_LEVEL.toFixed() + "%";
                 $("#battery").html(str);
+            },
+            error: function(errMsg){
+                console.log(errMsg)
+            }
+            })
+    }
+
+    function synchro_lights_speed()
+    {
+        $.ajax({
+            type: "GET",
+            url: "/current/lights-speed",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function(result){
                 str = "" + result.CHAIR_SPEED.toFixed(1) + " km/h";
                 $("#current_speed").html(str);
+
+                for ( var i=0 ; i<result["LIGHTS"].length ; i++ ) {
+                    light = "light_" + (i+1)
+                    if(result["LIGHTS"][i] === true) {
+                        sessionStorage.setItem(light, "true")
+                        if (!($("#" + light).hasClass("on"))) {
+                            $("#" + light).addClass("on");
+                        }
+                    } else {
+                        sessionStorage.setItem(light, "false")
+                        if($("#" + light).hasClass("on")) {
+                            $("#" + light).removeClass("on");
+                        }
+                    }
+                              
+                }
             },
             error: function(errMsg){
                 console.log(errMsg)
@@ -174,8 +204,8 @@
     }
 
     /* Clock */
-    display_time_battery_speed();
-    setInterval(display_time_battery_speed, 1000);
+    setInterval(display_time_battery, 2000);
+    setInterval(synchro_lights_speed, 500);
 
     /* Register button callbacks */
     $("#actuator").on("click", function() {window.location = "actuator.html";})

@@ -145,7 +145,7 @@ def light_handler(client, key):
         state['LIGHT'][FLASHING_RIGHT] = False 
         state['LIGHT'][WARNING_LIGHT] = (not state['LIGHT'][WARNING_LIGHT])
     
-    if lid < 2 and not state['LIGHT'][WARNING_LIGHT]: # Flashing (only if no Warn)
+    elif lid < 2 and not state['LIGHT'][WARNING_LIGHT]: # Flashing (only if no Warn)
         state['LIGHT'][FLASHING_LEFT] = (not state['LIGHT'][FLASHING_LEFT]) and lid==FLASHING_LEFT
         state['LIGHT'][FLASHING_RIGHT] = (not state['LIGHT'][FLASHING_RIGHT]) and lid==FLASHING_RIGHT
 
