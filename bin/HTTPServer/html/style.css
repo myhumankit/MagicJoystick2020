@@ -1,5 +1,5 @@
 :root {
-    --header-height: 5vh; /* 5% de la hauteur pour le header */
+    --header-height: 10vh; /* 10% de la hauteur pour le header */
     --border-width: 10px;
     --icon-size: min(18vmin, 100px);
 }
@@ -22,16 +22,34 @@ body {
 }
 
 .header {
-    position: absolute;
     width: 100%;
     height: var(--header-height);
 }
 
 #time, #battery {
     color: white;
-    font-size: var(--header-height);
-    line-height: var(--header-height);
+    font-size: calc(var(--header-height)/2);
+    line-height: calc(var(--header-height)/2);
     position: absolute;
+}
+
+.working > div {
+    text-align: center;
+    display: inline-table;
+    box-sizing: border-box;
+    border: transparent solid 2px;
+    height: 100%;
+    width: 10vw;
+}
+
+.working {
+    top : calc(var(--header-height)/2);
+    width: 100%;
+    height: calc(var(--header-height)/2);
+    position: absolute;
+    font-size: calc(0.65*var(--header-height)/2);
+    display: flex;
+    justify-content: center;
 }
 
 #time {
@@ -170,6 +188,10 @@ div.body.light > div {
     background-image: url("button_drive_mode.svg");
 }
 
+#button_drive_mode.on {
+    background-image: url("button_drive_mode_on.svg");
+}
+
 #button_back {
     background-image: url("button_back.svg");
 }
@@ -202,19 +224,23 @@ div.body.light > div {
 }
 
 #light_1.on {
-    color: #FFFF00;
+    color: #00FF00;
 }
 
 #light_2.on {
-    color: #FFFF00;
+    color: #00FF00;
 }
 
 #light_3.on {
-    color: #FFFF00;
+    color: #FF6600;
 }
 
 #light_4.on {
     color: #FFFF00;
+}
+
+#light_5.on {
+    color: #FF6600;
 }
 
 #power.on {

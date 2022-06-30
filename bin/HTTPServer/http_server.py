@@ -4,13 +4,23 @@ import paho.mqtt.client as mqtt
 from magick_joystick.Topics import *
 
 app = Flask(__name__)
+lights = [False, False, False, False]
+drive_mode = False
+battery_level = 7 #valeur d'init (fausse)
+chair_speed = -1.0 #valeur d'init (fausse)
+
+#Lights
+FLASHING_LEFT = 0
+FLASHING_RIGHT = 1
+WARNING_LIGHT = 2
+FRONT_LIGHTS = 3
 
 class StaticPages(Resource):
     def get(self, filename = "index.html"):
         files = ["index.html", "wheelchair.html", "style.css",
                  "script.js", "button_default.svg",
                  "button_wheelchair.svg", "button_horn.svg", "button_light.svg", 
-                 "button_speed.svg", "button_drive_mode.svg", "button_back.svg",
+                 "button_speed.svg", "button_drive_mode.svg", "button_drive_mode_on.svg", "button_back.svg",
                  "jquery-3.6.0.min.js", "all.min.css",
                  "actuator.html", "actuator_0_0.svg", "actuator_0_1.svg",
                  "actuator_1_0.svg", "actuator_1_1.svg", "actuator_2_0.svg",
@@ -45,6 +55,8 @@ class Actions(Resource):
         if action == "light":
             data = request.get_json()
             msg = action_light(data["light_id"])
+        elif action == "auto_light":
+            msg = action_auto_light()
         elif action == "max_speed":
             data = request.get_json()
             msg = action_max_speed(data["max_speed"])
@@ -65,11 +77,72 @@ class Actions(Resource):
         self.client.publish(msg.TOPIC_NAME, msg.serialize())
         return "", 200
 
+
+class CurrentValues(Resource):
+    def __init__(self):
+        pass
+    
+    def get(self, topic):
+        global battery_level, chair_speed, drive_mode
+        if topic == "time-battery":
+            return {"BATTERY_LEVEL": battery_level}
+        elif topic == "lights-speed-driveMode":
+            print("get request", lights)
+            return {"DRIVE_MODE": drive_mode, "CHAIR_SPEED" : chair_speed, "LIGHTS": lights}
+            #return {"CHAIR_SPEED" : chair_speed, "LIGHTS": lights}
+
+def on_connect(client, userdata, flags, rc):
+        if rc == 0:
+            print("Connection successful")
+            client.subscribe(status_chair_speed.TOPIC_NAME)
+            client.subscribe(status_battery_level.TOPIC_NAME)
+            client.subscribe(action_light.TOPIC_NAME)
+            client.subscribe(action_drive.TOPIC_NAME)
+        else:
+            print(f"Connection failed with code {rc}")
+
+def on_message(client, userdata, msg):
+    global battery_level, chair_speed, drive_mode
+    data_current = deserialize(msg.payload)
+    if msg.topic == status_battery_level.TOPIC_NAME:
+        #self.battery_level = json.dumps({"BATTERY_LEVEL": data_current.battery_level}).encode("utf8")
+        battery_level = data_current.battery_level
+
+    elif msg.topic == status_chair_speed.TOPIC_NAME:
+        #self.chair_speed = json.dumps({"CHAIR_SPEED": data_current.speedMps*3.6}).encode("utf8")
+        chair_speed = data_current.speedMps*3.6
+    
+    elif msg.topic == action_drive.TOPIC_NAME:
+        drive_mode = not drive_mode
+
+    elif msg.topic == action_light.TOPIC_NAME:
+        lid = data_current.light_id-1
+        if lid == FRONT_LIGHTS :
+            lights[lid] = not lights[lid] #light_ID begins at 1
+            return
+
+        if lid == WARNING_LIGHT :
+            lights[FLASHING_LEFT] = False 
+            lights[FLASHING_RIGHT] = False 
+            lights[lid] = not lights[lid]
+    
+        elif lid < 2 and not lights[WARNING_LIGHT]: # Flashing (only if no Warn)
+            lights[FLASHING_LEFT] = (not lights[FLASHING_LEFT]) and lid==FLASHING_LEFT
+            lights[FLASHING_RIGHT] = (not lights[FLASHING_RIGHT]) and lid==FLASHING_RIGHT
+
+
 app = Flask(__name__)
 api = Api(app)
 
 api.add_resource(StaticPages, "/<string:filename>", "/", "/webfonts/<string:filename>")
 api.add_resource(Actions, "/action/<string:action>")
+api.add_resource(CurrentValues, "/current/<string:topic>")
 
 if __name__ == "__main__":
+    client = mqtt.Client() 
+    client.on_connect = on_connect
+    client.on_message = on_message
+    client.connect("localhost", 1883, 60)
+    client.loop_start()
+
     app.run(debug = True, host = "0.0.0.0", port = 8080)

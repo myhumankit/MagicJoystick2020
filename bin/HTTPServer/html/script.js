@@ -9,12 +9,68 @@
         return ("0" + n).slice(-2)
     }
 
-    function display_time()
+
+    function display_time_battery()
     {   
         let now = new Date();
+        $.ajax({
+            type: "GET",
+            url: "/current/time-battery",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function(result){
+                str = "" + pad(now.getHours()) +":" + pad(now.getMinutes());
+                $("#time").html(str);
+                str = "" + result.BATTERY_LEVEL.toFixed() + "%";
+                $("#battery").html(str);
+            },
+            error: function(errMsg){
+                console.log(errMsg)
+            }
+            })
+    }
 
-        str = "" + pad(now.getHours()) +":" + pad(now.getMinutes());
-        $("#time").html(str);
+    function synchro_lights_speed_driveMode()
+    {
+        $.ajax({
+            type: "GET",
+            url: "/current/lights-speed-driveMode",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function(result){
+                if(result.DRIVE_MODE === true) {
+                    if (!($("#button_drive_mode").hasClass("on"))) {
+                        $("#button_drive_mode").addClass("on");
+                    }
+                } else {
+                        if($("#button_drive_mode").addClass("on")) {
+                            $("#button_drive_mode").removeClass("on");
+                        }
+                }
+
+                str = "" + result.CHAIR_SPEED.toFixed(1) + " km/h";
+                $("#current_speed").html(str);
+
+                for ( var i=0 ; i<result["LIGHTS"].length ; i++ ) {
+                    light = "light_" + (i+1)
+                    if(result["LIGHTS"][i] === true) {
+                        sessionStorage.setItem(light, "true")
+                        if (!($("#" + light).hasClass("on"))) {
+                            $("#" + light).addClass("on");
+                        }
+                    } else {
+                        sessionStorage.setItem(light, "false")
+                        if($("#" + light).hasClass("on")) {
+                            $("#" + light).removeClass("on");
+                        }
+                    }
+                              
+                }
+            },
+            error: function(errMsg){
+                console.log(errMsg)
+            }
+            })
     }
 
     function send_light(light_id)
@@ -43,7 +99,10 @@
             sessionStorage.setItem(light, "true")
             $("#" + light).addClass("on");
         }
-        send_light(light_id)
+        if(light_id<5)
+            send_light(light_id)
+        else if(light=5)
+            $.post("/action/auto_light")
     }
 
     function send_power(url)
@@ -155,8 +214,8 @@
     }
 
     /* Clock */
-    display_time();
-    setInterval(display_time, 1000);
+    setInterval(display_time_battery, 2000);
+    setInterval(synchro_lights_speed_driveMode, 500);
 
     /* Register button callbacks */
     $("#actuator").on("click", function() {window.location = "actuator.html";})
@@ -192,6 +251,7 @@
     $("#light_2").on("click", function() {change_light(2);})
     $("#light_3").on("click", function() {change_light(3);})
     $("#light_4").on("click", function() {change_light(4);})
+    $("#light_5").on("click", function() {change_light(5);})
     $("#power").on("click", change_power)
     $("#button_speed").on("click", change_speed)
     $("#button_drive_mode").on("click", function() {$.post("/action/drive")})
