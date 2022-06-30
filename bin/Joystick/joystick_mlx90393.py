@@ -11,13 +11,13 @@ import paho.mqtt.client as mqtt
 from magick_joystick.Topics import *
 
 GPIO_LEFT_BUTTON = 23
-GPIO_RIGHT_BUTTON = 24
+GPIO_RIGHT_BUTTON = 25
 
 JOY_PERIOD = 0.03 # Same as joystick.py
 
-# COEF**2000 = 0.5
+# REDUCE_COEF**2000 = 0.5
 # To devide by 2 a number in 2min at 33Hz
-COEF = 0.99982672821815
+REDUCE_COEF = 0.99982672821815
 
 X = 0
 Y = 1
@@ -25,9 +25,15 @@ Y = 1
 
 class Joystick():
     
-    def __init__(self):
+    def __init__(self, dead_zone_size=.1, slow_reduce=False, swap_xy=False, swap_x=False, swap_y=False):
         self.left_button = Button(GPIO_LEFT_BUTTON)
         self.right_button = Button(GPIO_RIGHT_BUTTON)
+
+        self.swap_xy = swap_xy
+        self.swap_x = swap_x
+        self.swap_y = swap_y
+        self.dead_zone_size = dead_zone_size # Between 0.0 and 1.0
+        self.slow_reduce = slow_reduce
 
         i2c = board.I2C()  # uses board.SCL and board.SDA
         self.SENSOR = adafruit_mlx90393.MLX90393(i2c, gain=adafruit_mlx90393.GAIN_1X, filt = adafruit_mlx90393.FILTER_5, resolution= adafruit_mlx90393.RESOLUTION_19)
@@ -56,17 +62,27 @@ class Joystick():
             cnt += 1
             print(".", end='', flush=True)
             time.sleep(0.1)
+        print(" Done")
         self.offsets[X] /= cnt
         self.offsets[Y] /= cnt
-        print(" Done")
+
+        self.mins[X] = self.offsets[X] * -0.05
+        self.maxs[X] = self.offsets[X] * 0.05
+        self.mins[Y] = self.offsets[Y] * -0.05
+        self.maxs[Y] = self.offsets[Y] * 0.05
+        
+        print("[CALIB] Offsets = x:%.3f, y:%.3f" % (self.offsets[X],self.offsets[Y]))
+        print("[CALIB] MinMax set to X [%.3f,%.3f] Y [%.3f,%.3f]" % (self.mins[X], self.maxs[X], self.mins[Y], self.maxs[Y]))
+
 
     def update_min_max(self, x, y):
         """Update mins and maxs values with params"""
-        #Slowly decrease the value of min & max in case of aberation
-        self.mins[X] = COEF * self.mins[X]
-        self.mins[Y] = COEF * self.mins[Y]
-        self.maxs[X] = COEF * self.maxs[X]
-        self.maxs[Y] = COEF * self.maxs[Y]
+        if self.slow_reduce:
+            #Slowly decrease the value of min & max in case of aberation
+            self.mins[X] = REDUCE_COEF * self.mins[X]
+            self.mins[Y] = REDUCE_COEF * self.mins[Y]
+            self.maxs[X] = REDUCE_COEF * self.maxs[X]
+            self.maxs[Y] = REDUCE_COEF * self.maxs[Y]
 
         if x < self.mins[X]:
             self.mins[X] = x
@@ -89,21 +105,32 @@ class Joystick():
     def get_XY(self):
         """Return integer value of x & y ready to be published and raw value gived by getraw_XY() fonction, into a tuple (X,Y, rawX, rawY)"""
         rawX, rawY = self.getraw_XY()
-        offsets = self.offsets
         mins = self.mins
         maxs = self.maxs
+        dz = self.dead_zone_size
 
-        # Values from interval [min, max] are transformed to interval [-100, 100].
-        if rawX < offsets[X]:
-            posX = (100 * rawX) / (-mins[X])
-        else :
-            posX = (100 * rawX) / (maxs[X])
+        if (rawX > (dz*maxs[X])): # x positif
+            #Changement de repère, puis application du coef
+            posX = (rawX-(dz*maxs[X])) * (100 / ((1.0-dz) * maxs[X]))
+        elif (rawX < (dz*mins[X])): # x negatif
+            posX = (rawX-(dz*mins[X])) * (100 / ((dz-1.0) * mins[X]))
+        else: # Dans la zone morte
+            posX = 0.0
+
+        if (rawY > (dz*maxs[Y])):
+            posY = (rawY-(dz*maxs[Y])) * (100 / ((1.0-dz) * maxs[Y]))
+        elif (rawY < (dz*mins[Y])):
+            posY = (rawY-(dz*mins[Y])) * (100 / ((dz-1.0) * mins[Y]))
+        else:
+            posY = 0.0
         
-        if rawY < offsets[Y]:
-            posY = (100 * rawY) / (-mins[Y])
-        else :
-            posY = (100 * rawY) / (maxs[Y])
-        
+
+        if self.swap_x:
+            posX = - posX
+        if self.swap_y:
+            posY = - posY
+        if self.swap_xy :
+            return (int(posY), int(posX), rawY, rawX)
         return (int(posX), int(posY), rawX, rawY)
 
 if __name__ == "__main__":
@@ -118,36 +145,31 @@ if __name__ == "__main__":
     print("[MAIN]Connect MQTT")
     
     state = [0,0,0,0] #[buttons, x, y, long_click]
-    joy = Joystick()
+    marge_long_clic = 0.5
+    marge_false_clic = 0.05
 
-    long_clic_delay = 0.5
+    joy = Joystick(dead_zone_size=0.5, slow_reduce=True)
+    lstBtn = [joy.left_button, joy.right_button]
 
     while True:
         state[0] = 0
         state[3] = 0
-        
-        if joy.left_button.is_pressed:
-            start_btn1 = time.monotonic()
-            while(joy.left_button.is_active):
-                current = time.monotonic()
-                delai = current - start_btn1
-                if  delai > long_clic_delay:
-                    state[0] = 1
-                    state[3] = 1
-                    break                   
-            state[0] = 1
-        elif joy.right_button.is_pressed:
-            start_btn2 = time.monotonic()
-            while(joy.right_button.is_active):
-                current = time.monotonic()
-                delai = current - start_btn2
-                if  delai > long_clic_delay:
-                    state[0] = 2
-                    state[3] = 1
-                    break       
-            state[0] = 2 
+
+        for btn in lstBtn:
+            if btn.is_pressed:
+                start = time.monotonic()
+                delay = 0.0
+                while(btn.is_active):
+                    delay = time.monotonic() - start
+                    if delay > marge_long_clic:
+                        break
+                state[0] = lstBtn.index(btn)+1 if (delay > marge_false_clic) else 0
+                state[3] = 1 if (delay > marge_long_clic) else 0
+                # if (delay < marge_false_clic):
+                #     print("\n[WARN] Strange quick clic n°%d delay=%.3f" % (lstBtn.index(btn)+1,delay))
 
         state[1], state[2], rawX, rawY = joy.get_XY()
+
 
         if debug:
             s = "JoyXY=[{:+4d},{:+4d}]   Raw=[{:+10.1f},{:+10.1f}]   MinMax=[X {:+10.1f},{:+10.1f} |Y {:+10.1f},{:+10.1f}]".format(state[1], state[2], rawX, rawY, joy.mins[X], joy.maxs[X], joy.mins[Y], joy.maxs[Y])
