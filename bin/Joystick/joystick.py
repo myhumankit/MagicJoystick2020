@@ -1,274 +1,159 @@
 #!/usr/bin/python3
 import time
-import logging
-import RPi.GPIO as GPIO
+from ads1015 import ADS1015
 from gpiozero import Button
 import paho.mqtt.client as mqtt
 from magick_joystick.Topics import *
-import sys
 
 # Constants definition:
-DEFAULT_PERIOD = 0.01
+DEFAULT_PERIOD = 0.03
 
-GPIO_LEFT_BUTTON = 26
-GPIO_RIGHT_BUTTON = 23
+GPIO_LEFT_BUTTON = 23
+GPIO_RIGHT_BUTTON = 25
 
-# Instanciate logger:
-logging.basicConfig(
-    level=logging.INFO, #log every message above INFO level (debug, info, warning, error, critical)
-    format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
-    handlers=[
-        logging.StreamHandler()
-    ])
-logger = logging.getLogger()
-h = logging.StreamHandler(sys.stdout)
-h.flush = sys.stdout.flush
-logger.addHandler(h)
+X = 0
+Y = 1
 
-
-# In case of test mode run on a PC, no 
-# ADC or screen will be available
-# imports for ADC
-try:
-    FORCE_JOY_TESTMODE = False
-    from ads1015 import ADS1015
-except Exception as e:
-    FORCE_JOY_TESTMODE = True
-    logger.error(str(e))
-
-
-# Unsigned 8 bits to signed 8bits
-# input x      : 0..255 center on 127 unsigned
-# input invert : True/False, invert sign
-def unsigned2signed(x, invert):
-
-    # Invert the sign if required
-    if invert is True :
-        x = 255-x
-
-    if x == 0:
-        out  = 128
-
-    # Case 'negative' range input 1..127 output 127..255 <=> -127..-1
-    elif x < 128:
-        out = x + 127
-
-    # Case positive range input 128..255 output 0..127
-    else :
-        # Range 0..127
-        out = x - 128
-
-    return out
-
-"""
-joystick class implements the interface with hardware and offers 
-a 'get_new_data' to the client thread.
-'sleeptime' parameters is a timing delay expressed in seconds 
-            between each read on the hardware interface
-"""
 class Joystick():
 
-    # Choose a gain of 1 for reading voltages from 0 to 4.09V.
-    # Or pick a different gain to change the range of voltages that are read:
-    #  - 2/3 = +/-6.144V
-    #  -   1 = +/-4.096V
-    #  -   2 = +/-2.048V
-    #  -   4 = +/-1.024V
-    #  -   8 = +/-0.512V
-    #  -  16 = +/-0.256V
-    # See table 3 in the ADS1015/ADS1115 datasheet for more info on gain.
-    ADC_GAIN        = 2     # This gain gives 0 to 2048 measures
+    ADS_GAIN = 4.096
 
-    ADC_GAIN_SCALE          = 2048.0    # Scale the ADC value function of ADC_GAIN
-    HYSTERESIS              = 30        # Used to generate a real 'zero' point 
-    NB_SAMPLE               = 10        # number of samples for calibaration
-    ADS_GAIN                = 2048      # = ads.set_programmable_gain(), analogic gain, defaut value = 2048
-
-
-    def __init__(self, sleeptime = DEFAULT_PERIOD, invert_x = False, invert_y = False, swap_xy = False, test = False):
-        self.sleeptime = sleeptime
-        self.invert_x = invert_x
-        self.invert_y = invert_y
-        self.swap_xy = swap_xy
-        self.offset_x = 0
-        self.offset_y = 0
+    def __init__(self, dead_zone_size=.1, swap_xy=False, swap_x=False, swap_y=False):
         self.left_button = Button(GPIO_LEFT_BUTTON)
         self.right_button = Button(GPIO_RIGHT_BUTTON)
-        
-        if test is True:
-            logger.info("Starting joy in debug mode with with computer keybaord")
-            self.kbdtest = kbdtest()
-        else :
-            self.kbdtest = None
-            # Create an ADS1015 ADC (16-bit) instance.
-            self.ads = ADS1015()
-            # reference = self.ads.get_reference_voltage()
-            # print("Reference voltage: {:6.3f}v \n".format(reference))
-            self.calibrate()
-            logger.info("Starting joy, calibration done")
 
-           
+        self.swap_xy = swap_xy
+        self.swap_x = swap_x
+        self.swap_y = swap_y
+        self.dead_zone_size = dead_zone_size # Between 0.0 and 1.0
 
-    """
-    Get new x/y couple from ADC
-    """
-    def get_xy(self):
-        if self.swap_xy is False:
-            x = self.ads.get_voltage('in0/ref')
-            y = self.ads.get_voltage('in1/ref')
-        else:
-            x = self.ads.get_voltage('in1/ref')
-            y = self.ads.get_voltage('in0/ref')
-        return x, y
+        # Create an ADS1015 ADC (16-bit) instance.
+        self.ads = ADS1015()
+        self.ads.set_programmable_gain(self.ADS_GAIN)
 
+        self.offsets = [.0,.0]
+        self.maxs = [.01,.01]
+        self.mins = [.01,.01]
+        self.calibrate()
 
     """
     Calibration function to set the zero position
     """
     def calibrate(self):
-        
+        NB_SAMPLE = 30
         x_sum = 0
         y_sum = 0
-        
-        for i in range(self.NB_SAMPLE):
-            x, y = self.get_xy()
+
+        print("Calibration in progress", end='', flush=True)
+        for i in range(NB_SAMPLE):
+            x = self.ads.get_voltage('in0/gnd')
+            y = self.ads.get_voltage('in1/gnd')
             x_sum += x
             y_sum += y
-            logger.debug(" JOY Calibration %d = %6d / %6d" %(i, x_sum, y_sum))
-               
-        self.offset_x = int((x_sum / self.NB_SAMPLE) - self.ADC_GAIN_SCALE * 0.5)
-        self.offset_y = int((y_sum / self.NB_SAMPLE) - self.ADC_GAIN_SCALE * 0.5)
-        logger.debug("ZERO calibration result : x=%d, y=%d" %(self.offset_x, self.offset_y))            
+            if i%3==0:
+                print(".", end='', flush=True)
+            time.sleep(0.1)
+        print(" Done")
 
-
-    """
-        Normalize x/y values between 0 and 1
-    """
-    def normalize_xy(self, x, y):
-        min_x = self.offset_x
-        max_x = self.ADC_GAIN_SCALE - 1 + self.offset_x
-        range_x = max_x - min_x
-
-        min_y = self.offset_y
-        max_y = self.ADC_GAIN_SCALE - 1 + self.offset_y
-        range_y = max_y - min_y
-
-        norm_x = min(1, max(0, (x - min_x) / range_x))
-        norm_y = min(1, max(0, (y - min_y) / range_y))
-        return norm_x, norm_y
-
-
-    """
-    Scale x/y from ADC dynamic to 8 bits signed dynamic
-    """
-    def scale_xy(self, x, y):
-        # Scale values to 8 bits:
-        x_scaled = int((x / self.ADC_GAIN_SCALE)*255)
-        y_scaled = int((y / self.ADC_GAIN_SCALE)*255)
-        return x_scaled, y_scaled
-
-    """
-    Scale value for screen display
-    """
-    def screen_scale(self, x, in_min, in_max, out_min, out_max):
-        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-
-
-
-    """
-    This funtion is called periodically by the client
-    to get new X/Y data from joystick, and must output
+        self.offsets[X] = (x_sum / NB_SAMPLE)
+        self.offsets[Y] = (y_sum / NB_SAMPLE)
+        self.mins[X] = self.offsets[X] * -0.05 # TODO Is it truly secure?
+        self.maxs[X] = self.offsets[X] * 0.05 
+        self.mins[Y] = self.offsets[Y] * -0.05
+        self.maxs[Y] = self.offsets[Y] * 0.05
+        print("[CALIB] Offsets = x:%.3f, y:%.3f" % (self.offsets[X],self.offsets[Y]))
+        print("[CALIB] MinMax set to X [%.3f,%.3f] Y [%.3f,%.3f]" % (self.mins[X], self.maxs[X], self.mins[Y], self.maxs[Y]))
     
-    Note: Rnet works with signed int8, so 0..127 => [0..127], 128..255 => [-127..-1]
-    """
-    def get_new_data(self):
-
-        # Get magnetometer x/y values from ADC:
-        x, y = self.normalize_xy(*self.get_xy())
-
-        # Scale ADC range to 8bits range for rnet
-        x, y = int(x * 255), int(y * 255)
-
-        # Convert unsigned scaled value to signed value, and possibly
-        # invert sign if required
-        rnet_x = unsigned2signed(x, self.invert_x)
-        rnet_y = unsigned2signed(y, self.invert_y)
-
-
-        # Filter raw data to create a real zero
-        # FIXME : If required, add filter function on x,y
-        rnet_x, rnet_y  = self.zero_filter(rnet_x, rnet_y)
-
-        return rnet_x, rnet_y
-
 
     """
-    Joystick filtering function:
-    This function will filter the x/y data 
-    from analog to digital converter 
-    input: x/y unsigned 8 bits data. Center around 127
+    Get new x/y couple from ADC
     """
-    def zero_filter(self, x, y):
-        x_out = x
-        y_out = y
-        if (x > 255 - self.HYSTERESIS) or (x < self.HYSTERESIS):
-            x_out = 0
+    def getRaw_xy(self):
+        x = self.ads.get_voltage('in0/gnd') - self.offsets[X]
+        y = self.ads.get_voltage('in1/gnd') - self.offsets[Y]
+        if x > self.maxs[X]:
+            self.maxs[X] = x
+        elif x < self.mins[X]:
+            self.mins[X] = x
+        if y > self.maxs[Y]:
+            self.maxs[Y] = y
+        elif y < self.mins[Y]:
+            self.mins[Y] = y
+        return x, y
 
-        if (y > 255 - self.HYSTERESIS) or (y < self.HYSTERESIS):
-            y_out = 0
+    def get_xy(self):
+        rawX, rawY = self.getRaw_xy()
+        x, y = self.normalize_xy(rawX, rawY)
 
-        return x_out, y_out
+        if self.swap_x:
+            x = - x
+        if self.swap_y:
+            y = - y
+        if self.swap_xy :
+            return (int(y), int(x), rawY, rawX)
+        return (int(x), int(y), rawX, rawY)
+
+    def normalize_xy(self, x, y):
+        """Change x & y from [min,max] to [-100,100], using the dead zone"""
+        # Fonction affine en 3 morceaux
+        dz = self.dead_zone_size
+        if (x > (dz*self.maxs[X])): # x positif
+            #Changement de repère, puis application du coef
+            x_res = (x-(dz*self.maxs[X])) * (100 / ((1.0-dz) * self.maxs[X]))
+        elif (x < (dz*self.mins[X])): # x negatif
+            x_res = (x-(dz*self.mins[X])) * (100 / ((dz-1.0) * self.mins[X]))
+        else: # Dans la zone morte
+            x_res = 0.0
+
+        if (y > (dz*self.maxs[Y])):
+            y_res = (y-(dz*self.maxs[Y])) * (100 / ((1.0-dz) * self.maxs[Y]))
+        elif (y < (dz*self.mins[Y])):
+            y_res = (y-(dz*self.mins[Y])) * (100 / ((dz-1.0) * self.mins[Y]))
+        else:
+            y_res = 0.0
+
+        return x_res, y_res
 
 
 if __name__ == "__main__":
-
-    state = [0,0,0,0]
-    save_state = [0,0,0,0]
-    diff = 1
-    btn1_state_save = False
+    
+    state = [0,0,0,0]           #state = [buttons, x, y, long_click]
+    marge_long_clic = 0.5
+    marge_false_clic = 0.05
+    test = False
 
     client = mqtt.Client()
     client.connect("localhost",1883,60)
     client.loop_start()
-    logger.info("Connect MQTT")
+    print("[MAIN] Connect MQTT")
 
     # Instanciate joystick 
-    joy = Joystick(invert_x = False, invert_y = True)
+    joy = Joystick(swap_y=True, dead_zone_size=0.2)
+    lstBtn = [joy.left_button, joy.right_button]
 
     while True:
         state[0] = 0
         state[3] = 0
-        
-        if joy.left_button.is_pressed:
-            start_btn1 = time.monotonic()
-            while(joy.left_button.is_active):
-                current = time.monotonic()
-                delai = current - start_btn1
-                #print("Delai: ", delai)
-                if  delai > diff:
-                    print("Appui long sur bouton 1 detecté")
-                    state[0] = 1
-                    state[3] = 1
-                    break                   
-            state[0] = 1
-        elif joy.right_button.is_pressed:
-            start_btn2 = time.monotonic()
-            while(joy.right_button.is_active):
-                current = time.monotonic()
-                delai = current - start_btn2
-                #print("Delai: ", delai)
-                if  delai > diff:
-                    print("Appui long sur bouton 2 detecté")
-                    state[0] = 2
-                    state[3] = 1
-                    break       
-            state[0] = 2 
 
-        state[1], state[2] = joy.get_new_data()
+        for btn in lstBtn:
+            if btn.is_pressed:
+                start = time.monotonic()
+                delay = 0.0
+                while(btn.is_active):
+                    delay = time.monotonic() - start
+                    if delay > marge_long_clic:
+                        break
+                state[0] = lstBtn.index(btn)+1 if (delay > marge_false_clic) else 0
+                state[3] = 1 if (delay > marge_long_clic) else 0
+                # if (delay < marge_false_clic):
+                #     print("\n[WARN] Strange quick clic n°%d delay=%.3f" % (lstBtn.index(btn)+1,delay))
 
-        # if(save_state != state ):
-        joy_data = joystick_state(state[0], state[1], state[2],state[3])
-        client.publish(joy_data.TOPIC_NAME, joy_data.serialize())
-            # save_state = state
-        time.sleep(0.03)
+        state[1], state[2], rawX, rawY = joy.get_xy()
 
+        if test :
+            s = "JOY[{:1d}, {:+4d}, {:+4d}, {:1d}] RAW[{:+7.3f}, {:+7.3f}] MinMax[X {:+7.3f},{:+7.3f} | Y {:+7.3f},{:+7.3f}]"
+            print(s.format(state[0], state[1], state[2], state[3], rawX, rawY, joy.mins[X], joy.maxs[X], joy.mins[Y], joy.maxs[Y]), end='\r')
+        else:
+            joy_data = joystick_state(state[0], state[1], state[2], state[3])
+            client.publish(joy_data.TOPIC_NAME, joy_data.serialize())
+        time.sleep(DEFAULT_PERIOD)
