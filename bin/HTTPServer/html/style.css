@@ -189,7 +189,7 @@ div.body.light > div {
 }
 
 #button_drive_mode.on {
-    background-color: #00FF00;
+    background-image: url("button_drive_mode_on.svg");
 }
 
 #button_back {
