@@ -61,7 +61,7 @@ class Actions(Resource):
             data = request.get_json()
             msg = action_max_speed(data["max_speed"])
         elif action == "drive":
-            msg = action_drive()
+            msg = action_drive(True)
         elif action == "horn":
             msg = action_horn()
         elif action == "actuator_ctrl":
@@ -113,7 +113,7 @@ def on_message(client, userdata, msg):
         chair_speed = data_current.speedMps*3.6
     
     elif msg.topic == action_drive.TOPIC_NAME:
-        drive_mode = not drive_mode
+        drive_mode = deserialize(msg.payload).doDrive
 
     elif msg.topic == action_light.TOPIC_NAME:
         lid = data_current.light_id-1
