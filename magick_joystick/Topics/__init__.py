@@ -30,8 +30,8 @@ class action_actuator_ctrl(base_mqtt_message):
 
 class action_drive(base_mqtt_message):
     TOPIC_NAME = "action/drive"
-    def __init__(self):
-        pass
+    def __init__(self, doDrive):
+        self.doDrive = doDrive
 
 class action_max_speed(base_mqtt_message):
     TOPIC_NAME = "action/max_speed"
@@ -64,6 +64,8 @@ class action_auto_light(base_mqtt_message):
     TOPIC_NAME = "action/auto_light"
     def __init__(self): 
        pass
+    # def __init__(self, doAutoLight): #si publish de l'etat auto toutes les demi-secondes
+    #    self.doAutoLight = doAutoLight
 
 class status_battery_level(base_mqtt_message):
     TOPIC_NAME = "status/battery_level"

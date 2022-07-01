@@ -188,24 +188,31 @@ def get_kbd(client):
             state['LIGHT'] = [False,False,False,state['LIGHT'][3]]
 
         elif key == 'd':
-            drive = action_drive()
+            drive = action_drive(True)
             client.publish(drive.TOPIC_NAME, drive.serialize())
             state['MOTOR_STATE'] = 'ON/DRIVE'
         
         elif key == 'c':
             state['CLIC'] = [1, 0]
             state['MOTOR_STATE'] = 'ON/NO_DRIVE'
+            drive = action_drive(False)
+            client.publish(drive.TOPIC_NAME, drive.serialize())
         
         elif key == 'v': #toggle long clic
             long = state['CLIC'][1]
             long = 1 if (long==0) else 0
             state['CLIC'] = [0, long]
             state['MOTOR_STATE'] = 'ON/NO_DRIVE'
+            drive = action_drive(False)
+            client.publish(drive.TOPIC_NAME, drive.serialize())
         
         elif key in KEYS_ONOFF:
             if (key == KEYS_ONOFF[0]):
                 turn = action_poweron()
                 state['MOTOR_STATE'] = "ON/NO_DRIVE"
+                drive = action_drive(False)
+                client.publish(drive.TOPIC_NAME, drive.serialize())
+
             else:
                 turn = action_poweroff()
                 state = state_init.copy()
@@ -272,6 +279,7 @@ def joystick_thread(client):
 def on_connect(client, userdata, flags, rc):
     client.subscribe(status_chair_speed.TOPIC_NAME)
     client.subscribe(status_battery_level.TOPIC_NAME)
+    client.subscribe(action_drive.TOPIC_NAME)
 
 def on_message(client, userdata, msg):
     global state
@@ -284,6 +292,8 @@ def on_message(client, userdata, msg):
         if state['CHAIR_SPEED'] == data.speedMps:
             return
         state['CHAIR_SPEED'] = data.speedMps
+    elif msg.topic == action_drive:
+        state['MOTOR_STATE'] = data.doDrive
     print_state()
 
 client = mqtt.Client()

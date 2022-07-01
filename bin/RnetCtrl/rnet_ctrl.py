@@ -51,6 +51,9 @@ class RnetControl(threading.Thread):
         except:
             logger.error("mqtt connection error")
 
+        drive = action_drive(False)
+        self.mqtt_client.publish(action_drive.TOPIC_NAME, drive.serialize())
+
         if testmode is False:
             self.cansend = can2RNET.cansendraw
         else:
@@ -96,10 +99,10 @@ class RnetControl(threading.Thread):
                     logger.info("[WARNING] : Recv %s but init of Rnet_can not done yet" % (msg.topic))
                 return
 
-            # ENABLE DRIVE COMMAND
+            # ENABLE/DISABLE DRIVE COMMAND
             elif msg.topic == action_drive.TOPIC_NAME:
-                logger.info("[recv %s] Switch to drive mode ON" %(msg.topic))
-                self.drive_mode = True
+                self.drive_mode = deserialize(msg.payload).doDrive
+                logger.info("[recv %s] Switch to drive mode %s" %(msg.topic, self.drive_mode))
 
             # ENABLE/DISABLE LIGHT 
             elif msg.topic == action_light.TOPIC_NAME:
@@ -140,6 +143,8 @@ class RnetControl(threading.Thread):
                 time.sleep(0.2)
                 self.power_state = False
                 self.auto_light = False
+                drive = action_drive(False)
+                self.mqtt_client.publish(drive.TOPIC_NAME, drive.serialize())
                 # All threads end --> join() end --> reboot using supervisor
 
             # HORN
@@ -180,6 +185,8 @@ class RnetControl(threading.Thread):
                     if (joy_data.buttons == 1) :
                         logger.info("[CLIC] Switch to drive mode OFF")
                         self.drive_mode = False
+                        drive = action_drive(False)
+                        self.mqtt_client.publish(drive.TOPIC_NAME, drive.serialize())
                         self.RnetJoyPosition.set_data(0, 0)
                     else:
                         self.RnetJoyPosition.set_data(x, y)

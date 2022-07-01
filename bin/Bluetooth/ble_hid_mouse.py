@@ -102,18 +102,21 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, msg):
     global drive_state, mouse_buttons, mouse_x, mouse_y, speed
-
+    data = deserialize(msg.payload)
     if msg.topic == action_drive.TOPIC_NAME:
-        print("[recv %s] Switch to drive mode ON" %(msg.topic))
-        drive_state = True
+        drive_state = data.doDrive
+        print("[recv %s] Switch to drive mode %s" %(msg.topic, drive_state))
         
     elif msg.topic == joystick_state.TOPIC_NAME:
-        joy_position = deserialize(msg.payload)
+        joy_position = data
 
         if drive_state:
             if joy_position.buttons == 1:
                 print("[CLIC] Switch to drive mode OFF")
                 drive_state = False
+                drive = action_drive(False)
+                client.publish(drive.TOPIC_NAME, drive.serialize())
+                
             mouse_x = 0
             mouse_y = 0
             mouse_buttons = 0
