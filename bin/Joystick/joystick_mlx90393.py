@@ -4,7 +4,7 @@ import sys
 import time
 import board
 import adafruit_mlx90393
-
+import threading
 from gpiozero import Button
 
 import paho.mqtt.client as mqtt
@@ -21,6 +21,9 @@ REDUCE_COEF = 0.99982672821815
 
 X = 0
 Y = 1
+
+# Lenght of the list to save datas
+NB_SAMPLE = 60
 
 
 class Joystick():
@@ -41,30 +44,44 @@ class Joystick():
         self.SENSOR.resolution_x = adafruit_mlx90393.RESOLUTION_19
         self.SENSOR.resolution_y = adafruit_mlx90393.RESOLUTION_19
         self.SENSOR.resolution_z = adafruit_mlx90393.RESOLUTION_19
+
         self.offsets = [.0, .0]
         self.mins = [-1.0, -1.0] 
         self.maxs = [1.0, 1.0]
-        self.variance_seuil = [.0, .0] #TODO MAJ l'offset si la variance redescent proche de celle durant la calib (x1.5)
+        self.values = [[.0] * NB_SAMPLE, [.0] * NB_SAMPLE] # The 30 last values readed by the joy
+        self.curVar = [.0,.0]
+        self.initVar = [.0,.0]
+        self.curID = 0
+        self.calib_ready = False
+
         self.calibrate()
-    
+
+        thread_joy = threading.Thread(target=self.calbration_thread, daemon=True)
+        thread_joy.start()
+
 
     def calibrate(self):
         """This function compute the offset value for x and y axis"""
+        slep = 3.0 / NB_SAMPLE # Calibration during 3s
+
         print("[CALIB] Computing sensor offset:", end='', flush=True)
-        t = time.time()
-        cnt = 0
-        while True:
-            if time.time() - t > 3.0:
-                break
+        for i in range(NB_SAMPLE):
             MX, MY, _ = self.SENSOR.magnetic
-            self.offsets[X] += MX
-            self.offsets[Y] += MY
-            cnt += 1
-            print(".", end='', flush=True)
-            time.sleep(0.1)
+            self.values[X][i] = MX
+            self.values[Y][i] = MY
+            if i%(NB_SAMPLE//10)==0:
+                print(".", end='', flush=True)
+            time.sleep(slep)
         print(" Done")
-        self.offsets[X] /= cnt
-        self.offsets[Y] /= cnt
+
+        self.offsets[X] = sum(self.values[X]) / NB_SAMPLE
+        self.offsets[Y] = sum(self.values[Y]) / NB_SAMPLE
+
+        self.values[X][:] = [f-self.offsets[X] for f in self.values[X]] # Sub offsets to all values saved,
+        self.values[Y][:] = [f-self.offsets[Y] for f in self.values[Y]] #   so mean is now at 0
+
+        self.initVar[X] = sum([f*f for f in self.values[X]]) / NB_SAMPLE # - 0²
+        self.initVar[Y] = sum([f*f for f in self.values[Y]]) / NB_SAMPLE # - 0²
 
         self.mins[X] = self.offsets[X] * -0.05
         self.maxs[X] = self.offsets[X] * 0.05
@@ -72,6 +89,7 @@ class Joystick():
         self.maxs[Y] = self.offsets[Y] * 0.05
         
         print("[CALIB] Offsets = x:%.3f, y:%.3f" % (self.offsets[X],self.offsets[Y]))
+        print("[CALIB] InitVar are: vx=%.3f, vy=%.3f" % (self.initVar[X], self.initVar[Y]))
         print("[CALIB] MinMax set to X [%.3f,%.3f] Y [%.3f,%.3f]" % (self.mins[X], self.maxs[X], self.mins[Y], self.maxs[Y]))
 
 
@@ -100,6 +118,12 @@ class Joystick():
         MX -= self.offsets[X]
         MY -= self.offsets[Y]
         self.update_min_max(MX, MY)
+
+        self.values[X][self.curID] = MX
+        self.values[Y][self.curID] = MY
+        self.curID = (self.curID +1) % NB_SAMPLE
+        if not self.calib_ready:
+            self.calib_ready = (self.curID%(NB_SAMPLE//2)==0) # TODO Update curVar when half of value have changed (See if the freq in good)
         return (MX, MY)
     
     def get_XY(self):
@@ -132,6 +156,31 @@ class Joystick():
         if self.swap_xy :
             return (int(posY), int(posX), rawY, rawX)
         return (int(posX), int(posY), rawX, rawY)
+    
+    def updateCurVar(self):
+        sumX = .0
+        sumY = .0
+        sumSqX = .0
+        sumSqY = .0
+        for i in range(NB_SAMPLE):
+            sumX += self.values[X][i]
+            sumY += self.values[Y][i]
+            sumSqX += self.values[X][i]**2
+            sumSqY += self.values[Y][i]**2
+        self.curVar[X] = (sumSqX / NB_SAMPLE )- (sumX / NB_SAMPLE)**2
+        self.curVar[Y] = (sumSqY / NB_SAMPLE )- (sumY / NB_SAMPLE)**2
+
+    def calbration_thread(self):
+        calibSleep = JOY_PERIOD * (NB_SAMPLE/2) #TODO find perfect frequency
+        while True:
+            time.sleep(calibSleep)
+            if not self.calib_ready:
+                continue
+            self.updateCurVar()
+
+
+
+
 
 if __name__ == "__main__":
 
@@ -148,7 +197,7 @@ if __name__ == "__main__":
     marge_long_clic = 0.5
     marge_false_clic = 0.05
 
-    joy = Joystick(dead_zone_size=0.5, slow_reduce=True)
+    joy = Joystick(dead_zone_size=0.3, slow_reduce=True)
     lstBtn = [joy.left_button, joy.right_button]
 
     while True:
@@ -172,7 +221,7 @@ if __name__ == "__main__":
 
 
         if debug:
-            s = "JoyXY=[{:+4d},{:+4d}]   Raw=[{:+10.1f},{:+10.1f}]   MinMax=[X {:+10.1f},{:+10.1f} |Y {:+10.1f},{:+10.1f}]".format(state[1], state[2], rawX, rawY, joy.mins[X], joy.maxs[X], joy.mins[Y], joy.maxs[Y])
+            s = "JoyXY=[{:+4d},{:+4d}]   Raw=[{:+7.1f},{:+7.1f}]   MinMax=[X {:+7.1f},{:+7.1f} |Y {:+7.1f},{:+7.1f}] curVar=[{:+10.1f},{:+10.1f}]".format(state[1], state[2], rawX, rawY, joy.mins[X], joy.maxs[X], joy.mins[Y], joy.maxs[Y], joy.curVar[X],joy.curVar[Y])
         else:
             s = "JoyState = [{:+4d},{:+4d},{:+4d},{:+4d}]".format(state[0],state[1],state[2],state[3])
         
