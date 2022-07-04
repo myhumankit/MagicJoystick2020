@@ -223,30 +223,17 @@ div.body.light > div {
     margin-right: 2.5%;
 }
 
-#light_1.on {
+#light_1.on, #light_2.on, #power.on{
     color: #00FF00;
 }
 
-#light_2.on {
-    color: #00FF00;
-}
-
-#light_3.on {
+#light_3.on, #light_5.on {
     color: #FF6600;
 }
 
 #light_4.on {
     color: #FFFF00;
 }
-
-#light_5.on {
-    color: #FF6600;
-}
-
-#power.on {
-    color: #00FF00;
-}
-
 
 
 #lvl1.on {
