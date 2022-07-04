@@ -167,17 +167,27 @@ class Joystick():
             sumY += self.values[Y][i]
             sumSqX += self.values[X][i]**2
             sumSqY += self.values[Y][i]**2
-        self.curVar[X] = (sumSqX / NB_SAMPLE )- (sumX / NB_SAMPLE)**2
-        self.curVar[Y] = (sumSqY / NB_SAMPLE )- (sumY / NB_SAMPLE)**2
+        espX = (sumX / NB_SAMPLE)
+        espY = (sumY / NB_SAMPLE)
+        self.curVar[X] = (sumSqX / NB_SAMPLE) - espX**2
+        self.curVar[Y] = (sumSqY / NB_SAMPLE) - espY**2
+        return (espX, espY)
 
     def calbration_thread(self):
-        calibSleep = JOY_PERIOD * (NB_SAMPLE/2) #TODO find perfect frequency
+        calibSleep = JOY_PERIOD * (NB_SAMPLE/4)
         while True:
             time.sleep(calibSleep)
-            if not self.calib_ready:
+            if not self.calib_ready: #Half of values must have changed
                 continue
-            self.updateCurVar()
-
+            newOffsets = self.updateCurVar()
+            if (self.curVar[X] < self.initVar[X]*2) and (self.curVar[Y] < self.initVar[Y]*2): #Updating Offsets
+                self.mins[X] -= (self.offsets[X]-newOffsets[X]) # Must shift min and max because
+                self.mins[Y] -= (self.offsets[Y]-newOffsets[Y]) #  they depend of offsets
+                self.maxs[X] -= (self.offsets[X]-newOffsets[X])
+                self.maxs[Y] -= (self.offsets[Y]-newOffsets[Y])
+                self.offsets[X] = newOffsets[X]
+                self.offsets[Y] = newOffsets[Y]
+                print("[CALIB_THR] Updating offsets = x:%.3f, y:%.3f" % (self.offsets[X],self.offsets[Y]))
 
 
 
@@ -186,7 +196,7 @@ if __name__ == "__main__":
 
     debug = len(sys.argv)==2 and sys.argv[1]=='-d'
     if not debug:
-        print("Use '-d' to print more info about joystick")
+        print("Use '-d' to info about joystick")
 
     client = mqtt.Client()
     client.connect("localhost",1883,60)
@@ -222,10 +232,7 @@ if __name__ == "__main__":
 
         if debug:
             s = "JoyXY=[{:+4d},{:+4d}]   Raw=[{:+7.1f},{:+7.1f}]   MinMax=[X {:+7.1f},{:+7.1f} |Y {:+7.1f},{:+7.1f}] curVar=[{:+10.1f},{:+10.1f}]".format(state[1], state[2], rawX, rawY, joy.mins[X], joy.maxs[X], joy.mins[Y], joy.maxs[Y], joy.curVar[X],joy.curVar[Y])
-        else:
-            s = "JoyState = [{:+4d},{:+4d},{:+4d},{:+4d}]".format(state[0],state[1],state[2],state[3])
-        
-        print(s, end='\r')
+            print(s, end='\r')
 
         joy_data = joystick_state(state[0], state[1], state[2], state[3])
         client.publish(joy_data.TOPIC_NAME, joy_data.serialize())
