@@ -31,6 +31,7 @@ be tagged:
 
 """
 
+
 def print_rec_procedure():
     print("\
         Procedure to generate '%s' file :\n\
@@ -41,16 +42,17 @@ def print_rec_procedure():
           5- After program ends, power Off the JSM\n\
         The %s file will be created with the JSM init sequence" %(JSM_INIT_FILE, JSM_INIT_FILE))
 
-"""
-R-net class for single raspi and pican dual port logging
-"""
-class RnetDualLogger(threading.Thread):
+
+
+class RnetInitSeqRecorder(threading.Thread):
 
     is_jsm_identified = False
     init = False
     device_id = None
 
     def __init__(self, logfile):
+        """R-net class for single raspi and pican dual port init sequence recording"""
+
         self.cansocket0 = None
         self.cansocket1 = None
         self.logfile = logfile
@@ -69,11 +71,10 @@ class RnetDualLogger(threading.Thread):
             sys.exit(1)
 
 
-    """
-    used for single raspi and pican dual config
-    """
     def start_daemons(self):
-
+        """
+        used for single raspi and pican dual config
+        """
         # launch daemon
         logger.debug("Starting Rnet Dual daemons")
         daemon0 = threading.Thread(target=self.rnet_daemon, args=[self.cansocket0, self.cansocket1, 'PORT0'], daemon=True)
@@ -83,11 +84,11 @@ class RnetDualLogger(threading.Thread):
         return daemon0, daemon1
 
 
-    """
-    Endless loop waiting for Rnet frames
-    Each frame is logged and forwarded to remote server
-    """
     def rnet_daemon(self, listensock, sendsock, logger_tag):
+        """
+        Endless loop waiting for Rnet frames\n
+        Each frame is logged in order to be repeated
+        """
         logger.debug("Rnet listener daemon started")
         is_motor = False
         is_serial = False
@@ -126,36 +127,38 @@ class RnetDualLogger(threading.Thread):
 
 
 
-"""
-JSMiser class will send the JSM init sequence to the motor
-so the raspberry will act in place of the JSM 
-"""
+
+
+
+
 class JSMiser(threading.Thread):
 
-    """
-    Get the JSM init sequence file,
-    Then connect the Rnet socket to the correct interface
-    """
     def __init__(self):
+        """
+        JSMiser class will send the JSM init sequence to the motor
+        so the raspberry will act in place of the JSM\n
+        Get the JSM init sequence file,
+        Then connect the Rnet socket to the correct interface
+        """
 
         try:
             with open(JSM_INIT_FILE,"r") as infile:
                 self.jsm_cmds = infile.readlines()
                 if len(self.jsm_cmds) == 0:
-                    logger.error("The JMS init file %s is empty, please run JSM init recorder 'RnetCtrlInit.py' to create it" %JSM_INIT_FILE)        
+                    logger.error("[JSMiser] The JMS init file %s is empty, please run JSM init recorder 'RnetCtrlInit.py' to create it" %JSM_INIT_FILE)        
                     print_rec_procedure()
                     sys.exit(1)
         except:
-            logger.error("The JMS init file %s is not present, please run JSM init recorder 'RnetCtrlInit.py' to create it" %JSM_INIT_FILE)
+            logger.error("[JSMiser] The JMS init file %s is not present, please run JSM init recorder 'RnetCtrlInit.py' to create it" %JSM_INIT_FILE)
             print_rec_procedure()
             sys.exit(1)
 
         if 'PORT0' in self.jsm_cmds[0]:
-            logger.info("JSM connected on port0 and motor on port1")
+            logger.info("[JSMiser] JSM connected on port0 and motor on port1")
             self.motor_port = 1
             self.jsm_port = 0
         else:
-            logger.info("JSM connected on port1 and motor on port0")
+            logger.info("[JSMiser] JSM connected on port1 and motor on port0")
             self.motor_port = 0
             self.jsm_port = 1
 
@@ -166,42 +169,41 @@ class JSMiser(threading.Thread):
         for line in self.jsm_cmds:
             if 'DEVICE_ID' in line:
                 self.device_id = int(line.split(':')[2],16)
-                logger.info("DEVICE_ID: 0x%x" %self.device_id)
+                logger.info("[JSMiser] DEVICE_ID: 0x%x" %self.device_id)
             if 'JOY_SERIAL' in line:
                 self.jsm_serial = binascii.unhexlify(line.split("'")[1])
-                logger.info("JSM serial: %r" %self.jsm_serial)
+                logger.info("[JSMiser] JSM serial: %r" %self.jsm_serial)
 
         # Open motor can socket, assuming at first that the port is identical
         # to the init file. If not, try the other port as init sequence recording
         # is done on a dual port pican, but final project can use a less expensive
         # single port pican board.
         threading.Thread.__init__(self)
-        logger.info("Opening socketcan")
+        logger.info("[JSMiser] Opening socketcan")
         try:
             self.motor_cansocket = can2RNET.opencansocket(self.motor_port)
         except:
-            logger.error("socketcan %d cannot be opened! Trying the other port" %self.motor_port)
+            logger.error("[JSMiser] socketcan %d cannot be opened! Trying the other port" %self.motor_port)
             # Try the other socket as recording can be done on a dual pican but the environment
             # raspberry controller can use a single port pincan
             try:
                 self.motor_cansocket = can2RNET.opencansocket(self.jsm_port)
             except:
-                logger.error("socketcan %d cannot be opened either! Check connectivity" %self.jsm_port)
+                logger.error("[JSMiser] socketcan %d cannot be opened either! Check connectivity" %self.jsm_port)
                 sys.exit(1)
 
 
 
-    """
-    Start JSM init sequence, blocking function call until init sequence
-    fully completed.
-    """
+   
     def jsm_start(self):
+        """
+        Start JSM init sequence, blocking function call until init sequence
+        fully completed.
+        """
         daemon = threading.Thread(target=self.init_daemon, args=[], daemon=True)
         daemon.start()
         daemon.join()
-
-        print("************************* POWER ON DONE **********************")
-        return self.device_id
+        return self.device_id, self.jsm_serial
 
 
     def get_next_frame(self, idx):
@@ -212,18 +214,19 @@ class JSMiser(threading.Thread):
         else:
             return -1.0, 'NONE', b'\x00'
 
-    """
-    Will send the frames stored in the init file and wait for Motor answer
-    Once done thread exits
-    """
+    
     def init_daemon(self):
-        logger.debug("Rnet JSM init daemon started")
+        """
+        Will send the frames stored in the init file and wait for Motor answer
+        Once done thread exits
+        """
+        logger.debug("[JSMiser] Rnet JSM init daemon started")
         frame_idx = 0
         JSMport = "PORT%d" %self.jsm_port
         MOTORport = "PORT%d" %self.motor_port
         max_idx = len(self.jsm_cmds)
 
-        logger.debug("Proceeding a total of %d frames" %max_idx)
+        logger.debug("[JSMiser] Proceeding a total of %d frames" %max_idx)
 
         while frame_idx < max_idx:
 
@@ -233,26 +236,27 @@ class JSMiser(threading.Thread):
             if port == JSMport:
                 RnetDissector.printFrame(frame)
                 time.sleep(currentTimeFrame - self.timeFrame )
-                logger.debug("%d: sleep(%s) - Sending JSM frame %s" %(frame_idx, currentTimeFrame - self.timeFrame ,binascii.hexlify(frame)))
+                logger.debug("[JSMiser] %d: sleep(%s) - Sending JSM frame %s" %(frame_idx, currentTimeFrame - self.timeFrame ,binascii.hexlify(frame)))
                 can2RNET.cansendraw(self.motor_cansocket, frame)
 
             elif port == MOTORport:
                 RnetDissector.printFrame(frame)
                 rnetFrame = can2RNET.canrecv(self.motor_cansocket)
-                logger.debug('%d: Receive MOTOR frame %s\n' %(frame_idx, binascii.hexlify(rnetFrame)))
+                logger.debug('[JSMiser] %d: Receive MOTOR frame %s\n' %(frame_idx, binascii.hexlify(rnetFrame)))
 
             else:
-                logger.debug('%d: %r / %r Unsupported frame: %r, %r' %(frame_idx, JSMport, MOTORport, port, frame))
+                logger.debug('[JSMiser] %d: %r / %r Unsupported frame: %r, %r' %(frame_idx, JSMport, MOTORport, port, frame))
                 pass
 
             self.timeFrame =  currentTimeFrame
             frame_idx += 1
 
 
-"""
-Argument parser definition
-"""
+
 def parseInputs():
+    """
+    Argument parser definition
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--debug", help="Enable debug messages", action="store_true")
     parser.add_argument("-t", "--test_init", help="Test init sequense", action="store_true")
@@ -260,17 +264,18 @@ def parseInputs():
 
 
 
-"""
-Configuration using one raspi with dual port pican boards.
-"""
+
 def picanDualCaseInit():
+    """
+    Configuration using one raspi with dual port pican boards.
+    """
     # Start Rnet listener daemon
     with open(JSM_INIT_FILE,"w") as outfile:
 
         # Connect and initialize Rnet controller
         # Will listen for Rnet frames and transmit
         # them to other Rnet Port
-        rnet = RnetDualLogger(outfile)
+        rnet = RnetInitSeqRecorder(outfile)
         daemon0, daemon1 = rnet.start_daemons()
 
         daemon0.join()
