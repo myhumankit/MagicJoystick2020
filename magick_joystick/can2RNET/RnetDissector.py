@@ -101,8 +101,8 @@ def getFrameType(rawFrame):
 
 
 def printFrame(rawFrame):
-
     frameType, frameSubtype, device_id, frameName, allData, idl, rtr = getFrameType(rawFrame)
+    frameName = '[' + frameName + ']'
     if idl:
         idl = True
     else:
@@ -113,7 +113,9 @@ def printFrame(rawFrame):
         rtr = False
 
     data = binascii.hexlify(allData)
-    return "[%s]\t\t0x%x\t-0x%x\t-\t0x%x\t\tDATA: %s - RAW: %s (idl=%r, rtr=%r)" % (frameName, frameType, device_id, frameSubtype, data, binascii.hexlify(rawFrame), idl, rtr)
+    # Old format : "[%s]\t\t\t0x%x\t-\t0x%x\t-\t0x%x\t\tDATA: %s - RAW: %s (idl=%r, rtr=%r)" % (frameName, frameType, device_id, frameSubtype, data, binascii.hexlify(rawFrame), idl, rtr)
+    return "{:<18s}   0x{:<4x} - 0x{:<4x} - 0x{:<4x} DATA: {} - RAW: {} (idl={:5s}, rtr={:5s})".format(
+            frameName, frameType, device_id, frameSubtype, data, binascii.hexlify(rawFrame), str(idl), str(rtr))
 
 
 

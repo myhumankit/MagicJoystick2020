@@ -106,6 +106,7 @@ class RnetDualLogger(threading.Thread):
         self.frametype = frametype
         self.record = False
         self.daemon_ctrl = True
+        self.initTime = None
         
         threading.Thread.__init__(self)
         logger.info("Opening socketcan")
@@ -141,6 +142,8 @@ class RnetDualLogger(threading.Thread):
     def record_trigger(self):
         while(1):
             c = readchar.readchar()
+            if self.initTime is None: # Set time to 0 when strart record
+                self.initTime = time.clock_gettime(0)
             if c == "q":
                 break
             else:
@@ -152,7 +155,8 @@ class RnetDualLogger(threading.Thread):
 
     def record_logfile(self, printframe, logger_tag):
         if not any(ftype in printframe for ftype in self.frametype):
-            self.logfile.write('%s\t %s - %s\n' %(time.clock_gettime(0), logger_tag, printframe))
+            s = "{:9.6f}   {:5s} - ".format(time.clock_gettime(0)-self.initTime, logger_tag)
+            self.logfile.write(s + printframe + '\n')
 
 
     """
