@@ -97,7 +97,7 @@ div.body > div > div > i {
 }
 
 div.body.main > div {
-    height: calc(100% / 4);
+    height: calc(100% / 5);
 }
 
 div.body.main > div > div {
@@ -112,8 +112,28 @@ div.body.actuator > div {
     height: calc(100% / 7);
 }
 
+div.body.IR > div {
+    height: calc(100% / 4);
+}
+
+div.body.IR > div > div {
+    width: 100%;
+}
+
+div.body.TV > div {
+    height: calc(100% / 8);
+}
+
+div.body.TV > div > div {
+    width: calc(100%/4);
+}
+
 div.body.light > div {
     height: calc(100% / 4);
+}
+
+#IR {
+    background-image: url("IR.svg");
 }
 
 #actuator_0_0 {
@@ -198,6 +218,114 @@ div.body.light > div {
 
 #button_back_index {
     background-image: url("button_back.svg");
+}
+
+#TV {
+    background-image: url("TV.svg");
+}
+
+#TV_power {
+    background-image: url("button_power.svg");
+}
+
+#TV_0 {
+    background-image: url("button_0.svg");
+}
+
+#TV_1 {
+    background-image: url("button_1.svg");
+}
+
+#TV_2 {
+    background-image: url("button_2.svg");
+}
+
+#TV_3 {
+    background-image: url("button_3.svg");
+}
+
+#TV_4 {
+    background-image: url("button_4.svg");
+}
+
+#TV_5 {
+    background-image: url("button_5.svg");
+}
+
+#TV_6 {
+    background-image: url("button_6.svg");
+}
+
+#TV_7 {
+    background-image: url("button_7.svg");
+}
+
+#TV_8 {
+    background-image: url("button_8.svg");
+}
+
+#TV_9 {
+    background-image: url("button_9.svg");
+}
+
+#TV_mute {
+    background-image: url("mute.svg");
+}
+
+#TV_volume_up {
+    background-image: url("volume_up.svg");
+}
+
+#TV_volume_down {
+    background-image: url("volume_down.svg");
+}
+
+#TV_left {
+    background-image: url("left.svg");
+}
+
+#TV_down {
+    background-image: url("down.svg");
+}
+
+#TV_right {
+    background-image: url("right.svg");
+}
+
+#TV_up {
+    background-image: url("up.svg");
+}
+
+#TV_ok {
+    background-image: url("ok.svg");
+}
+
+#TV_exit {
+    background-image: url("TV_exit.svg");
+}
+
+#TV_home {
+    background-image: url("TV_home.svg");
+}
+
+#TV_info {
+    background-image: url("TV_info.svg");
+}
+
+#TV_menu {
+    background-image: url("TV_menu.svg");
+}
+
+#TV_return {
+    background-image: url("TV_return.svg");
+}
+
+#TV_source {
+    background-image: url("TV_source.svg");
+}
+
+#TV_tools {
+    background-image: url("TV_tools.svg");
 }
 
 #current_speed {
