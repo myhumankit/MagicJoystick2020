@@ -22,6 +22,13 @@ class StaticPages(Resource):
                  "button_wheelchair.svg", "button_horn.svg", "button_light.svg", 
                  "button_speed.svg", "button_drive_mode.svg", "button_drive_mode_on.svg", "button_back.svg",
                  "jquery-3.6.0.min.js", "all.min.css",
+                 "IR.html", "IR.svg", "TV.html", "TV.svg", 
+                 "button_power.svg", "button_0.svg", "button_1.svg", "button_2.svg", "button_3.svg", 
+                 "button_4.svg", "button_5.svg", "button_6.svg", 
+                 "button_7.svg", "button_8.svg", "button_9.svg", 
+                 "mute.svg", "volume_up.svg", "volume_down.svg",
+                 "left.svg", "down.svg", "right.svg", "up.svg", "ok.svg", 
+                 "TV_exit.svg", "TV_home.svg", "TV_info.svg", "TV_menu.svg", "TV_return.svg", "TV_source.svg", "TV_tools.svg",
                  "actuator.html", "actuator_0_0.svg", "actuator_0_1.svg",
                  "actuator_1_0.svg", "actuator_1_1.svg", "actuator_2_0.svg",
                  "actuator_2_1.svg", "actuator_3_0.svg", "actuator_3_1.svg",
@@ -91,6 +98,35 @@ class CurrentValues(Resource):
             return {"DRIVE_MODE": drive_mode, "CHAIR_SPEED" : chair_speed, "LIGHTS": lights}
             #return {"CHAIR_SPEED" : chair_speed, "LIGHTS": lights}
 
+
+class TV(Resource):
+    def __init__(self):
+        self.client = mqtt.Client() 
+        self.client.on_connect = self.__on_connect 
+        self.client.connect("localhost", 1883, 60) 
+        self.client.loop_start()
+    
+    def __on_connect(self, client, userdata, flags, rc):
+        if rc == 0:
+            print("Connection successful")
+        else:
+            print(f"Connection failed with code {rc}")
+
+    def post(self, command):
+        if command == "power":
+            msg = TV_power()
+        # if command == "power_on":
+        #     msg = TV_power(True)
+        # if command == "power_off":
+        #     msg = TV_power(False)
+        else:
+            return "", 404
+
+        self.client.publish(msg.TOPIC_NAME, msg.serialize())
+        return "", 200
+
+
+
 def on_connect(client, userdata, flags, rc):
         if rc == 0:
             print("Connection successful")
@@ -137,6 +173,7 @@ api = Api(app)
 api.add_resource(StaticPages, "/<string:filename>", "/", "/webfonts/<string:filename>")
 api.add_resource(Actions, "/action/<string:action>")
 api.add_resource(CurrentValues, "/current/<string:topic>")
+api.add_resource(TV, "/TV/<string:command>")
 
 if __name__ == "__main__":
     client = mqtt.Client() 

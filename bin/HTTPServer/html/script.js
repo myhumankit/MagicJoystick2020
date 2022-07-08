@@ -214,8 +214,8 @@
     }
 
     /* Clock */
-    setInterval(display_time_battery, 2000);
-    setInterval(synchro_lights_speed_driveMode, 500);
+    // setInterval(display_time_battery, 2000);
+    // setInterval(synchro_lights_speed_driveMode, 500);
 
     /* Register button callbacks */
     $("#actuator").on("click", function() {window.location = "actuator.html";})
@@ -244,6 +244,8 @@
     $("#actuator_5_1").mouseup(function() {clearInterval(interval);})
     $("#actuator_5_1").mousedown(function() {actuator_ctrl(5, 1);})
     $("#button_wheelchair").on("click", function() {window.location = "wheelchair.html";})
+    $("#IR").on("click", function() {window.location = "IR.html";})
+    $("#TV").on("click", function() {window.location = "TV.html";})
     $("#button_back_index").on("click", function() {window.location = "index.html";})
     $("#button_back").on("click", function() {window.location = "wheelchair.html";})
     $("#button_light").on("click", function() {window.location = "light.html";})
@@ -256,6 +258,7 @@
     $("#button_speed").on("click", change_speed)
     $("#button_drive_mode").on("click", function() {$.post("/action/drive")})
     $("#button_horn").on("click", function() {$.post("/action/horn")})
+    $("#TV_power").on("click", function() {$.post("/TV/power")})
     $(window).on("load", set_icons_status)
 
 
