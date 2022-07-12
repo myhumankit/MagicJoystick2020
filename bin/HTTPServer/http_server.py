@@ -122,6 +122,15 @@ class TV(Resource):
         elif command == "volume":
             data = request.get_json()
             msg = TV_volume(data["type"])
+        elif command == "param":
+            data = request.get_json()
+            msg = TV_param(data["type"])
+        elif command == "direction":
+            data = request.get_json()
+            msg = TV_direction(data["type"])
+        elif command == "number":
+            data = request.get_json()
+            msg = TV_number(data["nb"])
 
         else:
             return "", 404
