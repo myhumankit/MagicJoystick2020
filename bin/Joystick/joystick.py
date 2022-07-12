@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+from math import sqrt
 import time
 from ads1015 import ADS1015
 from gpiozero import Button
@@ -18,7 +19,7 @@ class Joystick():
 
     ADS_GAIN = 4.096
 
-    def __init__(self, dead_zone_size=.1, swap_xy=False, swap_x=False, swap_y=False):
+    def __init__(self, dead_zone_size=.1, swap_xy=False, swap_x=False, swap_y=False, squareToCircle = False):
         self.left_button = Button(GPIO_LEFT_BUTTON)
         self.right_button = Button(GPIO_RIGHT_BUTTON)
 
@@ -26,6 +27,7 @@ class Joystick():
         self.swap_x = swap_x
         self.swap_y = swap_y
         self.dead_zone_size = dead_zone_size # Between 0.0 and 1.0
+        self.squareToCircle = squareToCircle
 
         # Create an ADS1015 ADC (16-bit) instance.
         self.ads = ADS1015()
@@ -65,10 +67,10 @@ class Joystick():
         print("[CALIB] MinMax set to X [%.3f,%.3f] Y [%.3f,%.3f]" % (self.mins[X], self.maxs[X], self.mins[Y], self.maxs[Y]))
     
 
-    """
-    Get new x/y couple from ADC
-    """
     def getRaw_xy(self):
+        """
+        Get new x/y couple from ADC
+        """
         x = self.ads.get_voltage('in0/gnd') - self.offsets[X]
         y = self.ads.get_voltage('in1/gnd') - self.offsets[Y]
         if x > self.maxs[X]:
@@ -80,10 +82,30 @@ class Joystick():
         elif y < self.mins[Y]:
             self.mins[Y] = y
         return x, y
+    
+    def swapToCircle(self, x, y):
+        """
+        If your joy is in square shape, you must use this function to not send data such as [100,100] which is impossible.
+        """
+        r = sqrt(x**2 + y**2)
+        if r == 0:
+            return (x, y)
+        if abs(y) <= abs(x):
+            absCosTheta = abs(x) / r
+            x = x * absCosTheta
+            y = y * absCosTheta
+        else :
+            absSinTheta = abs(y) / r
+            x = x * absSinTheta
+            y = y * absSinTheta
+        return (x, y)
 
     def get_xy(self):
         rawX, rawY = self.getRaw_xy()
         x, y = self.normalize_xy(rawX, rawY)
+
+        if self.squareToCircle:
+            x,y = self.swapToCircle(x, y)
 
         if self.swap_x:
             x = - x
@@ -128,7 +150,7 @@ if __name__ == "__main__":
     print("[MAIN] Connect MQTT")
 
     # Instanciate joystick 
-    joy = Joystick(swap_y=True, dead_zone_size=0.2)
+    joy = Joystick(swap_y=True, dead_zone_size=0.2, squareToCircle=True)
     lstBtn = [joy.left_button, joy.right_button]
 
     while True:
