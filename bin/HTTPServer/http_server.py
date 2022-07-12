@@ -119,8 +119,9 @@ class TV(Resource):
         #     msg = TV_power(True)
         # if command == "power_off":
         #     msg = TV_power(False)
-        elif command == "mute":
-            msg = TV_mute()
+        elif command == "volume":
+            data = request.get_json()
+            msg = TV_volume(data["type"])
 
         else:
             return "", 404

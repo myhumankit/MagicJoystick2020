@@ -200,6 +200,19 @@
         interval = setInterval(send_actuator_ctrl, actuatorWatchdogTime, actuator_num, direction)
     }
 
+    function change_TV_volume(type)
+    {
+        $.ajax({
+            type: "POST",
+            url: "/TV/volume",
+            data: JSON.stringify({"type": type}),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function(data){},
+            error: function(errMsg){}
+        });
+    }
+
     function set_icons_status()
     {
         if (sessionStorage.getItem('power') === 'true') {
@@ -259,6 +272,9 @@
     $("#button_drive_mode").on("click", function() {$.post("/action/drive")})
     $("#button_horn").on("click", function() {$.post("/action/horn")})
     $("#TV_power").on("click", function() {$.post("/TV/power")})
+    $("#TV_mute").on("click", function() {change_TV_volume("mute")})
+    $("#TV_volume_up").on("click", function() {change_TV_volume("up")})
+    $("#TV_volume_down").on("click", function() {change_TV_volume("down")})
     $(window).on("load", set_icons_status)
 
 

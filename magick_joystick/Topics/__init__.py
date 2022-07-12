@@ -84,8 +84,7 @@ class TV_power(base_mqtt_message):
         pass
         #self.state = state
 
-class TV_mute(base_mqtt_message):
-    TOPIC_NAME = "TV/mute"
-    def __init__(self):
-        pass
-
+class TV_volume(base_mqtt_message):
+    TOPIC_NAME = "TV/volume"
+    def __init__(self, type):
+        self.type = type
