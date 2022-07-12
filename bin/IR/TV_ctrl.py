@@ -19,7 +19,10 @@ h.flush = sys.stdout.flush
 logger.addHandler(h)
 
 def send_power():
-    os.system("sudo ir-ctl -d /dev/lirc0 -s bin/IR/raw_command/power.txt")
+    os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/power.txt")
+
+def send_mute():
+    os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/mute.txt")
 
 
 # MQTT Connection initialization
@@ -27,6 +30,7 @@ def on_connect(mqtt_client, userdata, flags, rc):
         if rc == 0:
             logger.info("Connection successful")
             mqtt_client.subscribe(TV_power.TOPIC_NAME)
+            mqtt_client.subscribe(TV_mute.TOPIC_NAME)
         else:
             logger.info(f"Connection failed with code {rc}")
 
@@ -38,6 +42,9 @@ def on_message(mqtt_client, userdata, msg):
         #power_state = data_current.state
         print("TV powered")
         send_power()
+    elif msg.topic == TV_mute.TOPIC_NAME:
+        print("TV muted")
+        send_mute()
 
 
 

@@ -119,6 +119,9 @@ class TV(Resource):
         #     msg = TV_power(True)
         # if command == "power_off":
         #     msg = TV_power(False)
+        elif command == "mute":
+            msg = TV_mute()
+
         else:
             return "", 404
 

@@ -78,3 +78,14 @@ class status_chair_speed(base_mqtt_message):
         self.speedMps = speedMps
 
 
+class TV_power(base_mqtt_message):
+    TOPIC_NAME = "TV/power"
+    def __init__(self):
+        pass
+        #self.state = state
+
+class TV_mute(base_mqtt_message):
+    TOPIC_NAME = "TV/mute"
+    def __init__(self):
+        pass
+
