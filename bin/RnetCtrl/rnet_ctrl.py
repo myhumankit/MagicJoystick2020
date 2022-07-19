@@ -29,16 +29,17 @@ class RnetControl(threading.Thread):
     light_state = [False,False,False] # flashing left, flashing right, Warnning
     auto_light = False
 
-    def __init__(self, testmode = False):
+    def __init__(self, logJoyFrames = False):
         self.RnetHorn = None
-        # self.hornThread = None
-        self.testmode = testmode
         self.drive_mode = False
         self.battery_level = 0
         self.chair_speed = 0.0
         self.joy_watchdog = 0
         self.actuator_watchdog = 0
+        self.fdLog = None
         threading.Thread.__init__(self)
+
+        self.logJoyFrames = logJoyFrames
         
         logger.info("========== START ========== ")
         try:
@@ -54,15 +55,14 @@ class RnetControl(threading.Thread):
         drive = action_drive(False)
         self.mqtt_client.publish(action_drive.TOPIC_NAME, drive.serialize())
 
-        if testmode is False:
-            self.cansend = can2RNET.cansendraw
-        else:
-            logger.warning("Switching in test mode, do not connect to CAN bus")
-            self.cansend = self.dummy
+        self.cansend = can2RNET.cansendraw
+
+        if logJoyFrames:
+            logger.info("Ready to store JOY_POSITION frames")
 
         # Open can socket to prepare fake JSM power_on
         logger.info("Opening socketcan")
-        self.rnet_can =  RnetCan(self.testmode)
+        self.rnet_can = RnetCan()
 
 
     # MQTT Connection initialization
@@ -227,7 +227,7 @@ class RnetControl(threading.Thread):
         while self.rnet_can.init_done is not True:
             time.sleep(0.1)
 
-        logger.info("Rnet Init complete, jsm_subtype id is: %x" %self.rnet_can.jsm_subtype)
+        logger.info("Rnet Init complete, deviceID is: 0x%x" % (self.rnet_can.joy_subtype))
 
         # Initialize required Rnet frame objects and callbacks:
         self.rnet_can.set_battery_level_callback(self.update_battery_level)  
@@ -239,12 +239,19 @@ class RnetControl(threading.Thread):
         self.RnetMotorMaxSpeed = RnetDissector.RnetMotorMaxSpeed(20, self.rnet_can.joy_subtype)
         self.RnetActuatorCtrl = RnetDissector.RnetActuatorCtrl(0, 0, self.rnet_can.jsm_subtype)
 
+        if self.logJoyFrames:
+            self.motorXY = [0,0]
+            self.rnet_can.set_motor_pos_callback(self.update_motor_pos)
+
         return self.start_threads()
 
-
-    def dummy(self, arg0, arg1):
-        pass
-
+    def update_motor_pos(self, rawData):
+        x = rawData[0]
+        y = rawData[1]
+        x = (x-256) if (x>127) else x
+        y = (y-256) if (y>127) else y
+        self.motorXY = [x,y]
+        return
 
     def update_battery_level(self, raw_frame):
         self.RnetBatteryLevel.set_raw(raw_frame)
@@ -265,7 +272,25 @@ class RnetControl(threading.Thread):
         thread_act.start()
         thread_batt = threading.Thread(target=self.rnet_status_thread, daemon=True)
         thread_batt.start()
+        if self.logJoyFrames:
+            thread_log = threading.Thread(target=self.log_thread, daemon=True)
+            thread_log.start()
         return [thread_joy, thread_act, thread_batt]
+
+
+    def log_thread(self):
+        fdLog = open("/tmp/pos.log", 'a')
+        logger.info("Rnet joy pos thread started")
+        flusher = 0
+        while self.power_state:
+            flusher += 1
+            jx, jy = self.RnetJoyPosition.get_data()
+            mx, my = self.motorXY
+            fdLog.write("%d %d %d %d\n" % (jx,jy,mx,my))
+            if flusher%100 == 0: #In case of crash, all files are flushed do we have datas to debug
+                fdLog.flush()
+        logger.info("Rnet joy pos thread ended")
+        fdLog.close()
 
 
     """
@@ -352,7 +377,7 @@ Argument parser definition
 def parseInputs():
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--debug", help="Enable debug messages", action="store_true")
-    parser.add_argument("-t", "--testmode", help="Test mode, do not connect to CAN bus", action="store_true")
+    parser.add_argument("-l", "--logJoyFrames", help="Save in '/tmp/joy.log' all rnet frames send and recieve with name 'JOY_POSITION'", action="store_true")
 
     return parser.parse_args()
 
@@ -367,7 +392,7 @@ if __name__ == "__main__":
         logger.setLevel(logging.INFO)
 
     # Connect to piCan and initialize Rnet controller,
-    rnet = RnetControl(args.testmode) # Send JSM init sequence 'power on'
+    rnet = RnetControl(args.logJoyFrames) # Send JSM init sequence 'power on'
     threads = rnet.power_on()
     for thread in threads:
         thread.join()

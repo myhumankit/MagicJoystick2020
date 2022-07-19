@@ -20,46 +20,38 @@ class RnetCan(threading.Thread):
     jsm_cansocket = None
     battery_level_callback = None
     chair_speed_callback = None
+    motor_pos_callback = None
 
-    def __init__(self, testmode = False):
+    def __init__(self):
         self.cansocket0 = None
         self.cansocket1 = None
-        self.testmode = testmode
 
         threading.Thread.__init__(self)
 
-        if self.testmode is True:
-            self.init_done = True
-            self.jsm_subtype = 0x200
-
-        else:
-            logger.info("RnetListener Opening socketcan")
-            try:
-                self.cansocket0 = can2RNET.opencansocket(0)
-            except:
-                logger.error("RnetListener socketcan can0 cannot be opened! Check connectivity")
-                sys.exit(1)
-            try:
-                self.cansocket1 = can2RNET.opencansocket(1)
-            except:
-                logger.error("RnetListener socketcan can1 cannot be opened! Check connectivity")
-                sys.exit(1)
+        logger.info("RnetListener Opening socketcan")
+        try:
+            self.cansocket0 = can2RNET.opencansocket(0)
+        except:
+            logger.error("RnetListener socketcan can0 cannot be opened! Check connectivity")
+            sys.exit(1)
+        try:
+            self.cansocket1 = can2RNET.opencansocket(1)
+        except:
+            logger.error("RnetListener socketcan can1 cannot be opened! Check connectivity")
+            sys.exit(1)
 
 
     """
     Sart a listen/transmit daemon on each can port
     """
     def connect(self):
-        if self.testmode is False:
-            # launch daemon
-            logger.debug("RnetListener Starting Rnet Dual daemons")
-            daemon0 = threading.Thread(target=self.rnet_daemon, args=[self.cansocket0, self.cansocket1, 'PORT0'], daemon=True)
-            daemon0.start()
-            daemon1 = threading.Thread(target=self.rnet_daemon, args=[self.cansocket1, self.cansocket0, 'PORT1'], daemon=True)
-            daemon1.start()
-            return daemon0, daemon1
-        else:
-            return None, None
+        # launch daemon
+        logger.debug("RnetListener Starting Rnet Dual daemons")
+        daemon0 = threading.Thread(target=self.rnet_daemon, args=[self.cansocket0, self.cansocket1, 'PORT0'], daemon=True)
+        daemon1 = threading.Thread(target=self.rnet_daemon, args=[self.cansocket1, self.cansocket0, 'PORT1'], daemon=True)
+        daemon0.start()
+        daemon1.start()
+        return daemon0, daemon1
 
 
     """
@@ -80,6 +72,12 @@ class RnetCan(threading.Thread):
     """
     def set_chair_speed_callback(self, callback):
         self.chair_speed_callback = callback
+    
+    """
+    Chair motor pos callback (logging)
+    """
+    def set_motor_pos_callback(self, callback):
+        self.motor_pos_callback = callback
 
 
     """
@@ -87,18 +85,17 @@ class RnetCan(threading.Thread):
     Each received frame is logged/filtered and forwarded to other port
     """
     def rnet_daemon(self, listensock, sendsock, logger_tag):
-        logger.debug("RnetListener daemon started")
+        logger.info("RnetListener daemon '%s' started"%logger_tag)
 
         while True:
             rnetFrame = can2RNET.canrecv(listensock)
-            #frameToLog  = binascii.hexlify(rnetFrame)
-            #logger.debug('%s:%s:%s\n' %(time.time(), logger_tag, frameToLog))
 
             __, subType, device_id, frameName, data, __, __ = RnetDissector.getFrameType(rnetFrame)
            
             # Trash all joy position frames if not in JSM mode enabled
             if (frameName == 'JOY_POSITION'):
-                pass
+                if (self.motor_pos_callback is not None) and (listensock==self.motor_cansocket):
+                    self.motor_pos_callback(data)
             else:
                 can2RNET.cansendraw(sendsock, rnetFrame)
 
@@ -108,13 +105,14 @@ class RnetCan(threading.Thread):
                     self.jsm_cansocket = sendsock
 
                 # Wait for a joy position to record JSM ID
-                if frameName == 'JOY_POSITION':
-                    #logger.debug('********** Got JMS ID: 0x%x **********\n' %subType)
+                if (frameName=='JOY_POSITION') and (listensock==self.jsm_cansocket):
+                    # and only get it if the frame come from JSM
                     self.jsm_subtype = device_id & 0x0F
                     self.joy_subtype = device_id
                 
                 if (self.jsm_subtype is not None) and (self.jsm_cansocket is not None):
                     self.init_done = True
+
 
             if (frameName == 'BATTERY_LEVEL'):
                 if self.battery_level_callback is not None:
@@ -123,10 +121,4 @@ class RnetCan(threading.Thread):
             if (frameName == 'CHAIR_SPEED'):
                 if self.chair_speed_callback is not None:
                     self.chair_speed_callback(rnetFrame)
-
-    def logframe(self, frameName, listensock):
-        if self.motor_cansocket == listensock:
-            print("MOTOR: %s" %frameName)
-        else:
-            print("JSM  : %s" %frameName)
 
