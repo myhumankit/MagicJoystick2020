@@ -73,6 +73,39 @@
             })
     }
 
+
+    function get_and_update_buttons()
+    {
+        $.ajax({
+            type: "GET",
+            url: "/TV_A/buttons",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function(result){
+                console.log("function get and update buttons 2"),
+                console.log(result)
+                for ( var i=0 ; i<result["BUTTONS"].length ; i++ ){
+                    if(result.BUTTONS[i] === false) {
+                        //console.log(i, result.BUTTONS[i], "je dois changer de bg")
+                        if (!($("#TV_A_"+i).hasClass("no"))) {
+                            $("#TV_A_"+i).addClass("no");
+                        }
+                    } else {
+                        if ($("#TV_A_"+i).hasClass("no")) {
+                            $("#TV_A_"+i).removeClass("no");
+                        }
+                    }
+                }
+            },
+            error: function(errMsg){
+                console.log("function get and update buttons error"),
+                console.log(errMsg)
+            }
+            })
+
+    }
+
+
     function send_light(light_id)
     {
         $.ajax({
@@ -200,6 +233,8 @@
         interval = setInterval(send_actuator_ctrl, actuatorWatchdogTime, actuator_num, direction)
     }
 
+
+    /* TV */
     function change_TV_volume(type)
     {
         $.ajax({
@@ -226,7 +261,6 @@
         });
     }
 
-
     function change_TV_direction(type)
     {
         $.ajax({
@@ -252,8 +286,39 @@
             success: function(data){},
             error: function(errMsg){}
         });
-    
     }
+
+
+    /* TV_A */
+    function change_TV_A(id)
+    {
+        if ($("#TV_A_"+id).hasClass("no")){
+            //alert("Veuiller enregistrer la commande puis appuyer sur ok")
+            $.ajax({
+                type: "POST",
+                url: "/TV_A/get",
+                data: JSON.stringify({"id": id}),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function(data){},
+                error: function(errMsg){}
+            })
+        }
+        
+        else {
+            $.ajax({
+            type: "POST",
+            url: "/TV_A/control",
+            data: JSON.stringify({"id": id}),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function(data){},
+            error: function(errMsg){}
+        })
+        };
+    }
+
+
 
     function set_icons_status()
     {
@@ -271,9 +336,20 @@
     /* Clock */
     // setInterval(display_time_battery, 2000);
     // setInterval(synchro_lights_speed_driveMode, 500);
+    get_and_update_buttons()
 
-    /* Register button callbacks */
+    /* html change pages */
     $("#actuator").on("click", function() {window.location = "actuator.html";})
+    $("#button_wheelchair").on("click", function() {window.location = "wheelchair.html";})
+    $("#IR").on("click", function() {window.location = "IR.html";})
+    $("#TV").on("click", function() {window.location = "TV.html";})
+    $("#A").on("click", function() {window.location = "TV_A.html";})
+    $("#button_back_index").on("click", function() {window.location = "index.html";})
+    $("#button_back").on("click", function() {window.location = "wheelchair.html";})
+    $("#button_back_ir").on("click", function() {window.location = "IR.html";})
+    $("#button_light").on("click", function() {window.location = "light.html";})
+
+    /* Wheelchair buttons */
     $("#actuator_0_0").mouseup(function() {clearInterval(interval);})
     $("#actuator_0_0").mousedown(function() {actuator_ctrl(0, 0);})
     $("#actuator_0_1").mouseup(function() {clearInterval(interval);})
@@ -298,12 +374,6 @@
     $("#actuator_5_0").mousedown(function() {actuator_ctrl(5, 0);})
     $("#actuator_5_1").mouseup(function() {clearInterval(interval);})
     $("#actuator_5_1").mousedown(function() {actuator_ctrl(5, 1);})
-    $("#button_wheelchair").on("click", function() {window.location = "wheelchair.html";})
-    $("#IR").on("click", function() {window.location = "IR.html";})
-    $("#TV").on("click", function() {window.location = "TV.html";})
-    $("#button_back_index").on("click", function() {window.location = "index.html";})
-    $("#button_back").on("click", function() {window.location = "wheelchair.html";})
-    $("#button_light").on("click", function() {window.location = "light.html";})
     $("#light_1").on("click", function() {change_light(1);})
     $("#light_2").on("click", function() {change_light(2);})
     $("#light_3").on("click", function() {change_light(3);})
@@ -313,6 +383,9 @@
     $("#button_speed").on("click", change_speed)
     $("#button_drive_mode").on("click", function() {$.post("/action/drive")})
     $("#button_horn").on("click", function() {$.post("/action/horn")})
+
+
+    /* TV IR buttons */
     $("#TV_power").on("click", function() {$.post("/TV/power")})
     $("#TV_mute").on("click", function() {change_TV_volume("mute")})
     $("#TV_volume_up").on("click", function() {change_TV_volume("up")})
@@ -339,6 +412,34 @@
     $("#TV_7").on("click", function() {change_TV_number("7")})
     $("#TV_8").on("click", function() {change_TV_number("8")})
     $("#TV_9").on("click", function() {change_TV_number("9")})
+
+    /* TV IR learning buttons */
+    $("#TV_A_0").on("click", function() {change_TV_A(0)})
+    $("#TV_A_4").on("click", function() {change_TV_A(4)})
+    $("#TV_A_8").on("click", function() {change_TV_A(8)})
+    $("#TV_A_12").on("click", function() {change_TV_A(12)})
+    $("#TV_A_27").on("click", function() {change_TV_A(27)})
+    $("#TV_A_22").on("click", function() {change_TV_A(22)})
+    $("#TV_A_20").on("click", function() {change_TV_A(20)})
+    $("#TV_A_24").on("click", function() {change_TV_A(24)})
+    $("#TV_A_26").on("click", function() {change_TV_A(26)})
+    $("#TV_A_23").on("click", function() {change_TV_A(23)})
+    $("#TV_A_25").on("click", function() {change_TV_A(25)})
+    $("#TV_A_16").on("click", function() {change_TV_A(16)})
+    $("#TV_A_21").on("click", function() {change_TV_A(21)})
+    $("#TV_A_18").on("click", function() {change_TV_A(18)})
+    $("#TV_A_13").on("click", function() {change_TV_A(13)})
+    $("#TV_A_17").on("click", function() {change_TV_A(17)})
+    $("#TV_A_14").on("click", function() {change_TV_A(14)})
+    $("#TV_A_1").on("click", function() {change_TV_A(1)})
+    $("#TV_A_2").on("click", function() {change_TV_A(2)})
+    $("#TV_A_3").on("click", function() {change_TV_A(3)})
+    $("#TV_A_5").on("click", function() {change_TV_A(5)})
+    $("#TV_A_6").on("click", function() {change_TV_A(6)})
+    $("#TV_A_7").on("click", function() {change_TV_A(7)})
+    $("#TV_A_9").on("click", function() {change_TV_A(9)})
+    $("#TV_A_10").on("click", function() {change_TV_A(10)})
+    $("#TV_A_11").on("click", function() {change_TV_A(11)})
 
     $(window).on("load", set_icons_status)
 

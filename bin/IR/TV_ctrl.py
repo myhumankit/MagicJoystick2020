@@ -86,7 +86,7 @@ def send_number(nb):
 # MQTT Connection initialization
 def on_connect(mqtt_client, userdata, flags, rc):
         if rc == 0:
-            logger.info("Connection successful")
+            logger.info("Connection successful TV")
             mqtt_client.subscribe(TV_power.TOPIC_NAME)
             mqtt_client.subscribe(TV_volume.TOPIC_NAME)
             mqtt_client.subscribe(TV_param.TOPIC_NAME)

@@ -104,3 +104,9 @@ class TV_number(base_mqtt_message):
     TOPIC_NAME = "TV/number"
     def __init__(self, nb):
         self.nb = nb
+
+
+class TV_A_control(base_mqtt_message):
+    TOPIC_NAME = "TV_A/control"
+    def __init__(self, id):
+        self.id = id

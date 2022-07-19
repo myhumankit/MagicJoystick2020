@@ -1,7 +1,12 @@
+from sys import stdin
 from flask import Flask, send_from_directory, request
 from flask_restful import Resource, Api
 import paho.mqtt.client as mqtt
 from magick_joystick.Topics import *
+import os
+import time
+import subprocess
+import signal
 
 app = Flask(__name__)
 lights = [False, False, False, False]
@@ -15,6 +20,14 @@ FLASHING_RIGHT = 1
 WARNING_LIGHT = 2
 FRONT_LIGHTS = 3
 
+
+def check_files_TV_A():
+    state = []
+    for i in range (28):
+        state.append(os.path.exists("/home/roxu/bin/IR/TV_A_raw_command/TV_A_" + str(i) + ".txt"))
+    return state
+
+
 class StaticPages(Resource):
     def get(self, filename = "index.html"):
         files = ["index.html", "wheelchair.html", "style.css",
@@ -22,13 +35,14 @@ class StaticPages(Resource):
                  "button_wheelchair.svg", "button_horn.svg", "button_light.svg", 
                  "button_speed.svg", "button_drive_mode.svg", "button_drive_mode_on.svg", "button_back.svg",
                  "jquery-3.6.0.min.js", "all.min.css",
-                 "IR.html", "IR.svg", "TV.html", "TV.svg", 
+                 "IR.html", "IR.svg", "TV.html", "TV.svg", "TV_A.html", 
                  "button_power.svg", "button_0.svg", "button_1.svg", "button_2.svg", "button_3.svg", 
                  "button_4.svg", "button_5.svg", "button_6.svg", 
                  "button_7.svg", "button_8.svg", "button_9.svg", 
                  "mute.svg", "volume_up.svg", "volume_down.svg",
                  "left.svg", "down.svg", "right.svg", "up.svg", "ok.svg", 
                  "TV_exit.svg", "TV_home.svg", "TV_info.svg", "TV_menu.svg", "TV_return.svg", "TV_source.svg", "TV_tools.svg",
+                 "A.svg", 
                  "actuator.html", "actuator_0_0.svg", "actuator_0_1.svg",
                  "actuator_1_0.svg", "actuator_1_1.svg", "actuator_2_0.svg",
                  "actuator_2_1.svg", "actuator_3_0.svg", "actuator_3_1.svg",
@@ -140,6 +154,52 @@ class TV(Resource):
 
 
 
+class TV_A(Resource):
+    def __init__(self):
+        self.client = mqtt.Client() 
+        self.client.on_connect = self.__on_connect 
+        self.client.connect("localhost", 1883, 60) 
+        self.client.loop_start()
+    
+    def __on_connect(self, client, userdata, flags, rc):
+        if rc == 0:
+            print("Connection successful")
+        else:
+            print(f"Connection failed with code {rc}")
+    
+    def get(self, command):
+        if command == "buttons":
+            return {"BUTTONS":check_files_TV_A()}
+        else:
+            return "", 404
+
+    def post(self, command):
+        if command == "control":
+            data = request.get_json()
+            msg = TV_A_control(data["id"])
+            self.client.publish(msg.TOPIC_NAME, msg.serialize())
+        elif command == "get":
+            data = request.get_json()
+            id = data["id"]
+            file = open("/home/roxu/bin/IR/TV_A_raw_command/" + "TV_A_" + str(id) +  ".txt", "w")
+            process = subprocess.Popen(["ir-ctl", "-r",  "-d", "/dev/lirc1", "--mode2"], stdout=file)   # pass cmd and args to the function
+            time.sleep(10)
+            process.send_signal(signal.SIGINT)   # send Ctrl-C signal
+            file.close()
+            # stdout_get, stderr_get = process.communicate()
+            # # print("stdout", stdout)
+            # # print("stderr", stderr)
+            # print(stdout_get)
+            # f = open("test.txt", "w")
+            # f.write(stdout_get)
+            # f.close()
+        else:
+            return "", 404
+
+        return "", 200
+
+
+
 def on_connect(client, userdata, flags, rc):
         if rc == 0:
             print("Connection successful")
@@ -187,9 +247,10 @@ api.add_resource(StaticPages, "/<string:filename>", "/", "/webfonts/<string:file
 api.add_resource(Actions, "/action/<string:action>")
 api.add_resource(CurrentValues, "/current/<string:topic>")
 api.add_resource(TV, "/TV/<string:command>")
+api.add_resource(TV_A, "/TV_A/<string:command>")
 
 if __name__ == "__main__":
-    client = mqtt.Client() 
+    client = mqtt.Client()
     client.on_connect = on_connect
     client.on_message = on_message
     client.connect("localhost", 1883, 60)
