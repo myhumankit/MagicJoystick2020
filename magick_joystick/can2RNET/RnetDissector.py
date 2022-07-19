@@ -343,11 +343,13 @@ class RnetJoyPosition :
 
     def encode(self):
         frame = raw_frame(self.idl, self.rtr, self.type, self.subtype, self.jsm_id)
+        x = (-self.X) if (self.Y > 0) else (self.X) # Change left/right if we go backward
         
         data = self.joyPosition_t.build(
             dict(
-                X = self.X & 0xFF, # Change values from [-100;-1] to [128;255]
-                Y = self.Y & 0xFF) # The eight least significant bits remain unchanged
+                X = x & 0xFF, # Change values from [-100;-1] to [128;255]
+                Y = self.Y & 0xFF # The eight least significant bits remain unchanged
+                )
         )
 
         frame.set_data(data)
