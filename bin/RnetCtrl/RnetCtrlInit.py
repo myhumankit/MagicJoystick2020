@@ -8,8 +8,6 @@ import logging
 from magick_joystick.can2RNET import can2RNET, RnetDissector
 logger = can2RNET.logger
 
-JSM_INIT_FILE = 'jsm_init.log'
-
 """
 Rnet JSM init sequence recorder and playback
 Must use a raspberry + Dual Can board architecture
@@ -30,6 +28,9 @@ be tagged:
     Then init sequence recording is completed.
 
 """
+
+JSM_INIT_FILE = 'jsm_init.log'
+JSM_RECONF_FILE = 'jsm_reconf.log'
 
 
 def print_rec_procedure():
@@ -126,23 +127,163 @@ class RnetInitSeqRecorder(threading.Thread):
                     self.is_jsm_identified = True
 
 
+class RnetReconfigSeqRecorder(threading.Thread):
+
+    is_jsm_identified = False
+    init = False
+    device_id = None
+
+    def __init__(self):
+        """
+        R-net class for single raspi and pican dual port reconfiguration & init sequences recording.\n
+        To use this class, make sure that the next power on of the JSM will do an reconfiguration sequence. 
+        Launch the script with '-r' coption, then turn on the JSM.
+        At the end of the sequence, turn off then on the JSM to start the init sequence recording.
+        The two sequences will be saved in .log files
+        """
+
+        self.cansocket0 = None
+        self.cansocket1 = None
+
+        threading.Thread.__init__(self)
+
+    def openSock(self):
+        print("Opening socketcan")
+        try:
+            self.cansocket0 = can2RNET.opencansocket(0)
+        except:
+            logger.error("socketcan can0 cannot be opened! Check connectivity")
+            sys.exit(1)
+        try:
+            self.cansocket1 = can2RNET.opencansocket(1)
+        except:
+            logger.error("socketcan can1 cannot be opened! Check connectivity")
+            sys.exit(1)
+    def closeSock(self):
+        self.cansocket0.close()
+        self.cansocket1.close()
+
+    def startAllRecords(self):
+        self.openSock()
+        # First phase, record reconf sequence
+        print("Starting Rnet Dual daemons for reconfiguration record")
+        self.logfile = open(JSM_RECONF_FILE, "w")
+        dems = self.start_daemons(self.rnet_daemon_reconf)
+        for d in dems:
+            d.join()
+        self.logfile.close()
+        self.closeSock()
+        print(" ===== Done with reconfiguration sequence ===== ")
+
+        time.sleep(.5)
+
+        #Then the init sequence
+        self.openSock()
+        print("Starting Rnet Dual daemons for init sequence record")
+        self.logfile = open(JSM_INIT_FILE, "w")
+        dems = self.start_daemons(self.rnet_daemon_init)
+        for d in dems:
+            d.join()
+        self.logfile.close()
+        self.closeSock()
+        
+
+    def start_daemons(self, target):
+        # launch daemon
+        daemon0 = threading.Thread(target=target, args=[self.cansocket0, self.cansocket1, 'PORT0'], daemon=True)
+        daemon1 = threading.Thread(target=target, args=[self.cansocket1, self.cansocket0, 'PORT1'], daemon=True)
+        daemon0.start()
+        daemon1.start()
+        return daemon0, daemon1
+
+    def rnet_daemon_reconf(self, listensock, sendsock, logger_tag):
+        """
+        Endless loop waiting for Rnet frames\n
+        Each frame is logged in order to be repeated
+        """
+        print("Rnet Reconf daemon started")
+
+        gotPowerOff = False
+
+        while True:
+
+            if gotPowerOff is False: #Before the user turn the JSM off
+                rnetFrame = can2RNET.canrecv(listensock)
+            else: #Once user turn off the JSM
+                rnetFrame = can2RNET.canrecvTimeout(listensock, 0.5)
+                if rnetFrame == b'':
+                    break
+
+            can2RNET.cansendraw(sendsock, rnetFrame)
+            frameToLog  = binascii.hexlify(rnetFrame)
+
+            # Check end of init condition
+            _, _, _, frameName, _, _, _ = RnetDissector.getFrameType(rnetFrame)
+            if frameName == 'POWER_OFF':
+                gotPowerOff = True
+            logger.debug('%s:%s:%s\n' %(time.time(), logger_tag, frameToLog))
+            self.logfile.write('%s:%s:%s\n' %(time.time(), logger_tag, frameToLog))
+        
 
 
+    def rnet_daemon_init(self, listensock, sendsock, logger_tag):
+        """
+        Endless loop waiting for Rnet frames\n
+        Each frame is logged in order to be repeated
+        """
+        print("Rnet init daemon started")
+        is_motor = False
+        is_serial = False
+
+        while self.init is False or self.is_jsm_identified is False:
+            rnetFrame = can2RNET.canrecv(listensock)
+            frameToLog  = binascii.hexlify(rnetFrame)
+            logger.debug('%s:%s:%s\n' %(time.time(), logger_tag, frameToLog))
+            self.logfile.write('%s:%s:%s\n' %(time.time(), logger_tag, frameToLog))
+            can2RNET.cansendraw(sendsock, rnetFrame)
+
+            # Check end of init condition
+            _, _, device_id, frameName, data, _, _ = RnetDissector.getFrameType(rnetFrame)
+            if frameName == 'END_OF_INIT':
+                self.init = True
+            
+            # Check current thread is MOTOR or JMS
+            if frameName == 'PMTX_CONNECT':
+                print('===== PMTX_CONNECT frame received =====\n')
+                is_motor = True
+
+            # Memorize serial
+            if is_serial is False and frameName == 'SERIAL':
+                print('===== SERIAL frame received =====\n')
+                self.jsm_serial = data
+                is_serial = True
+
+            # In case thread is JSM side, wait for 
+            # a joy position to record JSM ID
+            if is_motor is False and self.init is True:
+                if frameName == 'JOY_POSITION':
+                    print('===== Got JMS ID: 0x%x =====\n' %device_id)
+                    self.logfile.write('-1.0:DEVICE_ID:0x%x\n' %device_id)
+                    self.logfile.write('-1.0:JOY_SERIAL:%s\n' %binascii.hexlify(self.jsm_serial))
+                    self.is_jsm_identified = True
 
 
 
 class JSMiser(threading.Thread):
 
-    def __init__(self):
+    def __init__(self, source=JSM_INIT_FILE):
         """
         JSMiser class will send the JSM init sequence to the motor
         so the raspberry will act in place of the JSM\n
+        You can also use an reconfiguration sequence. It will be replayed.\n
         Get the JSM init sequence file,
         Then connect the Rnet socket to the correct interface
         """
-
+        self.device_id = None
+        self.jsm_serial = None
+        
         try:
-            with open(JSM_INIT_FILE,"r") as infile:
+            with open(source,"r") as infile:
                 self.jsm_cmds = infile.readlines()
                 if len(self.jsm_cmds) == 0:
                     logger.error("[JSMiser] The JMS init file %s is empty, please run JSM init recorder 'RnetCtrlInit.py' to create it" %JSM_INIT_FILE)        
@@ -193,8 +334,6 @@ class JSMiser(threading.Thread):
                 sys.exit(1)
 
 
-
-   
     def jsm_start(self):
         """
         Start JSM init sequence, blocking function call until init sequence
@@ -220,13 +359,13 @@ class JSMiser(threading.Thread):
         Will send the frames stored in the init file and wait for Motor answer
         Once done thread exits
         """
-        logger.debug("[JSMiser] Rnet JSM init daemon started")
+        print("[JSMiser] Rnet JSM init daemon started")
         frame_idx = 0
         JSMport = "PORT%d" %self.jsm_port
         MOTORport = "PORT%d" %self.motor_port
         max_idx = len(self.jsm_cmds)
 
-        logger.debug("[JSMiser] Proceeding a total of %d frames" %max_idx)
+        print("[JSMiser] Proceeding a total of %d frames" %max_idx)
 
         while frame_idx < max_idx:
 
@@ -252,19 +391,6 @@ class JSMiser(threading.Thread):
             frame_idx += 1
 
 
-
-def parseInputs():
-    """
-    Argument parser definition
-    """
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-d", "--debug", help="Enable debug messages", action="store_true")
-    parser.add_argument("-t", "--test_init", help="Test init sequense", action="store_true")
-    return parser.parse_args()
-
-
-
-
 def picanDualCaseInit():
     """
     Configuration using one raspi with dual port pican boards.
@@ -280,6 +406,20 @@ def picanDualCaseInit():
 
         daemon0.join()
         daemon1.join()
+    print("Initialisation sequence acquisition complete !")
+
+
+
+def parseInputs():
+    """
+    Argument parser definition
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--debug", help="Enable debug messages", action="store_true")
+    parser.add_argument("-t", "--test_init", help="Test init sequense", action="store_true")    
+    parser.add_argument("-r", "--reconfig", help="Record the reconfiguration sequence and then, the init sequence.", action="store_true")
+    parser.add_argument("-c", "--config_test", help="Test reconfiguration sequense", action="store_true")
+    return parser.parse_args()
 
 
 
@@ -290,8 +430,18 @@ if __name__ == "__main__":
 
     if args.debug:
         logger.setLevel(logging.DEBUG)
+    
+    if args.reconfig:
+        req = RnetReconfigSeqRecorder()
+        req.startAllRecords()
 
-    if args.test_init:
+    elif args.config_test:
+        print("Relunching reconfiguration sequence preparation...")
+        jsm = JSMiser(source=JSM_RECONF_FILE)
+        print("Relunching reconfiguration sequence now...")
+        jsm.jsm_start()
+    
+    elif args.test_init:
         jsm = JSMiser()
         jsm.jsm_start()
 
@@ -303,4 +453,3 @@ if __name__ == "__main__":
     # 4- Power On the JSM and wait for the program to complete
     else:
         picanDualCaseInit()
-        print("Initialisation sequence acquisition complete !")

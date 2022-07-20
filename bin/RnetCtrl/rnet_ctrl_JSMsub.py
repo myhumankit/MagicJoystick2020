@@ -141,11 +141,11 @@ class RnetControlJSMsub(threading.Thread):
                 #cmd = RnetDissector.RnetPowerOff() #TODO NOT ENOUGH: study poweroff sequences to be able to repeate them
                 #self.cansend(self.rnet_can.cansocket, cmd.encode())
 
-                self.power_state = False
-                self.auto_light = False
-
                 drive = action_drive(False) #Tell to everyone that joy dosen't control the weelchair anymore
                 self.mqtt_client.publish(drive.TOPIC_NAME, drive.serialize())
+                time.sleep(0.1)
+                self.power_state = False
+                self.auto_light = False
 
             # HORN
             elif msg.topic == action_horn.TOPIC_NAME:
@@ -186,7 +186,7 @@ class RnetControlJSMsub(threading.Thread):
 
                     # Check if long click is pressed to get out of drive mode
                     # and force position to neutral if true
-                    if (joy_data.buttons == 1) :
+                    if (joy_data.long_click == 1) :
                         logger.info("[CLIC] Switch to drive mode OFF")
                         self.drive_mode = False
                         drive = action_drive(False)
