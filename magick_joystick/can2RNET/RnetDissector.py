@@ -26,6 +26,8 @@ RNET_FRAME_TYPE = {
     'JOY_POSITION'  : (0x0200, 0x00, 0x00),
     'HEARTBEAT'     : (0x03c3, 0x0F, 0x0F),
     'MAX_SPEED'     : (0x0A04, 0x00, 0x00),
+    'MAX_SPEED_CONF': (0x0000, 0x00, 0x52), 
+    'MAX_SPEED_REAC': (0x0000, 0x00, 0x50), # Sent 5 times by Motor when the max speed is changed (with unused datas)
     'PMTX_CONNECT'  : (0x0C28, 0x00, 0x00),
     'PMTX_HEATBEAT' : (0x0C14, 0x00, 0x00),
     'BATTERY_LEVEL' : (0x1C0C, 0x00, 0x00),
@@ -39,7 +41,7 @@ RNET_FRAME_TYPE = {
     'POWER_ON'      : (0x0000, 0x00, 0x0C),
 }
 
-# Can't add this into RNET_FRAME_TYPE to not break the RNET_FRAME_TYPE_R reverse search in getFrameType()
+# Can't add this into RNET_FRAME_TYPE because it breaks the RNET_FRAME_TYPE_R reverse search in getFrameType()
 RNET_FRAME_IDLRTR = {
     'CONNECT'       : (False, False),
     'SERIAL'        : (False, False),
@@ -47,6 +49,8 @@ RNET_FRAME_IDLRTR = {
     'JOY_POSITION'  : (True, False),
     'HEARTBEAT'     : (True, False),
     'MAX_SPEED'     : (True, False),
+    'MAX_SPEED_CONF': (False, False),
+    'MAX_SPEED_REAC': (False, False),
     'PMTX_CONNECT'  : (False, False),
     'PMTX_HEATBEAT' : (False, False),
     'BATTERY_LEVEL' : (True, False),
@@ -223,7 +227,7 @@ class RnetSerial:
 
 
 # --------------------------
-# set motor max speed message
+# set motor percentage of max speed message
 # --------------------------
 class RnetMotorMaxSpeed:
 
@@ -261,6 +265,55 @@ class RnetMotorMaxSpeed:
 
         return frame.get_raw_frame()
 
+
+# --------------------------
+# Set max speed configuration (1 to 5), before sending 'MAX_SPEED'
+# --------------------------
+class RnetMotorConfSpeed:
+
+    confSpeed_t = cs.Struct(
+        "space" / cs.Int8ub, # needed space, always 0
+        "confSpeed" / cs.Int8ub,
+    )
+
+    def __init__(self, confSpeed): 
+        self.type = RNET_FRAME_TYPE['MAX_SPEED_CONF'][TYPE]
+        self.subtype   = RNET_FRAME_TYPE['MAX_SPEED_CONF'][SUBTYPE]
+        self.device_id = RNET_FRAME_TYPE['MAX_SPEED_CONF'][DEVICE_ID] # ALWAYS 0 for this frame
+        self.set_data(confSpeed)
+        self.idl = RNET_FRAME_IDLRTR['MAX_SPEED_CONF'][IDL]
+        self.rtr = RNET_FRAME_IDLRTR['MAX_SPEED_CONF'][RTR]
+
+
+    def set_data(self, confSpeed):
+        # Consider max speed out of [1;5] is a bug, 
+        # force it to minimum
+        if (confSpeed > 5) or (confSpeed < 1):
+            confSpeed = 1
+        
+        self.confSpeed = confSpeed
+
+
+    def encode(self):
+        frame = raw_frame(self.idl, self.rtr, self.type, self.subtype, self.device_id)
+        
+        data = self.confSpeed_t.build(
+            dict(
+                space = 0,
+                confSpeed = self.confSpeed - 1 # in frames, values are form 0 to 4
+                )
+        )
+
+        frame.set_data(data)
+
+        rf = frame.get_raw_frame()
+
+        #TODO   Study why we have to change manualy the 5th byte from 2 to 4 
+        #       (without this change, the motor stop working when we send the frame)
+        rfArr = bytearray(rf) #bytes types is not assignable
+        rfArr[4] = 4
+        rf = bytes(rfArr)
+        return rf
 
 # --------------------------
 # Actuator Control

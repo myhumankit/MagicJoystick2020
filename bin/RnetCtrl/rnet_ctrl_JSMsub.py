@@ -23,7 +23,7 @@ class RnetControlJSMsub(threading.Thread):
     SERIAL_FREQUENCY = 0.05     # 50 ms period
     JSM_HEARTBEAT_PERIOD = 0.1 #10Hz
     AUTO_LIGHT_PERIOD = 0.25
-    power_state = True
+    power_state = False
 
     light_state = [False,False,False] # flashing left, flashing right, Warnning
     auto_light = False
@@ -96,7 +96,7 @@ class RnetControlJSMsub(threading.Thread):
     def on_message(self, mqtt_client, userdata, msg):
 
             # To ignore mqtt messages when we are off 
-            if (not self.rnet_can.init_done) and (msg.topic != action_poweron.TOPIC_NAME):
+            if (self.power_state is False) and (msg.topic != action_poweron.TOPIC_NAME):
                 if not msg.topic == joystick_state.TOPIC_NAME: #Ignore joy msg
                     logger.info("[WARNING] : Recv %s but power_on not done yet" % (msg.topic))
                 return
@@ -135,8 +135,8 @@ class RnetControlJSMsub(threading.Thread):
             elif msg.topic == action_poweroff.TOPIC_NAME:
                 logger.info("[recv %s] Power Off" %(msg.topic))
 
-                cmd = RnetDissector.RnetPowerOff() #TODO NOT ENOUGH: study poweroff sequences to be able to repeate them
-                self.cansend(self.rnet_can.cansocket, cmd.encode())
+                #cmd = RnetDissector.RnetPowerOff() #TODO NOT ENOUGH: study poweroff sequences to be able to repeate them
+                #self.cansend(self.rnet_can.cansocket, cmd.encode())
 
                 self.power_state = False
                 self.auto_light = False
@@ -153,10 +153,14 @@ class RnetControlJSMsub(threading.Thread):
             # SET MAX SPEED
             elif msg.topic == action_max_speed.TOPIC_NAME:
                 max_speed = deserialize(msg.payload)
-                speed = (max_speed.max_speed)*20
-                self.RnetMotorMaxSpeed.set_data(speed)
-                self.cansend(self.rnet_can.cansocket,self.RnetMotorMaxSpeed.encode())
-                logger.info("[recv %s] set max speed to %d" %(msg.topic, speed))
+                speed = max_speed.max_speed
+                if (speed < 1) or (speed > 5):
+                    logger.error("[ERROR] : [recv %s] Non supported max speed of %d" %(msg.topic, speed))
+                    return
+                self.RnetMotorConfSpeed.set_data(speed)
+                self.maxSpeedState = 6
+                self.max_speed_configuration()                
+                logger.info("[recv %s] Configuring max speed to %d..." %(msg.topic, speed))
 
             # JOYSTICK POSITION
             elif msg.topic == joystick_state.TOPIC_NAME:
@@ -222,14 +226,14 @@ class RnetControlJSMsub(threading.Thread):
         self.RnetJoyPosition = RnetDissector.RnetJoyPosition(0,0,self.rnet_can.joy_subtype)
         self.RnetLight = RnetDissector.RnetLightCtrl(self.rnet_can.jsm_subtype)
         self.RnetBatteryLevel = RnetDissector.RnetBatteryLevel()
-        self.RnetMotorMaxSpeed = RnetDissector.RnetMotorMaxSpeed(20, self.rnet_can.joy_subtype)
+        self.RnetMotorMaxSpeed = RnetDissector.RnetMotorMaxSpeed(100, self.rnet_can.joy_subtype)
+        self.RnetMotorConfSpeed = RnetDissector.RnetMotorConfSpeed(1)
         self.RnetActuatorCtrl = RnetDissector.RnetActuatorCtrl(0, 0, self.rnet_can.jsm_subtype)
+
+        self.power_state = True
 
         thrs = self.start_threads()
         self.rnet_can.connect()
-
-        #Set max speed to 20% by default
-        self.cansend(self.rnet_can.cansocket,self.RnetMotorMaxSpeed.encode())
 
         logger.info("Power on done")
 
@@ -248,6 +252,32 @@ class RnetControlJSMsub(threading.Thread):
         speedStr = binascii.hexlify(data)[0:4]
         self.chair_speed = int(speedStr[2:4],16) + (int(speedStr[0:2],16)/256)
         logger.debug("Got chair speed info: %f" %self.chair_speed)
+    
+    def max_speed_configuration(self):
+        """
+        Function that handle max speed configuration of the weelchair.
+        
+        To change the max speed, we must first send the max speed value with a 'MAX_SPEED_CONF' frame (data between 1 and 5).
+        Then, after receiving 5 frames of type 'MAX_SPEED_REAC' from motor (using rnet_can), we send the last 'MAX_SPEED' frame with a 100% value in data.
+
+        this function is a state machine. At each call, it takes one step in this algorithm, using self.maxSpeedState variable.
+        """
+        self.maxSpeedState -= 1
+        #logger.info("[MAX_SPEED_CONF] State is %d" % self.maxSpeedState)
+
+        if self.maxSpeedState == 5: #At first call, send the 'MAX_SPEED_CONF' frame
+            self.rnet_can.set_max_speed_config_callback(self.max_speed_configuration) #To count all 'MAX_SPEED_REAC' frames
+            self.cansend(self.rnet_can.cansocket,self.RnetMotorConfSpeed.encode())
+            logger.debug("[MAX_SPEED_CONF] Frame 'MAX_SPEED_CONF' sent.")
+            return
+        
+        if self.maxSpeedState == 0: # Last call, send the 'MAX_SPEED' frame with a 100% (already fixed) value
+            self.cansend(self.rnet_can.cansocket, self.RnetMotorMaxSpeed.encode())
+            self.rnet_can.set_max_speed_config_callback(None) # To ignore other unwanted 'MAX_SPEED_REAC' frames
+            logger.info("[MAX_SPEED_CONF] Max speed configuration done.")
+            return        
+        # Else, just decrement the maxSpeedState in order to wait the 5 'MAX_SPEED_REAC' frames from motor
+        return
 
     def start_threads(self):
         """Start all threads to communicate with the motor"""

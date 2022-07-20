@@ -17,6 +17,7 @@ class RnetCanJSMsub(threading.Thread):
     joy_subtype = None
     battery_level_callback = None
     chair_speed_callback = None
+    max_speed_config_callback = None
     cansocket = None
     serial_bytes = None
 
@@ -55,6 +56,10 @@ class RnetCanJSMsub(threading.Thread):
     def set_chair_speed_callback(self, callback):
         """Set chair speed callback"""
         self.chair_speed_callback = callback
+    
+    def set_max_speed_config_callback(self, callback):
+        """Set chair max speed configuration callback"""
+        self.max_speed_config_callback = callback
 
 
     def rnet_daemon(self):
@@ -73,4 +78,8 @@ class RnetCanJSMsub(threading.Thread):
             if (frameName == 'CHAIR_SPEED'):
                 if self.chair_speed_callback is not None:
                     self.chair_speed_callback(rnetFrame)
+            
+            if (frameName == 'MAX_SPEED_REAC'):
+                if self.max_speed_config_callback is not None:
+                    self.max_speed_config_callback()
 
