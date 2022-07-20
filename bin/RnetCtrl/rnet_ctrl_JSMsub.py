@@ -127,6 +127,9 @@ class RnetControlJSMsub(threading.Thread):
 
             # POWER ON
             elif msg.topic == action_poweron.TOPIC_NAME:
+                if self.power_state is True:
+                    logger.info("[recv %s] Power On - But already ON, message ignored" %(msg.topic))
+                    return
                 logger.info("[recv %s] Power On - Sending init frames" %(msg.topic))
                 self.threads = self.power_on()               
 
