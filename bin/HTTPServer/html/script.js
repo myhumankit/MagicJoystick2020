@@ -132,36 +132,25 @@
         }
     }
 
-    function change_speed()
-    {
+    function add_speed()
+    {   
         let level = 0;
-
-        for(var i = 1; i <= 5; i++)
-        {
-            if($("#lvl" + i).hasClass("on"))
-            {
-                level++;
-            }
-        }
-
-        if(level == 5)
+        if($("#lvl5").hasClass("on"))
         {
             level = 1;
-        }
-        else
-        {
-            level++;
-        }
-        
-        for(var i = 1; i <= 5; i++)
-        {
-            if(i <= level)
+            for(var i = 2; i <= 5; i++)
             {
-                $("#lvl" + i).addClass("on");
+                $("#lvl" + i).removeClass("on")
             }
-            else
+        } else {
+            for(var i = 1; i <= 5; i++)
             {
-                $("#lvl" + i).removeClass("on");
+                if(!$("#lvl" + i).hasClass("on"))
+                {
+                    level = i;
+                    $("#lvl" + level).addClass("on");
+                    break;
+                }
             }
         }
 
@@ -270,7 +259,7 @@
     // setInterval(synchro_lights_speed_driveMode, 500);
 
     get_max_speed()
-    
+
 
     /* Register button callbacks */
     $("#actuator").on("click", function() {window.location = "actuator.html";})
@@ -313,7 +302,7 @@
     $("#lvl4").on("click", function() {change_max_speed(4)})
     $("#lvl5").on("click", function() {change_max_speed(5)})
     $("#power").on("click", change_power)
-    $("#button_speed").on("click", change_speed)
+    $("#button_speed").on("click", add_speed)
     $("#button_drive_mode").on("click", function() {$.post("/action/drive")})
     $("#button_horn").on("click", function() {$.post("/action/horn")})
     $(window).on("load", set_icons_status)
