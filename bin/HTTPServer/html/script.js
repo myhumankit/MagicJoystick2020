@@ -176,6 +176,58 @@
         });
     }
 
+    function change_max_speed(level)
+    {
+        $.ajax({
+            type: "POST",
+            url: "/action/max_speed", 
+            data: JSON.stringify({max_speed: level}),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function(data){
+                for(var i = 1; i <= 5; i++)
+                {
+                    if(i <= level)
+                    {
+                        $("#lvl" + i).addClass("on");
+                    }
+                    else
+                    {
+                        $("#lvl" + i).removeClass("on");
+                    }
+                }
+            },
+            error: function(errMsg){}
+        });
+    }
+
+
+    function get_max_speed()
+    {
+        $.ajax({
+            type: "GET",
+            url: "/action/max_speed", 
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function(result){
+                for(var i = 1; i <= 5; i++)
+                {
+                    if(i <= result.MAX_SPEED)
+                    {
+                        $("#lvl" + i).addClass("on");
+                    }
+                    else
+                    {
+                        $("#lvl" + i).removeClass("on");
+                    }
+                }
+            },
+            error: function(errMsg){
+                console.log(errMsg)
+            }
+        });
+    }
+
     
     function send_actuator_ctrl(actuator_num, direction)
     {
@@ -214,8 +266,11 @@
     }
 
     /* Clock */
-    setInterval(display_time_battery, 2000);
-    setInterval(synchro_lights_speed_driveMode, 500);
+    // setInterval(display_time_battery, 2000);
+    // setInterval(synchro_lights_speed_driveMode, 500);
+
+    get_max_speed()
+    
 
     /* Register button callbacks */
     $("#actuator").on("click", function() {window.location = "actuator.html";})
@@ -252,6 +307,11 @@
     $("#light_3").on("click", function() {change_light(3);})
     $("#light_4").on("click", function() {change_light(4);})
     $("#light_5").on("click", function() {change_light(5);})
+    $("#lvl1").on("click", function() {change_max_speed(1)})
+    $("#lvl2").on("click", function() {change_max_speed(2)})
+    $("#lvl3").on("click", function() {change_max_speed(3)})
+    $("#lvl4").on("click", function() {change_max_speed(4)})
+    $("#lvl5").on("click", function() {change_max_speed(5)})
     $("#power").on("click", change_power)
     $("#button_speed").on("click", change_speed)
     $("#button_drive_mode").on("click", function() {$.post("/action/drive")})
