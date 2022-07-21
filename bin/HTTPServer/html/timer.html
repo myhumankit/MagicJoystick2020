@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+    
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Timer IR record command</title>
+        <link rel="stylesheet" type="text/css" href="timer/timer.css">
+        <link rel="stylesheet" type="text/css" href="timer/yellowcircle.css">
+        <script src="timer/jquery-1.12.4.min.js"></script>
+        <script src="timer/circle.js"></script>
+    </head>
+
+    <body onload="load()">
+        <div class="page">
+            <div class = "title">
+                <h1>Timer IR record command</h1>
+            </div>
+            <div class="timer">
+                <div id="circle-1" class="circlebar" data-circle-startTime=0 data-circle-maxValue=10 data-circle-dialWidth=10 data-circle-fontColor="#ffff00">
+                    <div id="circle-bg" class="loader-bg">
+                        <div id=time class="text">Appuyez</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+
+</html>
