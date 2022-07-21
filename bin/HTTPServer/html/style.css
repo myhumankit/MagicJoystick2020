@@ -133,195 +133,199 @@ div.body.light > div {
 }
 
 #IR {
-    background-image: url("IR.svg");
+    background-image: url("svg_icon/IR.svg");
 }
 
 #actuator_0_0 {
-    background-image: url("actuator_0_0.svg");
+    background-image: url("svg_icon/actuator_0_0.svg");
 }
 
 #actuator_0_1 {
-    background-image: url("actuator_0_1.svg");
+    background-image: url("svg_icon/actuator_0_1.svg");
 }
 
 #actuator_1_0 {
-    background-image: url("actuator_1_0.svg");
+    background-image: url("svg_icon/actuator_1_0.svg");
 }
 
 #actuator_1_1 {
-    background-image: url("actuator_1_1.svg");
+    background-image: url("svg_icon/actuator_1_1.svg");
 }
 
 #actuator_2_0 {
-    background-image: url("actuator_2_0.svg");
+    background-image: url("svg_icon/actuator_2_0.svg");
 }
 
 #actuator_2_1 {
-    background-image: url("actuator_2_1.svg");
+    background-image: url("svg_icon/actuator_2_1.svg");
 }
 
 #actuator_3_0 {
-    background-image: url("actuator_3_0.svg");
+    background-image: url("svg_icon/actuator_3_0.svg");
 }
 
 #actuator_3_1 {
-    background-image: url("actuator_3_1.svg");
+    background-image: url("svg_icon/actuator_3_1.svg");
 }
 
 #actuator_4_0 {
-    background-image: url("actuator_4_0.svg");
+    background-image: url("svg_icon/actuator_4_0.svg");
 }
 
 #actuator_4_1 {
-    background-image: url("actuator_4_1.svg");
+    background-image: url("svg_icon/actuator_4_1.svg");
 }
 
 #actuator_5_0 {
-    background-image: url("actuator_5_0.svg");
+    background-image: url("svg_icon/actuator_5_0.svg");
 }
 
 #actuator_5_1 {
-    background-image: url("actuator_5_1.svg");
+    background-image: url("svg_icon/actuator_5_1.svg");
 }
 
 #actuator {
-    background-image: url("actuator.svg");
+    background-image: url("svg_icon/actuator.svg");
 }
 
 #button_wheelchair {
-    background-image: url("button_wheelchair.svg");
+    background-image: url("svg_icon/button_wheelchair.svg");
 }
 
 #button_horn {
-    background-image: url("button_horn.svg");
+    background-image: url("svg_icon/button_horn.svg");
 }
 
 #button_light {
-    background-image: url("button_light.svg");
+    background-image: url("svg_icon/button_light.svg");
 }
 
 #button_speed {
-    background-image: url("button_speed.svg");
+    background-image: url("svg_icon/button_speed.svg");
 }
 
 #button_drive_mode {
-    background-image: url("button_drive_mode.svg");
+    background-image: url("svg_icon/button_drive_mode.svg");
 }
 
 #button_drive_mode.on {
-    background-image: url("button_drive_mode_on.svg");
+    background-image: url("svg_icon/button_drive_mode_on.svg");
 }
 
 #button_back, #button_back_index, #button_back_ir {
-    background-image: url("button_back.svg");
+    background-image: url("svg_icon/button_back.svg");
 }
 
 #TV {
-    background-image: url("TV.svg");
+    background-image: url("svg_icon/TV.svg");
+}
+
+#TV_A {
+    background-image: url("svg_icon/TV_A.svg");
 }
 
 #TV_power, #TV_A_0 {
-    background-image: url("button_power.svg");
+    background-image: url("svg_icon/button_power.svg");
 }
 
 #TV_0, #TV_A_14 {
-    background-image: url("button_0.svg");
+    background-image: url("svg_icon/button_0.svg");
 }
 
 #TV_1, #TV_A_1 {
-    background-image: url("button_1.svg");
+    background-image: url("svg_icon/button_1.svg");
 }
 
 #TV_2, #TV_A_2 {
-    background-image: url("button_2.svg");
+    background-image: url("svg_icon/button_2.svg");
 }
 
 #TV_3, #TV_A_3 {
-    background-image: url("button_3.svg");
+    background-image: url("svg_icon/button_3.svg");
 }
 
 #TV_4, #TV_A_5 {
-    background-image: url("button_4.svg");
+    background-image: url("svg_icon/button_4.svg");
 }
 
 #TV_5, #TV_A_6 {
-    background-image: url("button_5.svg");
+    background-image: url("svg_icon/button_5.svg");
 }
 
 #TV_6, #TV_A_7 {
-    background-image: url("button_6.svg");
+    background-image: url("svg_icon/button_6.svg");
 }
 
 #TV_7, #TV_A_9 {
-    background-image: url("button_7.svg");
+    background-image: url("svg_icon/button_7.svg");
 }
 
 #TV_8, #TV_A_10 {
-    background-image: url("button_8.svg");
+    background-image: url("svg_icon/button_8.svg");
 }
 
 #TV_9, #TV_A_11 {
-    background-image: url("button_9.svg");
+    background-image: url("svg_icon/button_9.svg");
 }
 
 #TV_mute, #TV_A_4 {
-    background-image: url("mute.svg");
+    background-image: url("svg_icon/mute.svg");
 }
 
 #TV_volume_up, #TV_A_8 {
-    background-image: url("volume_up.svg");
+    background-image: url("svg_icon/olume_up.svg");
 }
 
 #TV_volume_down, #TV_A_12 {
-    background-image: url("volume_down.svg");
+    background-image: url("svg_icon/volume_down.svg");
 }
 
 #TV_left, #TV_A_16 {
-    background-image: url("left.svg");
+    background-image: url("svg_icon/left.svg");
 }
 
 #TV_down, #TV_A_21 {
-    background-image: url("down.svg");
+    background-image: url("svg_icon/down.svg");
 }
 
 #TV_right, #TV_A_18 {
-    background-image: url("right.svg");
+    background-image: url("svg_icon/right.svg");
 }
 
 #TV_up, #TV_A_13 {
-    background-image: url("up.svg");
+    background-image: url("svg_icon/up.svg");
 }
 
 #TV_ok, #TV_A_17 {
-    background-image: url("ok.svg");
+    background-image: url("svg_icon/ok.svg");
 }
 
 #TV_exit, #TV_A_27 {
-    background-image: url("TV_exit.svg");
+    background-image: url("svg_icon/TV_exit.svg");
 }
 
 #TV_home, #TV_A_22 {
-    background-image: url("TV_home.svg");
+    background-image: url("svg_icon/TV_home.svg");
 }
 
 #TV_info, #TV_A_20 {
-    background-image: url("TV_info.svg");
+    background-image: url("svg_icon/TV_info.svg");
 }
 
 #TV_menu, #TV_A_24 {
-    background-image: url("TV_menu.svg");
+    background-image: url("svg_icon/TV_menu.svg");
 }
 
 #TV_return, #TV_A_26 {
-    background-image: url("TV_return.svg");
+    background-image: url("svg_icon/TV_return.svg");
 }
 
 #TV_source, #TV_A_23 {
-    background-image: url("TV_source.svg");
+    background-image: url("svg_icon/TV_source.svg");
 }
 
 #TV_tools, #TV_A_25 {
-    background-image: url("TV_tools.svg");
+    background-image: url("svg_icon/TV_tools.svg");
 }
 
 #TV_A_0.no , #TV_A_1.no, #TV_A_2.no, #TV_A_3.no, #TV_A_4.no, #TV_A_5.no, #TV_A_6.no, #TV_A_7.no, #TV_A_8.no, #TV_A_9.no, 
@@ -331,7 +335,7 @@ div.body.light > div {
 } 
 
 #A {
-    background-image: url("A.svg");
+    background-image: url("svg_icon/A.svg");
 }
 
 #current_speed {
@@ -392,7 +396,7 @@ div.body.light > div {
 
 
 .icon {
-    background: url("button_default.svg") no-repeat center;
+    background: url("svg_icon/button_default.svg") no-repeat center;
     background-size: contain;
 }
 
