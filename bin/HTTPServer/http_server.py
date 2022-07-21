@@ -31,23 +31,24 @@ def check_files_TV_A():
 class StaticPages(Resource):
     def get(self, filename = "index.html"):
         files = ["index.html", "wheelchair.html", "style.css",
-                 "script.js", "button_default.svg",
-                 "button_wheelchair.svg", "button_horn.svg", "button_light.svg", 
+                 "script.js", "jquery-3.6.0.min.js", "all.min.css",
+                 "IR.html", "TV.html", "TV_A.html", 
+                 "actuator.html", "light.html"]
+
+        svg_files = ["button_default.svg",
+                 "button_wheelchair.svg", "button_horn.svg", "button_light.svg", "actuator.svg",
                  "button_speed.svg", "button_drive_mode.svg", "button_drive_mode_on.svg", "button_back.svg",
-                 "jquery-3.6.0.min.js", "all.min.css",
-                 "IR.html", "IR.svg", "TV.html", "TV.svg", "TV_A.html", 
+                 "actuator_0_0.svg", "actuator_0_1.svg", "actuator_5_1.svg", 
+                 "actuator_1_0.svg", "actuator_1_1.svg", "actuator_2_0.svg",
+                 "actuator_2_1.svg", "actuator_3_0.svg", "actuator_3_1.svg",
+                 "actuator_4_0.svg", "actuator_4_1.svg", "actuator_5_0.svg",
+                 "IR.svg", "TV.svg", "TV_A.svg", "A.svg", 
                  "button_power.svg", "button_0.svg", "button_1.svg", "button_2.svg", "button_3.svg", 
                  "button_4.svg", "button_5.svg", "button_6.svg", 
                  "button_7.svg", "button_8.svg", "button_9.svg", 
                  "mute.svg", "volume_up.svg", "volume_down.svg",
                  "left.svg", "down.svg", "right.svg", "up.svg", "ok.svg", 
-                 "TV_exit.svg", "TV_home.svg", "TV_info.svg", "TV_menu.svg", "TV_return.svg", "TV_source.svg", "TV_tools.svg",
-                 "A.svg", 
-                 "actuator.html", "actuator_0_0.svg", "actuator_0_1.svg",
-                 "actuator_1_0.svg", "actuator_1_1.svg", "actuator_2_0.svg",
-                 "actuator_2_1.svg", "actuator_3_0.svg", "actuator_3_1.svg",
-                 "actuator_4_0.svg", "actuator_4_1.svg", "actuator_5_0.svg",
-                 "actuator_5_1.svg", "actuator.svg", "light.html"]
+                 "TV_exit.svg", "TV_home.svg", "TV_info.svg", "TV_menu.svg", "TV_return.svg", "TV_source.svg", "TV_tools.svg"]
 
         fonts = ["fa-solid-900.woff2", "fa-brands-400.woff2"]
 
@@ -55,6 +56,8 @@ class StaticPages(Resource):
 
         if (filename in files) or (filename in fonts):
             return send_from_directory("html", filename)
+        elif (filename in svg_files):
+            return send_from_directory("html/svg_icon", filename)
         else:
             print("%s: file not found" % filename)
             return "", 404
@@ -243,7 +246,7 @@ def on_message(client, userdata, msg):
 app = Flask(__name__)
 api = Api(app)
 
-api.add_resource(StaticPages, "/<string:filename>", "/", "/webfonts/<string:filename>")
+api.add_resource(StaticPages, "/<string:filename>", "/", "/webfonts/<string:filename>", "/svg_icon/<string:filename>")
 api.add_resource(Actions, "/action/<string:action>")
 api.add_resource(CurrentValues, "/current/<string:topic>")
 api.add_resource(TV, "/TV/<string:command>")

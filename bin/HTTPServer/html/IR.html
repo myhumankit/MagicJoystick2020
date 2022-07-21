@@ -8,9 +8,11 @@
         <meta name="color-scheme" content="light dark">
         <link rel="stylesheet" href="style.css">
         <link href="all.min.css" rel="stylesheet">
+        <script src="jquery-3.6.0.min.js"></script>
+        <script src="script.js"></script>
         <title>Magic Joystick</title>
     </head>
-    <body>
+    <body onload="load()">
         <!-- <img class="logo" src="logo.png"/> -->
 
         <div class="header">
@@ -26,18 +28,15 @@
                 <div id="TV" class="svg"></div>
             </div>
             <div>
-                <div id="A" class="svg"></div>
+                <div id="TV_A" class="svg"></div>
             </div>
             <div>
-                <div id="button_default" class="icon"></div>
+                <div id="A" class="svg"></div>
             </div>
             <div>
                 <div id="button_back_index" class="svg"></div>
             </div>
         </div>
-
-        <script src="jquery-3.6.0.min.js"></script>
-        <script src="script.js"></script>
     </body>
 </html>
 
