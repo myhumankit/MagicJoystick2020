@@ -4,6 +4,9 @@ import os
 from datetime import datetime
 
 
+MAX_LOG_FOLDER_SIZE_BYTE = 3000000
+LOGFOLDER = 'logs/'
+
 class JoyLogger():
 
 
@@ -15,13 +18,13 @@ class JoyLogger():
         So, you can make multiple test and truncate logs by simply turning the drive mode ON/OFF.\n
         The file 'logs/joy_log.csv' is a temporary file flushed every second. It will contain datas if a big crash happend.
         """
-        
         self.createDirLog()
+        self.checkLogSize() # At each start, check il logsize is not too important       
 
         self.cpt = 0
         self.doSave = False
 
-        self.f = open("logs/joy_log.csv", "w")
+        self.f = open(LOGFOLDER+"joy_log.csv", "w")
 
         self.f.write("#x y m1 m2\n")
  
@@ -30,6 +33,26 @@ class JoyLogger():
         self.client.on_message = self.on_message
         self.client.connect("localhost", 1883, 60) 
         
+    
+    def get_dir_size(self, path='.'):
+        total = 0
+        with os.scandir(path) as it:
+            for entry in it:
+                if entry.is_file():
+                    total += entry.stat().st_size
+                elif entry.is_dir():
+                    total += self.get_dir_size(entry.path)
+        return total
+
+    def checkLogSize(self):
+        if self.get_dir_size(LOGFOLDER) > MAX_LOG_FOLDER_SIZE_BYTE:
+            for file in os.listdir(LOGFOLDER):
+                try:
+                    os.remove(LOGFOLDER+file)
+                except:
+                    pass
+        return
+
     def getTimeString(self):
         #Hour-minute-second_day-month-year
         return datetime.now().strftime("%H-%M-%S_%d-%m-%Y")
@@ -40,7 +63,7 @@ class JoyLogger():
 
     def createDirLog(self):
         try:
-            os.mkdir("logs")
+            os.mkdir(LOGFOLDER)
         except: # Ignore any failure (most of the time the dir is already created)
             pass
 
@@ -57,13 +80,13 @@ class JoyLogger():
         self.f.close()
         heure = self.getTimeString()
         try:
-            os.rename("logs/joy_log.csv","logs/joyLog_%s.csv"%(heure))
-            print("File saved in 'logs/joy_log_%s.csv'" % (heure))
+            os.rename(LOGFOLDER+"joy_log.csv",LOGFOLDER+"joyLog_%s.csv"%(heure))
+            print("File saved in '%sjoy_log_%s.csv'" % (LOGFOLDER,heure))
         except:
-            print("Could not save the log file as 'logs/joyLog_%s.csv'"%(heure))
+            print("Could not save the log file as '%sjoyLog_%s.csv'"%(LOGFOLDER,heure))
             self.createDirLog() # May have been deleted
 
-        self.f = open("logs/joy_log.csv", "w")
+        self.f = open(LOGFOLDER+"joy_log.csv", "w")
         self.doSave = False
         return
 
