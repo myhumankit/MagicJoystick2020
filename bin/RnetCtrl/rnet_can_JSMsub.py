@@ -18,6 +18,7 @@ class RnetCanJSMsub(threading.Thread):
     battery_level_callback = None
     chair_speed_callback = None
     max_speed_config_callback = None
+    motor_joy_values_callback = None
     cansocket = None
     serial_bytes = None
 
@@ -61,6 +62,9 @@ class RnetCanJSMsub(threading.Thread):
         """Set chair max speed configuration callback"""
         self.max_speed_config_callback = callback
 
+    def set_motor_joy_values_callback(self, callback):
+        """Set the callback to log 'JOY_POSITION' frame values from motor"""
+        self.motor_joy_values_callback = callback
 
     def rnet_daemon(self):
         """Endless loop waiting for Rnet frames"""
@@ -69,7 +73,7 @@ class RnetCanJSMsub(threading.Thread):
         while True:
             rnetFrame = can2RNET.canrecv(self.cansocket)
 
-            __, _, _, frameName, _, __, __ = RnetDissector.getFrameType(rnetFrame)
+            __, _, _, frameName, data, __, __ = RnetDissector.getFrameType(rnetFrame)
            
             if (frameName == 'BATTERY_LEVEL'):
                 if self.battery_level_callback is not None:
@@ -78,6 +82,10 @@ class RnetCanJSMsub(threading.Thread):
             if (frameName == 'CHAIR_SPEED'):
                 if self.chair_speed_callback is not None:
                     self.chair_speed_callback(rnetFrame)
+            
+            if (frameName == 'JOY_POSITION'):
+                if self.motor_joy_values_callback is not None:
+                    self.motor_joy_values_callback(data)
             
             if (frameName == 'MAX_SPEED_REAC'):
                 if self.max_speed_config_callback is not None:

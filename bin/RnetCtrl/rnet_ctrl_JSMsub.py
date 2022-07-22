@@ -40,6 +40,7 @@ class RnetControlJSMsub(threading.Thread):
         self.chair_speed = 0.0
         self.joy_watchdog = 0
         self.actuator_watchdog = 0
+        self.motorXY = [0,0]
         
         threading.Thread.__init__(self)
         
@@ -193,6 +194,7 @@ class RnetControlJSMsub(threading.Thread):
                         self.mqtt_client.publish(drive.TOPIC_NAME, drive.serialize())
                         self.RnetJoyPosition.set_data(0, 0)
                     else:
+                        #x = 0 if self.auto_light else x # Test line that is usefull to only send y values when auto_light are ON
                         self.RnetJoyPosition.set_data(x, y)
                         if x or y:
                             logger.debug("[recv %s] X=%d, Y=%d" %(msg.topic, x, y))
@@ -224,7 +226,8 @@ class RnetControlJSMsub(threading.Thread):
 
         # Initialize required Rnet frame objects and callbacks:
         self.rnet_can.set_battery_level_callback(self.update_battery_level)  
-        self.rnet_can.set_chair_speed_callback(self.update_chair_speed)   
+        self.rnet_can.set_chair_speed_callback(self.update_chair_speed)
+        self.rnet_can.set_motor_joy_values_callback(self.update_motor_joy_values)
         self.RnetHorn = RnetDissector.RnetHorn(self.rnet_can.jsm_subtype)
         self.RnetJoyPosition = RnetDissector.RnetJoyPosition(0,0,self.rnet_can.joy_subtype)
         self.RnetLight = RnetDissector.RnetLightCtrl(self.rnet_can.jsm_subtype)
@@ -256,6 +259,15 @@ class RnetControlJSMsub(threading.Thread):
         self.chair_speed = int(speedStr[2:4],16) + (int(speedStr[0:2],16)/256)
         logger.debug("Got chair speed info: %f" %self.chair_speed)
     
+    def update_motor_joy_values(self, rawData):
+        """Callback function gived to rnet_ctrl in order to log 'JOY_POSITION' frames values from motor"""
+        x = rawData[0]
+        y = rawData[1]
+        x = (x-256) if (x>127) else x
+        y = (y-256) if (y>127) else y
+        self.motorXY = [x,y]
+        return
+
     def max_speed_configuration(self):
         """
         Function that handle max speed configuration of the weelchair.
@@ -263,7 +275,7 @@ class RnetControlJSMsub(threading.Thread):
         To change the max speed, we must first send the max speed value with a 'MAX_SPEED_CONF' frame (data between 1 and 5).
         Then, after receiving 5 frames of type 'MAX_SPEED_REAC' from motor (using rnet_can), we send the last 'MAX_SPEED' frame with a 100% value in data.
 
-        this function is a state machine. At each call, it takes one step in this algorithm, using self.maxSpeedState variable.
+        This function is a state machine. At each call, it takes one step in this algorithm, using self.maxSpeedState variable.
         """
         self.maxSpeedState -= 1
         #logger.info("[MAX_SPEED_CONF] State is %d" % self.maxSpeedState)
@@ -357,6 +369,11 @@ class RnetControlJSMsub(threading.Thread):
             if self.joy_watchdog == 0 :
                 self.RnetJoyPosition.set_data(0, 0)
             
+            if self.drive_mode: #Only log if you drive
+                jx, jy = self.RnetJoyPosition.get_data()
+                joyLog = joy_log(jx, jy, self.motorXY[0], self.motorXY[1])
+                self.mqtt_client.publish(joyLog.TOPIC_NAME, joyLog.serialize())
+
             time.sleep(self.POSITION_FREQUENCY)
         logger.info("[JOYSTICK] thread ended")
 
