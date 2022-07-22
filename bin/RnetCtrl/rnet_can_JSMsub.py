@@ -2,7 +2,7 @@
 import threading
 import sys
 from magick_joystick.can2RNET import can2RNET, RnetDissector
-from RnetCtrlInit import JSMiser
+from RnetCtrlInit import JSMiser, RPI_INIT_FILE, RPI_OFF_FILE
 
 logger = can2RNET.logger
 
@@ -36,12 +36,19 @@ class RnetCanJSMsub(threading.Thread):
     def turnMotorOn(self):
         """Send init sequence to motor. Get deviceID and serial bytes as well."""
         logger.info("Turn motor on with JSMiser...")
-        jsm = JSMiser()
-        deviceID, serial = jsm.jsm_start()
+        jsm = JSMiser(source=RPI_INIT_FILE)
+        deviceID, serial = jsm.sequence_start()
         self.jsm_subtype = deviceID & 0x0F
         self.joy_subtype = deviceID
         self.serial_bytes = serial
         
+    def turnMotorOff(self):
+        """Send turn off sequence to motor"""
+        logger.info("Turn motor off with JSMiser...")
+        jsm = JSMiser(source=RPI_OFF_FILE)
+        jsm.sequence_start()
+        logger.info("Sequence poweroff DONE")
+
     
     def connect(self):
         """Starting listening thread to get motor information such as battery level or chair speed."""

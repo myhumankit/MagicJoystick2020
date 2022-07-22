@@ -24,6 +24,7 @@ class RnetControlJSMsub(threading.Thread):
     JSM_HEARTBEAT_PERIOD = 0.1 #10Hz
     AUTO_LIGHT_PERIOD = 0.25
     power_state = False
+    nb_thread_ended = 0 # except auto_lights
 
     light_state = [False,False,False] # flashing left, flashing right, Warnning
     auto_light = False
@@ -139,14 +140,19 @@ class RnetControlJSMsub(threading.Thread):
             elif msg.topic == action_poweroff.TOPIC_NAME:
                 logger.info("[recv %s] Power Off" %(msg.topic))
 
+                self.power_state = False
+                self.auto_light = False
+
                 #cmd = RnetDissector.RnetPowerOff() #TODO NOT ENOUGH: study poweroff sequences to be able to repeate them
                 #self.cansend(self.rnet_can.cansocket, cmd.encode())
 
                 drive = action_drive(False) #Tell to everyone that joy dosen't control the weelchair anymore
                 self.mqtt_client.publish(drive.TOPIC_NAME, drive.serialize())
-                time.sleep(0.1)
-                self.power_state = False
-                self.auto_light = False
+
+                while self.nb_thread_ended < 5:
+                    time.sleep(0.01)
+                self.rnet_can.turnMotorOff()
+                
 
             # HORN
             elif msg.topic == action_horn.TOPIC_NAME:
@@ -320,6 +326,7 @@ class RnetControlJSMsub(threading.Thread):
             self.mqtt_client.publish(speedStatus.TOPIC_NAME, speedStatus.serialize())
             logger.debug("[RNET_STATUS] Published infos: %.1fkm/h %d(battery)" % (self.chair_speed, self.battery_level))
             time.sleep(self.STATUS_FREQUENCY)
+        self.nb_thread_ended += 1
         logger.info("[RNET_STATUS] thread ended")
 
 
@@ -334,6 +341,7 @@ class RnetControlJSMsub(threading.Thread):
                 self.actuator_watchdog -= 1
             
             time.sleep(self.ACTUATOR_FREQUENCY)
+        self.nb_thread_ended += 1
         logger.info("[ACTUATOR] thread ended")
 
 
@@ -344,6 +352,7 @@ class RnetControlJSMsub(threading.Thread):
         while self.power_state:
             self.cansend(self.rnet_can.cansocket, serial.encode())
             time.sleep(self.SERIAL_FREQUENCY)
+        self.nb_thread_ended += 1
         logger.info("[SERIAL] thread ended")
 
     def heartbeat_thead(self):
@@ -353,6 +362,7 @@ class RnetControlJSMsub(threading.Thread):
         while self.power_state:
             self.cansend(self.rnet_can.cansocket, htbt.encode())
             time.sleep(self.JSM_HEARTBEAT_PERIOD)
+        self.nb_thread_ended += 1
         logger.info("[HEARTBEAT] thread ended")
 
 
@@ -375,6 +385,7 @@ class RnetControlJSMsub(threading.Thread):
                 self.mqtt_client.publish(joyLog.TOPIC_NAME, joyLog.serialize())
 
             time.sleep(self.POSITION_FREQUENCY)
+        self.nb_thread_ended += 1
         logger.info("[JOYSTICK] thread ended")
 
     def auto_light_thread(self):
@@ -429,4 +440,5 @@ if __name__ == "__main__":
 
     for thread in rnet.threads:
         thread.join()
+    
     logger.info("All threads joined, rebooting <rnet_ctrl.py> using supervisord ..")
