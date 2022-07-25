@@ -21,8 +21,14 @@ body {
   height:50vh;
   width:100vw;
 }
-
-
+.button {
+  display: flex;
+  flex-direction: column;
+  gap: 5vh;
+  align-items: center;
+  justify-content: center;
+  height:50vh;
+}
 
 .loader {
   position: relative;

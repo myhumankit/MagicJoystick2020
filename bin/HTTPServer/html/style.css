@@ -273,7 +273,7 @@ div.body.light > div {
 }
 
 #TV_volume_up, #TV_A_8 {
-    background-image: url("svg_icon/olume_up.svg");
+    background-image: url("svg_icon/volume_up.svg");
 }
 
 #TV_volume_down, #TV_A_12 {
@@ -332,7 +332,13 @@ div.body.light > div {
 #TV_A_10.no, #TV_A_11.no, #TV_A_12.no, #TV_A_13.no, #TV_A_14.no, #TV_A_15.no, #TV_A_16.no, #TV_A_17.no, #TV_A_18.no, #TV_A_19.no, 
 #TV_A_20.no, #TV_A_21.no, #TV_A_22.no, #TV_A_23.no, #TV_A_24.no, #TV_A_25.no, #TV_A_26.no, #TV_A_27.no {
     background-color: #FF0000;
-} 
+}
+
+#TV_A_0.to_check , #TV_A_1.to_check, #TV_A_2.to_check, #TV_A_3.to_check, #TV_A_4.to_check, #TV_A_5.to_check, #TV_A_6.to_check, #TV_A_7.to_check, #TV_A_8.to_check, #TV_A_9.to_check, 
+#TV_A_10.to_check, #TV_A_11.to_check, #TV_A_12.to_check, #TV_A_13.to_check, #TV_A_14.to_check, #TV_A_15.to_check, #TV_A_16.to_check, #TV_A_17.to_check, #TV_A_18.to_check, #TV_A_19.to_check, 
+#TV_A_20.to_check, #TV_A_21.to_check, #TV_A_22.to_check, #TV_A_23.to_check, #TV_A_24.to_check, #TV_A_25.to_check, #TV_A_26.to_check, #TV_A_27.to_check {
+    background-color: #ff8800;
+}
 
 #A {
     background-image: url("svg_icon/A.svg");

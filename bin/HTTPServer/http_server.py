@@ -20,20 +20,28 @@ FLASHING_RIGHT = 1
 WARNING_LIGHT = 2
 FRONT_LIGHTS = 3
 
+#IR
+RECORD_TIME = 10 #in seconds
+last = -1 #NUMBER OF LAST TV_A COMMAND
+validate = []
+NB_COMMAND = 28
+
+for i in range (NB_COMMAND):
+    validate.append(False)
+
 
 def check_files_TV_A():
     state = []
-    for i in range (28):
+    for i in range (NB_COMMAND):
         state.append(os.path.exists("/home/roxu/bin/IR/TV_A_raw_command/TV_A_" + str(i) + ".txt"))
     return state
 
-
 class StaticPages(Resource):
     def get(self, filename = "index.html"):
-        files = ["index.html", "wheelchair.html", "style.css",
+        files = ["index.html", "wheelchair.html", "style.css", "wheelchair.js", 
                  "script.js", "jquery-3.6.0.min.js", "all.min.css",
-                 "IR.html", "TV.html", "TV_A.html", 
-                 "actuator.html", "light.html"]
+                 "IR.html", "TV.html", "TV.js", "TV_A.html", "TV_A.js", 
+                 "actuator.html", "light.html", "timer.html", "IR_check_command.html"]
 
         svg_files = ["button_default.svg",
                  "button_wheelchair.svg", "button_horn.svg", "button_light.svg", "actuator.svg",
@@ -49,6 +57,8 @@ class StaticPages(Resource):
                  "mute.svg", "volume_up.svg", "volume_down.svg",
                  "left.svg", "down.svg", "right.svg", "up.svg", "ok.svg", 
                  "TV_exit.svg", "TV_home.svg", "TV_info.svg", "TV_menu.svg", "TV_return.svg", "TV_source.svg", "TV_tools.svg"]
+        
+        timer = ["circle.css", "circle.js", "jquery-1.12.4.min.js", "timer.css"]
 
         fonts = ["fa-solid-900.woff2", "fa-brands-400.woff2"]
 
@@ -58,6 +68,8 @@ class StaticPages(Resource):
             return send_from_directory("html", filename)
         elif (filename in svg_files):
             return send_from_directory("html/svg_icon", filename)
+        elif (filename in timer):
+            return send_from_directory("html/timer", filename)
         else:
             print("%s: file not found" % filename)
             return "", 404
@@ -130,6 +142,7 @@ class TV(Resource):
             print(f"Connection failed with code {rc}")
 
     def post(self, command):
+        global last
         if command == "power":
             msg = TV_power()
         # if command == "power_on":
@@ -171,12 +184,14 @@ class TV_A(Resource):
             print(f"Connection failed with code {rc}")
     
     def get(self, command):
+        global validate
         if command == "buttons":
-            return {"BUTTONS":check_files_TV_A()}
+            return {"BUTTONS":check_files_TV_A(), "VALIDATE": validate}
         else:
             return "", 404
 
     def post(self, command):
+        global last, validate
         if command == "control":
             data = request.get_json()
             msg = TV_A_control(data["id"])
@@ -184,22 +199,42 @@ class TV_A(Resource):
         elif command == "get":
             data = request.get_json()
             id = data["id"]
-            file = open("/home/roxu/bin/IR/TV_A_raw_command/" + "TV_A_" + str(id) +  ".txt", "w")
+            f_string = "/home/roxu/bin/IR/TV_A_raw_command/" + "TV_A_" + str(id) +  ".txt"
+            file = open(f_string, "w")
             process = subprocess.Popen(["ir-ctl", "-r",  "-d", "/dev/lirc1", "--mode2"], stdout=file)   # pass cmd and args to the function
-            time.sleep(10)
+            time.sleep(RECORD_TIME)
             process.send_signal(signal.SIGINT)   # send Ctrl-C signal
             file.close()
-            # stdout_get, stderr_get = process.communicate()
-            # # print("stdout", stdout)
-            # # print("stderr", stderr)
-            # print(stdout_get)
-            # f = open("test.txt", "w")
-            # f.write(stdout_get)
-            # f.close()
+            if(os.stat(f_string).st_size == 0):
+                os.remove(f_string)
+                return data["id"], 449
+            else:
+                last = data["id"]
+
+        elif command == "last-launch":
+            msg = TV_A_control(last)
+            self.client.publish(msg.TOPIC_NAME, msg.serialize())
+        elif command == "last-delete":
+            f_string = "/home/roxu/bin/IR/TV_A_raw_command/" + "TV_A_" + str(last) +  ".txt"
+            os.remove(f_string)
+            last = -1
+        elif command == "last-modify":
+            f_string = "/home/roxu/bin/IR/TV_A_raw_command/" + "TV_A_" + str(last) +  ".txt"
+            file = open(f_string, "w")
+            process = subprocess.Popen(["ir-ctl", "-r",  "-d", "/dev/lirc1", "--mode2"], stdout=file)   # pass cmd and args to the function
+            time.sleep(RECORD_TIME)
+            process.send_signal(signal.SIGINT)   # send Ctrl-C signal
+            file.close()
+            if(os.stat(f_string).st_size == 0):
+                os.remove(f_string)
+                return data["id"], 449
+        elif command == "last-validate":
+            validate[last] = True
+
         else:
             return "", 404
 
-        return "", 200
+        return last, 200
 
 
 
@@ -246,7 +281,7 @@ def on_message(client, userdata, msg):
 app = Flask(__name__)
 api = Api(app)
 
-api.add_resource(StaticPages, "/<string:filename>", "/", "/webfonts/<string:filename>", "/svg_icon/<string:filename>")
+api.add_resource(StaticPages, "/<string:filename>", "/", "/webfonts/<string:filename>", "/svg_icon/<string:filename>", "/timer/<string:filename>")
 api.add_resource(Actions, "/action/<string:action>")
 api.add_resource(CurrentValues, "/current/<string:topic>")
 api.add_resource(TV, "/TV/<string:command>")
