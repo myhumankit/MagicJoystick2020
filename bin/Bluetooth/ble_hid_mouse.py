@@ -92,7 +92,7 @@ drive_state = False
 mouse_x = 0
 mouse_y = 0
 mouse_buttons = 0
-speed = 0.1
+speed = 0.25
 
 def on_connect(client, userdata, flags, rc):
     print("Connected to MQTT broker with result code " + str(rc))
