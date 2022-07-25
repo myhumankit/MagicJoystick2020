@@ -15,7 +15,7 @@ Main R-net class to Act just like a JSM (using only one can interface)
 """
 class RnetControlJSMsub(threading.Thread):
 
-    POSITION_FREQUENCY = 0.01   # 100Hz - RNET requirement
+    POSITION_FREQUENCY = 0.015   # 100Hz - RNET requirement
     STATUS_FREQUENCY = 0.5        # 2Hz
     JOY_WATCHDOG_TIMEOUT = 20   # Force joystick position to [0,0] after 200ms without data.
     ACTUATOR_FREQUENCY = 0.05   # 20 Hz
