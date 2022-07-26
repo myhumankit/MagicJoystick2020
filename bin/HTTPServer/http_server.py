@@ -39,7 +39,7 @@ def check_files_TV_A():
 class StaticPages(Resource):
     def get(self, filename = "index.html"):
         files = ["index.html", "wheelchair.html", "style.css", "wheelchair.js", 
-                 "script.js", "jquery-3.6.0.min.js", "all.min.css",
+                 "script.js", "jquery-3.6.0.min.js", "all.min.css", "wheelchair.css", "TV.css",
                  "IR.html", "TV.html", "TV.js", "TV_A.html", "TV_A.js", 
                  "actuator.html", "light.html", "timer.html", "IR_check_command.html"]
 

@@ -1,0 +1,123 @@
+#TV {
+    background-image: url("svg_icon/TV.svg");
+}
+
+#TV_A {
+    background-image: url("svg_icon/TV_A.svg");
+}
+
+#TV_power, #TV_A_0 {
+    background-image: url("svg_icon/button_power.svg");
+}
+
+#TV_0, #TV_A_14 {
+    background-image: url("svg_icon/button_0.svg");
+}
+
+#TV_1, #TV_A_1 {
+    background-image: url("svg_icon/button_1.svg");
+}
+
+#TV_2, #TV_A_2 {
+    background-image: url("svg_icon/button_2.svg");
+}
+
+#TV_3, #TV_A_3 {
+    background-image: url("svg_icon/button_3.svg");
+}
+
+#TV_4, #TV_A_5 {
+    background-image: url("svg_icon/button_4.svg");
+}
+
+#TV_5, #TV_A_6 {
+    background-image: url("svg_icon/button_5.svg");
+}
+
+#TV_6, #TV_A_7 {
+    background-image: url("svg_icon/button_6.svg");
+}
+
+#TV_7, #TV_A_9 {
+    background-image: url("svg_icon/button_7.svg");
+}
+
+#TV_8, #TV_A_10 {
+    background-image: url("svg_icon/button_8.svg");
+}
+
+#TV_9, #TV_A_11 {
+    background-image: url("svg_icon/button_9.svg");
+}
+
+#TV_mute, #TV_A_4 {
+    background-image: url("svg_icon/mute.svg");
+}
+
+#TV_volume_up, #TV_A_8 {
+    background-image: url("svg_icon/volume_up.svg");
+}
+
+#TV_volume_down, #TV_A_12 {
+    background-image: url("svg_icon/volume_down.svg");
+}
+
+#TV_left, #TV_A_16 {
+    background-image: url("svg_icon/left.svg");
+}
+
+#TV_down, #TV_A_21 {
+    background-image: url("svg_icon/down.svg");
+}
+
+#TV_right, #TV_A_18 {
+    background-image: url("svg_icon/right.svg");
+}
+
+#TV_up, #TV_A_13 {
+    background-image: url("svg_icon/up.svg");
+}
+
+#TV_ok, #TV_A_17 {
+    background-image: url("svg_icon/ok.svg");
+}
+
+#TV_exit, #TV_A_27 {
+    background-image: url("svg_icon/TV_exit.svg");
+}
+
+#TV_home, #TV_A_22 {
+    background-image: url("svg_icon/TV_home.svg");
+}
+
+#TV_info, #TV_A_20 {
+    background-image: url("svg_icon/TV_info.svg");
+}
+
+#TV_menu, #TV_A_24 {
+    background-image: url("svg_icon/TV_menu.svg");
+}
+
+#TV_return, #TV_A_26 {
+    background-image: url("svg_icon/TV_return.svg");
+}
+
+#TV_source, #TV_A_23 {
+    background-image: url("svg_icon/TV_source.svg");
+}
+
+#TV_tools, #TV_A_25 {
+    background-image: url("svg_icon/TV_tools.svg");
+}
+
+#TV_A_0.no , #TV_A_1.no, #TV_A_2.no, #TV_A_3.no, #TV_A_4.no, #TV_A_5.no, #TV_A_6.no, #TV_A_7.no, #TV_A_8.no, #TV_A_9.no, 
+#TV_A_10.no, #TV_A_11.no, #TV_A_12.no, #TV_A_13.no, #TV_A_14.no, #TV_A_15.no, #TV_A_16.no, #TV_A_17.no, #TV_A_18.no, #TV_A_19.no, 
+#TV_A_20.no, #TV_A_21.no, #TV_A_22.no, #TV_A_23.no, #TV_A_24.no, #TV_A_25.no, #TV_A_26.no, #TV_A_27.no {
+    background-color: #FF0000;
+}
+
+#TV_A_0.to_check , #TV_A_1.to_check, #TV_A_2.to_check, #TV_A_3.to_check, #TV_A_4.to_check, #TV_A_5.to_check, #TV_A_6.to_check, #TV_A_7.to_check, #TV_A_8.to_check, #TV_A_9.to_check, 
+#TV_A_10.to_check, #TV_A_11.to_check, #TV_A_12.to_check, #TV_A_13.to_check, #TV_A_14.to_check, #TV_A_15.to_check, #TV_A_16.to_check, #TV_A_17.to_check, #TV_A_18.to_check, #TV_A_19.to_check, 
+#TV_A_20.to_check, #TV_A_21.to_check, #TV_A_22.to_check, #TV_A_23.to_check, #TV_A_24.to_check, #TV_A_25.to_check, #TV_A_26.to_check, #TV_A_27.to_check {
+    background-color: #ff8800;
+}
