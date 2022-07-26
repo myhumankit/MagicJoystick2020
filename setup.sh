@@ -65,6 +65,7 @@ read -r -d '' LC_NETITF << EOF
 allow-hotplug can0\n
 iface can0 can static\n
        bitrate 125000\n
+       post-up /sbin/ip link set can0 txqueuelen 1000
        down /sbin/ip link set $IFACE down\n
        up /sbin/ip link set $IFACE up\n
 \n
@@ -72,6 +73,7 @@ iface can0 can static\n
 allow-hotplug can1\n
 iface can1 can static\n
        bitrate 125000\n
+       post-up /sbin/ip link set can1 txqueuelen 1000
        down /sbin/ip link set $IFACE down\n
        up /sbin/ip link set $IFACE up\n
 EOF
