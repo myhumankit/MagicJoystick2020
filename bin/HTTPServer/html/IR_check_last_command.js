@@ -9,6 +9,7 @@ function load_IR_check()
         "svg_icon/TV_info.svg", "svg_icon/down.svg", "svg_icon/TV_home.svg", "svg_icon/TV_source.svg", 
         "svg_icon/TV_menu.svg", "svg_icon/TV_tools.svg", "svg_icon/TV_return.svg", "svg_icon/TV_exit.svg"
     ]
+
     function last_command_id()
     {   
         $.ajax({
@@ -18,12 +19,14 @@ function load_IR_check()
                 if(data !== -1){
                     document.getElementById("last_command_id").style.backgroundImage = "url(" + button_TV[data] + ")";
                 }
+                else{
+                    document.getElementById("last_command_id").style.backgroundImage = "url(svg_icon/-1.svg)";
+                }
             },
             error: function(errMsg){
             }
         });
     }
-
 
     function delete_command()
     {   
@@ -41,7 +44,6 @@ function load_IR_check()
         
     }
     
-
     function modify_command()
     {
         popup = window.open("timer.html");
