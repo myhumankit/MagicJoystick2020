@@ -1,5 +1,6 @@
-function load_TV(){
-
+function load_TV()
+{
+    /* Change volume */
     function change_TV_volume(type)
     {
         $.ajax({
@@ -13,6 +14,7 @@ function load_TV(){
         });
     }
 
+    /* Change other command */
     function change_TV_param(type)
     {
         $.ajax({
@@ -26,6 +28,7 @@ function load_TV(){
         });
     }
 
+    /* Change direction */
     function change_TV_direction(type)
     {
         $.ajax({
@@ -40,6 +43,7 @@ function load_TV(){
 
     }
 
+    /* Change channel number */
     function change_TV_number(nb)
     {
         $.ajax({

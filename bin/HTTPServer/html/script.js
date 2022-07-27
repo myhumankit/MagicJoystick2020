@@ -29,10 +29,9 @@ function load()
     }
 
     
-    /* Clock */
+    /* Clock and battery every 10 seconds */
     display_time_battery()
-    setInterval(display_time_battery, 2000);
-
+    setInterval(display_time_battery, 10000);
 
     /* html change pages */
     $("#actuator").on("click", function() {window.location = "actuator.html";})

@@ -2,6 +2,7 @@ function load_wheelchair()
 {
     var actuatorWatchdogTime = 500 // in ms
 
+    /* Get the current values of drive mode, speed and if lights are on */
     function synchro_lights_speed_driveMode()
     {
         $.ajax({
@@ -45,7 +46,7 @@ function load_wheelchair()
             })
     }
 
-
+    /* Send the light on/off command */
     function send_light(light_id)
     {
         $.ajax({
@@ -59,6 +60,7 @@ function load_wheelchair()
         });
     }
 
+    /* Change the light on/off command on web */
     function change_light(light_id)
     {
         let light = 'light_' + light_id;
@@ -78,6 +80,7 @@ function load_wheelchair()
             $.post("/action/auto_light")
     }
 
+    /* Send power command to wheelchair */
     function send_power(url)
     {
         $.ajax({
@@ -88,7 +91,7 @@ function load_wheelchair()
         });
     }
     
-    
+    /* Change power on/off command on web */
     function change_power()
     {
         if($("#power").hasClass("on"))
@@ -105,6 +108,7 @@ function load_wheelchair()
         }
     }
 
+    /* Speed +1*/
     function change_speed()
     {
         let level = 0;
@@ -149,7 +153,7 @@ function load_wheelchair()
         });
     }
 
-    
+    /* Send actuator command */
     function send_actuator_ctrl(actuator_num, direction)
     {
         $.ajax({
@@ -163,6 +167,7 @@ function load_wheelchair()
         });
     }
     
+    /* Timer actuator command */
     function actuator_ctrl(actuator_num, direction)
     {
         if (interval) {

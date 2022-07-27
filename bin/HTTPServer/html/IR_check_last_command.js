@@ -1,5 +1,6 @@
 function load_IR_check()
 {   
+    /* List of all the supported TV icon */
     let button_TV = [
         "svg_icon/button_power.svg", "svg_icon/button_1.svg", "svg_icon/button_2.svg", "svg_icon/button_3.svg", 
         "svg_icon/mute.svg", "svg_icon/button_4.svg", "svg_icon/button_5.svg", "svg_icon/button_6.svg", 
@@ -9,7 +10,8 @@ function load_IR_check()
         "svg_icon/TV_info.svg", "svg_icon/down.svg", "svg_icon/TV_home.svg", "svg_icon/TV_source.svg", 
         "svg_icon/TV_menu.svg", "svg_icon/TV_tools.svg", "svg_icon/TV_return.svg", "svg_icon/TV_exit.svg"
     ]
-
+ 
+    /* Change the background image of the last recorded command (or -1 if none)*/
     function last_command_id()
     {   
         $.ajax({
@@ -28,6 +30,7 @@ function load_IR_check()
         });
     }
 
+    /* Delete the last recorded command*/
     function delete_command()
     {   
         alert("Voulez-vous vraiment supprimer la commande ?")
@@ -44,6 +47,7 @@ function load_IR_check()
         
     }
     
+    /* Modify the last recorded command*/
     function modify_command()
     {
         popup = window.open("timer.html");
@@ -62,6 +66,7 @@ function load_IR_check()
         });
     }
 
+    /* Validate the last recorded command and register it in "database" */
     function validate_command()
     {
         $.ajax({

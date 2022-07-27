@@ -10,7 +10,7 @@ import signal
 
 app = Flask(__name__)
 lights = [False, False, False, False]
-drive_mode = False
+drive_mode = False #pas en mode drive au démarrage
 battery_level = 7 #valeur d'init (fausse)
 chair_speed = -1.0 #valeur d'init (fausse)
 
@@ -32,6 +32,9 @@ def init_validate():
         validate.append(os.path.exists("../IR/TV_A_raw_command/TV_A_" + str(i) + ".txt"))
     return validate
 
+'''
+    Verify if the raw command file exists
+'''
 def check_files_TV_A():
     global validate
     state = []
@@ -196,11 +199,11 @@ class TV_A(Resource):
 
     def post(self, command):
         global last
-        if command == "control":
+        if command == "control": #send the command
             data = request.get_json()
             msg = TV_A_control(data["id"])
             self.client.publish(msg.TOPIC_NAME, msg.serialize())
-        elif command == "get":
+        elif command == "get": #record the command
             data = request.get_json()
             id = data["id"]
             f_string = "../IR/TV_A_raw_command/" + "TV_A_" + str(id) +  ".txt"
@@ -214,21 +217,21 @@ class TV_A(Resource):
                 return data["id"], 449
             else:
                 last = data["id"]
-        elif command == "delete":
+        elif command == "delete": #delete the command
             data = request.get_json()
             id = data["id"]
             f_string = "../IR/TV_A_raw_command/" + "TV_A_" + str(id) +  ".txt"
             os.remove(f_string)
             last = -1
 
-        elif command == "last-launch":
+        elif command == "last-launch": #send the last command recorded
             msg = TV_A_control(last)
             self.client.publish(msg.TOPIC_NAME, msg.serialize())
-        elif command == "last-delete":
+        elif command == "last-delete": #delete the last command recorded
             f_string = "../IR/TV_A_raw_command/" + "TV_A_" + str(last) +  ".txt"
             os.remove(f_string)
             last = -1
-        elif command == "last-modify":
+        elif command == "last-modify": #modify the last command recorded
             f_string = "../IR/TV_A_raw_command/" + "TV_A_" + str(last) +  ".txt"
             file = open(f_string, "w")
             process = subprocess.Popen(["ir-ctl", "-r",  "-d", "/dev/lirc1", "--mode2"], stdout=file)   # pass cmd and args to the function
@@ -238,9 +241,9 @@ class TV_A(Resource):
             if(os.stat(f_string).st_size == 0):
                 os.remove(f_string)
                 return data["id"], 449
-        elif command == "last-validate":
+        elif command == "last-validate": #validate the last command recorded
             validate[last] = True
-        elif command == "last-get":
+        elif command == "last-get": #get the number of the last command recorded
             pass
 
         else:
@@ -264,11 +267,9 @@ def on_message(client, userdata, msg):
     global battery_level, chair_speed, drive_mode
     data_current = deserialize(msg.payload)
     if msg.topic == status_battery_level.TOPIC_NAME:
-        #self.battery_level = json.dumps({"BATTERY_LEVEL": data_current.battery_level}).encode("utf8")
         battery_level = data_current.battery_level
 
     elif msg.topic == status_chair_speed.TOPIC_NAME:
-        #self.chair_speed = json.dumps({"CHAIR_SPEED": data_current.speedMps*3.6}).encode("utf8")
         chair_speed = data_current.speedMps*3.6
     
     elif msg.topic == action_drive.TOPIC_NAME:

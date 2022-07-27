@@ -19,7 +19,7 @@ h = logging.StreamHandler(sys.stdout)
 h.flush = sys.stdout.flush
 logger.addHandler(h)
 
-
+#Send the command of TV_A.html
 def send_command_A(command_id):
     if(command_id != 15 and command_id != 19):
         os.system("sudo ir-ctl -d /dev/lirc0 -s TV_A_raw_command/TV_A_" + str(command_id)+ ".txt")
