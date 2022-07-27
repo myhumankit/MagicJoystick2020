@@ -109,36 +109,25 @@ function load_wheelchair()
     }
 
     /* Speed +1*/
-    function change_speed()
-    {
+    function add_speed()
+    {   
         let level = 0;
-
-        for(var i = 1; i <= 5; i++)
-        {
-            if($("#lvl" + i).hasClass("on"))
-            {
-                level++;
-            }
-        }
-
-        if(level == 5)
+        if($("#lvl5").hasClass("on"))
         {
             level = 1;
-        }
-        else
-        {
-            level++;
-        }
-        
-        for(var i = 1; i <= 5; i++)
-        {
-            if(i <= level)
+            for(var i = 2; i <= 5; i++)
             {
-                $("#lvl" + i).addClass("on");
+                $("#lvl" + i).removeClass("on")
             }
-            else
+        } else {
+            for(var i = 1; i <= 5; i++)
             {
-                $("#lvl" + i).removeClass("on");
+                if(!$("#lvl" + i).hasClass("on"))
+                {
+                    level = i;
+                    $("#lvl" + level).addClass("on");
+                    break;
+                }
             }
         }
 
@@ -152,6 +141,60 @@ function load_wheelchair()
             error: function(errMsg){}
         });
     }
+
+    /* Change the max speed level directly on web */
+    function change_max_speed(level)
+    {
+        $.ajax({
+            type: "POST",
+            url: "/action/max_speed", 
+            data: JSON.stringify({max_speed: level}),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function(data){
+                for(var i = 1; i <= 5; i++)
+                {
+                    if(i <= level)
+                    {
+                        $("#lvl" + i).addClass("on");
+                    }
+                    else
+                    {
+                        $("#lvl" + i).removeClass("on");
+                    }
+                }
+            },
+            error: function(errMsg){}
+        });
+    }
+
+    /* Get the max speed level on load */
+    function get_max_speed()
+    {
+        $.ajax({
+            type: "GET",
+            url: "/action/max_speed", 
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function(result){
+                for(var i = 1; i <= 5; i++)
+                {
+                    if(i <= result.MAX_SPEED)
+                    {
+                        $("#lvl" + i).addClass("on");
+                    }
+                    else
+                    {
+                        $("#lvl" + i).removeClass("on");
+                    }
+                }
+            },
+            error: function(errMsg){
+                console.log(errMsg)
+            }
+        });
+    }
+
 
     /* Send actuator command */
     function send_actuator_ctrl(actuator_num, direction)
@@ -192,7 +235,7 @@ function load_wheelchair()
         }
     }
 
-
+    get_max_speed()
     setInterval(synchro_lights_speed_driveMode, 500);
     $(window).on("load", set_icons_status)
 
@@ -226,8 +269,13 @@ function load_wheelchair()
     $("#light_3").on("click", function() {change_light(3);})
     $("#light_4").on("click", function() {change_light(4);})
     $("#light_5").on("click", function() {change_light(5);})
+    $("#lvl1").on("click", function() {change_max_speed(1)})
+    $("#lvl2").on("click", function() {change_max_speed(2)})
+    $("#lvl3").on("click", function() {change_max_speed(3)})
+    $("#lvl4").on("click", function() {change_max_speed(4)})
+    $("#lvl5").on("click", function() {change_max_speed(5)})
     $("#power").on("click", change_power)
-    $("#button_speed").on("click", change_speed)
+    $("#button_speed").on("click", add_speed)
     $("#button_drive_mode").on("click", function() {$.post("/action/drive")})
     $("#button_horn").on("click", function() {$.post("/action/horn")})
 

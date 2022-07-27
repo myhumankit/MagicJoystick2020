@@ -92,6 +92,7 @@ class Actions(Resource):
 
     def __on_connect(self, client, userdata, flags, rc):
         if rc == 0:
+            self.client.subscribe(action_max_speed.TOPIC_NAME)
             print("Connection successful to Action")
         else:
             print(f"Connection failed with code {rc}")
