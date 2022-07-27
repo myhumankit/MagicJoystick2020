@@ -8,22 +8,27 @@
         <meta name="color-scheme" content="light dark">
         <link rel="stylesheet" href="style.css">
         <link href="all.min.css" rel="stylesheet">
+        <script src="jquery-3.6.0.min.js"></script>
+        <script src="script.js"></script>
         <title>Magic Joystick</title>
     </head>
-    <body>
+    <body onload="load()">
         <!-- <img class="logo" src="logo.png"/> -->
 
         <div class="header">
             <span id="time">
             </span>
             <span id="battery">
-                100%
+                -1%
             </span>
         </div>
 
         <div class="body main">
             <div>
                 <div id="button_wheelchair" class="svg"></div>
+            </div>
+            <div>
+                <div id="IR" class="svg"></div>
             </div>
             <div>
                 <div id="bluetooth" class="icon"><i class="fab fa-bluetooth-b"></i></div>
@@ -35,9 +40,6 @@
                 <div id="power" class="icon"><i class="fas fa-power-off"></i></div>
             </div>
         </div>
-
-        <script src="jquery-3.6.0.min.js"></script>
-        <script src="script.js"></script>
     </body>
 </html>
 

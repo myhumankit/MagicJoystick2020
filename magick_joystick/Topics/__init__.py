@@ -1,3 +1,4 @@
+from email.mime import base
 import jsonpickle
 
 def deserialize(arrray):
@@ -85,3 +86,35 @@ class status_chair_speed(base_mqtt_message):
     def __init__(self, speedMps):
         self.speedMps = speedMps
 
+
+class TV_power(base_mqtt_message):
+    TOPIC_NAME = "TV/power"
+    def __init__(self):
+        pass
+        #self.state = state
+
+class TV_volume(base_mqtt_message):
+    TOPIC_NAME = "TV/volume"
+    def __init__(self, type):
+        self.type = type
+
+class TV_param(base_mqtt_message):
+    TOPIC_NAME = "TV/param"
+    def __init__(self, type):
+        self.type = type
+
+class TV_direction(base_mqtt_message):
+    TOPIC_NAME = "TV/direction"
+    def __init__(self, type):
+        self.type = type
+
+class TV_number(base_mqtt_message):
+    TOPIC_NAME = "TV/number"
+    def __init__(self, nb):
+        self.nb = nb
+
+
+class TV_A_control(base_mqtt_message):
+    TOPIC_NAME = "TV_A/control"
+    def __init__(self, id):
+        self.id = id

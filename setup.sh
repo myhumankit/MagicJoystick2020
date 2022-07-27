@@ -110,7 +110,7 @@ remote 'sudo sed -i "s/\[General\]/\[General\]\nName = MagickJoystick\nClass = 0
 # Add extra packages
 echo " -> Adding extra packages"
 remote "sudo apt-get -y update > /dev/null"
-remote "sudo apt-get -y install can-utils build-essential python3-dev git python3-pip cmake mosquitto bluez libcap2-bin libdbus-1-dev libglib2.0-dev python3-gi libbluetooth-dev pi-bluetooth hostapd dnsmasq > /dev/null"
+remote "sudo apt-get -y install can-utils build-essential python3-dev git python3-pip cmake mosquitto bluez libcap2-bin libdbus-1-dev libglib2.0-dev python3-gi libbluetooth-dev pi-bluetooth hostapd dnsmasq v4l-utils > /dev/null"
 
 
 # Setup Acces Point Configuration

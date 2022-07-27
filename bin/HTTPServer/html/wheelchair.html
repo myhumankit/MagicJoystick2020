@@ -7,16 +7,21 @@
         <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover">
         <meta name="color-scheme" content="light dark">
         <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="wheelchair.css">
         <link href="all.min.css" rel="stylesheet">
+        <script src="jquery-3.6.0.min.js"></script>
+        <script src="script.js"></script>
+        <script src="wheelchair.js"></script>
         <title>Magic Joystick</title>
     </head>
-    <body>
+    <body onload="load_wheelchair();load()">
         <!-- <img class="logo" src="logo.png"/> -->
 
         <div class="header">
             <span id="time">
             </span>
             <span id="battery">
+                -1%
             </span>
             <div class="working">
                 <div id="light_1" class="icon"><i class="fas fa-arrow-alt-circle-left"></i></div>
@@ -44,7 +49,6 @@
             </div>
             <div>
                 <div id="actuator" class="svg"></div>
-                <!--<div id="current_jack"></div>-->
             </div>
             <div>
                 <div id="button_light" class="svg"></div>
@@ -54,9 +58,6 @@
                 <div id="button_back_index" class="svg"></div>
             </div>
         </div>
-
-        <script src="jquery-3.6.0.min.js"></script>
-        <script src="script.js"></script>
     </body>
 </html>
 

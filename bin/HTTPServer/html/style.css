@@ -97,7 +97,7 @@ div.body > div > div > i {
 }
 
 div.body.main > div {
-    height: calc(100% / 4);
+    height: calc(100% / 5);
 }
 
 div.body.main > div > div {
@@ -112,92 +112,40 @@ div.body.actuator > div {
     height: calc(100% / 7);
 }
 
+div.body.IR > div {
+    height: calc(100% / 4);
+}
+
+div.body.IR > div > div {
+    width: 100%;
+}
+
+div.body.TV > div {
+    height: calc(100% / 8);
+}
+
+div.body.TV > div > div {
+    width: calc(100%/4);
+}
+
 div.body.light > div {
     height: calc(100% / 4);
 }
 
-#actuator_0_0 {
-    background-image: url("actuator_0_0.svg");
-}
-
-#actuator_0_1 {
-    background-image: url("actuator_0_1.svg");
-}
-
-#actuator_1_0 {
-    background-image: url("actuator_1_0.svg");
-}
-
-#actuator_1_1 {
-    background-image: url("actuator_1_1.svg");
-}
-
-#actuator_2_0 {
-    background-image: url("actuator_2_0.svg");
-}
-
-#actuator_2_1 {
-    background-image: url("actuator_2_1.svg");
-}
-
-#actuator_3_0 {
-    background-image: url("actuator_3_0.svg");
-}
-
-#actuator_3_1 {
-    background-image: url("actuator_3_1.svg");
-}
-
-#actuator_4_0 {
-    background-image: url("actuator_4_0.svg");
-}
-
-#actuator_4_1 {
-    background-image: url("actuator_4_1.svg");
-}
-
-#actuator_5_0 {
-    background-image: url("actuator_5_0.svg");
-}
-
-#actuator_5_1 {
-    background-image: url("actuator_5_1.svg");
-}
-
-#actuator {
-    background-image: url("actuator.svg");
+#IR {
+    background-image: url("svg_icon/IR.svg");
 }
 
 #button_wheelchair {
-    background-image: url("button_wheelchair.svg");
+    background-image: url("svg_icon/button_wheelchair.svg");
 }
 
-#button_horn {
-    background-image: url("button_horn.svg");
+#button_back, #button_back_index, #button_back_ir {
+    background-image: url("svg_icon/button_back.svg");
 }
 
-#button_light {
-    background-image: url("button_light.svg");
-}
-
-#button_speed {
-    background-image: url("button_speed.svg");
-}
-
-#button_drive_mode {
-    background-image: url("button_drive_mode.svg");
-}
-
-#button_drive_mode.on {
-    background-image: url("button_drive_mode_on.svg");
-}
-
-#button_back {
-    background-image: url("button_back.svg");
-}
-
-#button_back_index {
-    background-image: url("button_back.svg");
+#A {
+    background-image: url("svg_icon/A.svg");
 }
 
 #current_speed {
@@ -205,60 +153,12 @@ div.body.light > div {
     font-size: 30px;
 }
 
-#max_speed,
-#current_jack {
+#max_speed {
     background: none;
 }
 
-.bargraph {
-    display: inline-block;
-    width: 15%;
-    height: 25%;
-    border: white solid 2px;
-    background-color: transparent;
-    top: 35%;
-    box-sizing: border-box;
-    position: relative;
-    margin-left: 2.5%;
-    margin-right: 2.5%;
-}
-
-#light_1.on, #light_2.on, #power.on{
-    color: #00FF00;
-}
-
-#light_3.on, #light_5.on {
-    color: #FF6600;
-}
-
-#light_4.on {
-    color: #FFFF00;
-}
-
-
-#lvl1.on {
-    background-color: #00FF00;
-}
-
-#lvl2.on {
-    background-color: #88FF00;
-}
-
-#lvl3.on {
-    background-color: #FFFF00;
-}
-
-#lvl4.on {
-    background-color: #FF8800;
-}
-
-#lvl5.on {
-    background-color: #FF0000;
-}
-
-
 .icon {
-    background: url("button_default.svg") no-repeat center;
+    background: url("svg_icon/button_default.svg") no-repeat center;
     background-size: contain;
 }
 
