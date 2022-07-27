@@ -40,10 +40,10 @@ class StaticPages(Resource):
     def get(self, filename = "index.html"):
         files = ["index.html", "wheelchair.html", "style.css", "wheelchair.js", 
                  "script.js", "jquery-3.6.0.min.js", "all.min.css", "wheelchair.css", "TV.css",
-                 "IR.html", "TV.html", "TV.js", "TV_A.html", "TV_A.js", 
+                 "IR.html", "TV.html", "TV.js", "TV_A.html", "TV_A.js", "IR_check_last_command.js", 
                  "actuator.html", "light.html", "timer.html", "IR_check_command.html"]
 
-        svg_files = ["button_default.svg",
+        svg_files = ["button_default.svg", "-1.svg", 
                  "button_wheelchair.svg", "button_horn.svg", "button_light.svg", "actuator.svg",
                  "button_speed.svg", "button_drive_mode.svg", "button_drive_mode_on.svg", "button_back.svg",
                  "actuator_0_0.svg", "actuator_0_1.svg", "actuator_5_1.svg", 
@@ -184,14 +184,13 @@ class TV_A(Resource):
             print(f"Connection failed with code {rc}")
     
     def get(self, command):
-        global validate
         if command == "buttons":
-            return {"BUTTONS":check_files_TV_A(), "VALIDATE": validate}
+            return {"BUTTONS":check_files_TV_A()}
         else:
             return "", 404
 
     def post(self, command):
-        global last, validate
+        global last
         if command == "control":
             data = request.get_json()
             msg = TV_A_control(data["id"])
@@ -210,6 +209,12 @@ class TV_A(Resource):
                 return data["id"], 449
             else:
                 last = data["id"]
+        elif command == "delete":
+            data = request.get_json()
+            id = data["id"]
+            f_string = "/home/roxu/bin/IR/TV_A_raw_command/" + "TV_A_" + str(id) +  ".txt"
+            os.remove(f_string)
+            last = -1
 
         elif command == "last-launch":
             msg = TV_A_control(last)
@@ -229,7 +234,7 @@ class TV_A(Resource):
                 os.remove(f_string)
                 return data["id"], 449
         elif command == "last-validate":
-            validate[last] = True
+            pass
 
         else:
             return "", 404

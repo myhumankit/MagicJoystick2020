@@ -30,6 +30,12 @@ body {
   height:50vh;
 }
 
+div.last-command {
+  display: flexbox;
+  height: 25vh;
+  width:100vw;
+}
+
 .loader {
   position: relative;
   float:left;

@@ -121,3 +121,11 @@
 #TV_A_20.to_check, #TV_A_21.to_check, #TV_A_22.to_check, #TV_A_23.to_check, #TV_A_24.to_check, #TV_A_25.to_check, #TV_A_26.to_check, #TV_A_27.to_check {
     background-color: #ff8800;
 }
+
+#last_command_id {
+    background-image: url("svg_icon/-1.svg");
+    height: 25vh;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+}
