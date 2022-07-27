@@ -19,68 +19,68 @@ h.flush = sys.stdout.flush
 logger.addHandler(h)
 
 def send_power():
-    os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/power.txt")
+    os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/power.txt")
 
 
 def send_volume(type):
     if(type == "up"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/volume_plus.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/volume_plus.txt")
     elif (type == "down"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/volume_less.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/volume_less.txt")
     elif (type == "mute"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/mute.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/mute.txt")
 
 def send_param(type):
     if(type == "exit"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/exit.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/exit.txt")
     elif (type == "home"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/home.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/home.txt")
     elif (type == "info"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/info.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/info.txt")
     elif (type == "menu"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/menu.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/menu.txt")
     elif (type == "return"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/return.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/return.txt")
     elif (type == "source"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/source.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/source.txt")
     elif (type == "tools"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/tools.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/tools.txt")
 
 
 def send_direction(type):
     if(type == "ok"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/ok.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/ok.txt")
     elif (type == "left"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/left.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/left.txt")
     elif (type == "down"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/down.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/down.txt")
     elif (type == "right"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/right.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/right.txt")
     elif (type == "up"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/up.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/up.txt")
 
 
 def send_number(nb):
     if(nb == "0"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/0.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/0.txt")
     elif (nb == "1"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/1.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/1.txt")
     elif (nb == "2"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/2.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/2.txt")
     elif (nb == "3"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/3.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/3.txt")
     elif (nb == "4"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/4.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/4.txt")
     elif (nb == "5"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/5.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/5.txt")
     elif (nb == "6"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/6.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/6.txt")
     elif (nb == "7"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/7.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/7.txt")
     elif (nb == "8"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/8.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/8.txt")
     elif (nb == "9"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/raw_command/9.txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/9.txt")
     
 
 # MQTT Connection initialization

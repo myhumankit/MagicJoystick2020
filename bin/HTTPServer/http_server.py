@@ -29,14 +29,14 @@ NB_COMMAND = 28
 def init_validate():
     global validate
     for i in range (NB_COMMAND):
-        validate.append(os.path.exists("/home/roxu/bin/IR/TV_A_raw_command/TV_A_" + str(i) + ".txt"))
+        validate.append(os.path.exists("../IR/TV_A_raw_command/TV_A_" + str(i) + ".txt"))
     return validate
 
 def check_files_TV_A():
     global validate
     state = []
     for i in range (NB_COMMAND):
-        state.append(os.path.exists("/home/roxu/bin/IR/TV_A_raw_command/TV_A_" + str(i) + ".txt"))
+        state.append(os.path.exists("../IR/TV_A_raw_command/TV_A_" + str(i) + ".txt"))
         if(validate[i]==True and state[i]==False):
             validate[i] = False
     return state
@@ -203,7 +203,7 @@ class TV_A(Resource):
         elif command == "get":
             data = request.get_json()
             id = data["id"]
-            f_string = "/home/roxu/bin/IR/TV_A_raw_command/" + "TV_A_" + str(id) +  ".txt"
+            f_string = "../IR/TV_A_raw_command/" + "TV_A_" + str(id) +  ".txt"
             file = open(f_string, "w")
             process = subprocess.Popen(["ir-ctl", "-r",  "-d", "/dev/lirc1", "--mode2"], stdout=file)   # pass cmd and args to the function
             time.sleep(RECORD_TIME)
@@ -217,7 +217,7 @@ class TV_A(Resource):
         elif command == "delete":
             data = request.get_json()
             id = data["id"]
-            f_string = "/home/roxu/bin/IR/TV_A_raw_command/" + "TV_A_" + str(id) +  ".txt"
+            f_string = "../IR/TV_A_raw_command/" + "TV_A_" + str(id) +  ".txt"
             os.remove(f_string)
             last = -1
 
@@ -225,11 +225,11 @@ class TV_A(Resource):
             msg = TV_A_control(last)
             self.client.publish(msg.TOPIC_NAME, msg.serialize())
         elif command == "last-delete":
-            f_string = "/home/roxu/bin/IR/TV_A_raw_command/" + "TV_A_" + str(last) +  ".txt"
+            f_string = "../IR/TV_A_raw_command/" + "TV_A_" + str(last) +  ".txt"
             os.remove(f_string)
             last = -1
         elif command == "last-modify":
-            f_string = "/home/roxu/bin/IR/TV_A_raw_command/" + "TV_A_" + str(last) +  ".txt"
+            f_string = "../IR/TV_A_raw_command/" + "TV_A_" + str(last) +  ".txt"
             file = open(f_string, "w")
             process = subprocess.Popen(["ir-ctl", "-r",  "-d", "/dev/lirc1", "--mode2"], stdout=file)   # pass cmd and args to the function
             time.sleep(RECORD_TIME)

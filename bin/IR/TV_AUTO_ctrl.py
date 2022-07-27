@@ -22,7 +22,7 @@ logger.addHandler(h)
 
 def send_command_A(command_id):
     if(command_id != 15 and command_id != 19):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s /home/roxu/bin/IR/TV_A_raw_command/TV_A_" + str(command_id)+ ".txt")
+        os.system("sudo ir-ctl -d /dev/lirc0 -s TV_A_raw_command/TV_A_" + str(command_id)+ ".txt")
     elif(command_id != 15 or command_id != 19):
         print("pas de bouton 15 ou 19")
     
