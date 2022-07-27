@@ -1,5 +1,5 @@
 function load_TV_A()
-{   
+{  
     /* Put the unknown button on red background when TV_A.html page is loaded */
     function get_and_update_buttons()
     {
@@ -10,14 +10,29 @@ function load_TV_A()
             dataType: "json",
             success: function(result){
                 for ( var i=0 ; i<result["BUTTONS"].length ; i++ ){
-                    if(result.BUTTONS[i] === false || (result.BUTTONS[i] === true && result.VALIDATE[i] === false)) {
+                    if(result.BUTTONS[i] === false) {
                         if (!($("#TV_A_"+i).hasClass("no"))) {
                             $("#TV_A_"+i).addClass("no");
                         }
-                    } else if(result.BUTTONS[i] === true && result.VALIDATE[i] === true){
+                    } 
+                    else if(result.BUTTONS[i] === true && result.VALIDATE[i] === true) {
                         if ($("#TV_A_"+i).hasClass("no")) {
                             $("#TV_A_"+i).removeClass("no");
                         }
+                    }
+                    else if(result.BUTTONS[i] === true && result.VALIDATE[i] === false) {
+                        if (!($("#TV_A_"+i).hasClass("no"))) {
+                            $("#TV_A_"+i).addClass("no");
+                        }
+                        $.ajax({
+                            type: "POST",
+                            url: "/TV_A/delete",
+                            data: JSON.stringify({"id": i}),
+                            contentType: "application/json; charset=utf-8",
+                            dataType: "json",
+                            success: function(data){},
+                            error: function(errMsg){}
+                        });
                     }
                 }
             },
@@ -35,6 +50,8 @@ function load_TV_A()
         TV_A_id_2 = id;
         if ($("#TV_A_"+id).hasClass("no")){
             popup = window.open("timer.html");
+            $("#TV_A_" + id).removeClass("no");
+            $("#TV_A_" + id).addClass("to_check");
 
             $.ajax({
                 type: "POST",
@@ -44,8 +61,6 @@ function load_TV_A()
                 dataType: "json",
                 success: function(data){
                     popup.close();
-                    $("#TV_A_" + id).removeClass("no");
-                    $("#TV_A_" + id).addClass("to_check");
                     if (window.confirm("Commande enregistée, vérifier la nouvelle commande ?"))
                     {
                         popup = window.open("IR_check_command.html");
@@ -54,6 +69,7 @@ function load_TV_A()
                 error: function(errMsg){
                     popup.close();
                     alert("La commande n'a pas pu être enregistrée");
+                    window.location.reload();
                 }
             });
 
@@ -74,52 +90,6 @@ function load_TV_A()
             error: function(errMsg){}
         })
         };
-    }
-
-    function delete_command()
-    {
-        $.ajax({
-            type: "POST",
-            url: "/TV_A/last-delete",
-            success: function(data){
-                window.location = "TV_A.html"
-            },
-            error: function(errMsg){}
-        })
-        
-    }
-    
-
-    function modify_command()
-    {
-        popup = window.open("timer.html");
-
-        $.ajax({
-            type: "POST",
-            url: "TV_A/last-modify",
-            success: function(data){
-                popup.close();
-                alert("Commande enregistée, vérifier la nouvelle commande ?")
-            },
-            error: function(errMsg){
-                popup.close();
-                alert("La commande n'a pas pu être enregistrée");
-            }
-        });
-    }
-
-    function validate_command()
-    {
-        $.ajax({
-            type: "POST",
-            url: "TV_A/last-validate",
-            success: function(data){
-                $("#TV_A_" + data).removeClass("to_check");
-                window.location = "TV_A.html"
-            },
-            error: function(errMsg){
-            }
-        });
     }
 
     get_and_update_buttons()
@@ -154,10 +124,4 @@ function load_TV_A()
     $("#TV_A_10").on("click", function() {send_or_get_TV_A(10)})
     $("#TV_A_11").on("click", function() {send_or_get_TV_A(11)})
 
-    /* IR check command buttons */
-    // $("#launch").on("click", function() {send_or_get_TV_A(TV_A_id)})
-    $("#launch").on("click", function() {$.post("/TV_A/last-launch")})
-    $("#delete").on("click", delete_command)
-    $("#modify").on("click", modify_command)
-    $("#validate").on("click", validate_command)
 }

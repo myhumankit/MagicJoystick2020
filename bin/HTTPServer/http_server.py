@@ -26,14 +26,19 @@ last = -1 #NUMBER OF LAST TV_A COMMAND
 validate = []
 NB_COMMAND = 28
 
-for i in range (NB_COMMAND):
-    validate.append(False)
-
+def init_validate():
+    global validate
+    for i in range (NB_COMMAND):
+        validate.append(os.path.exists("/home/roxu/bin/IR/TV_A_raw_command/TV_A_" + str(i) + ".txt"))
+    return validate
 
 def check_files_TV_A():
+    global validate
     state = []
     for i in range (NB_COMMAND):
         state.append(os.path.exists("/home/roxu/bin/IR/TV_A_raw_command/TV_A_" + str(i) + ".txt"))
+        if(validate[i]==True and state[i]==False):
+            validate[i] = False
     return state
 
 class StaticPages(Resource):
@@ -83,7 +88,7 @@ class Actions(Resource):
 
     def __on_connect(self, client, userdata, flags, rc):
         if rc == 0:
-            print("Connection successful")
+            print("Connection successful to Action")
         else:
             print(f"Connection failed with code {rc}")
 
@@ -137,7 +142,7 @@ class TV(Resource):
     
     def __on_connect(self, client, userdata, flags, rc):
         if rc == 0:
-            print("Connection successful")
+            print("Connection successful to TV")
         else:
             print(f"Connection failed with code {rc}")
 
@@ -179,13 +184,13 @@ class TV_A(Resource):
     
     def __on_connect(self, client, userdata, flags, rc):
         if rc == 0:
-            print("Connection successful")
+            print("Connection successful to TV_auto")
         else:
             print(f"Connection failed with code {rc}")
     
     def get(self, command):
         if command == "buttons":
-            return {"BUTTONS":check_files_TV_A()}
+            return {"BUTTONS":check_files_TV_A(), "VALIDATE": validate}
         else:
             return "", 404
 
@@ -234,6 +239,8 @@ class TV_A(Resource):
                 os.remove(f_string)
                 return data["id"], 449
         elif command == "last-validate":
+            validate[last] = True
+        elif command == "last-get":
             pass
 
         else:
@@ -245,7 +252,7 @@ class TV_A(Resource):
 
 def on_connect(client, userdata, flags, rc):
         if rc == 0:
-            print("Connection successful")
+            print("Connection successful to chair_speed, battery, light, drive_mode")
             client.subscribe(status_chair_speed.TOPIC_NAME)
             client.subscribe(status_battery_level.TOPIC_NAME)
             client.subscribe(action_light.TOPIC_NAME)
@@ -293,6 +300,7 @@ api.add_resource(TV, "/TV/<string:command>")
 api.add_resource(TV_A, "/TV_A/<string:command>")
 
 if __name__ == "__main__":
+    validate = init_validate()
     client = mqtt.Client()
     client.on_connect = on_connect
     client.on_message = on_message
