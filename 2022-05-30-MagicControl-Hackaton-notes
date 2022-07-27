@@ -55,3 +55,6 @@ Objectif N°3 : Rejeu des 2 séquences d'init d'un JSM (Normal et sablier)
 DIVERS:
 	Commande pour voir les messages MQTT de topics précisés
 mosquitto_sub -t "action/max_speed" -t "action/drive" -t "action/horn" -t "action/poweroff" -t "action/poweron" -t "action/light" -t "action/actuator_ctrl"
+
+	Selectionner toutes les lignes avec le mot clé "CHAIR_SPEED"
+^.*(CHAIR_SPEED).*\n?

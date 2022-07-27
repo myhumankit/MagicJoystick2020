@@ -13,6 +13,7 @@ lights = [False, False, False, False]
 drive_mode = False #pas en mode drive au démarrage
 battery_level = 7 #valeur d'init (fausse)
 chair_speed = -1.0 #valeur d'init (fausse)
+max_speed_level = 1 #valeur par défaut à au power on
 
 #Lights
 FLASHING_LEFT = 0
@@ -94,8 +95,14 @@ class Actions(Resource):
             print("Connection successful to Action")
         else:
             print(f"Connection failed with code {rc}")
+    
+    def get(self, action):
+        global max_speed_level
+        if action == "max_speed":
+            return {"MAX_SPEED": max_speed_level}
 
     def post(self, action):
+        global max_speed_level
         if action == "light":
             data = request.get_json()
             msg = action_light(data["light_id"])
@@ -104,6 +111,7 @@ class Actions(Resource):
         elif action == "max_speed":
             data = request.get_json()
             msg = action_max_speed(data["max_speed"])
+            max_speed_level = data["max_speed"]
         elif action == "drive":
             msg = action_drive(True)
         elif action == "horn":

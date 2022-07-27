@@ -3,7 +3,7 @@ import threading
 import argparse
 import time
 import logging
-from rnet_can import  RnetCan
+from rnet_can_JSMsub import RnetCanJSMsub
 import paho.mqtt.client as mqtt
 from magick_joystick.can2RNET import can2RNET, RnetDissector
 from magick_joystick.Topics import *
@@ -11,37 +11,47 @@ from magick_joystick.Topics import *
 logger = can2RNET.logger
 
 """
-Main R-net class to send joystick frames on the bus
-and take the control over the legacy JSM
-
+Main R-net class to Act just like a JSM (using only one can interface)
 """
-class RnetControl(threading.Thread):
+class RnetControlJSMsub(threading.Thread):
 
-    POSITION_FREQUENCY = 0.01   # 100Hz - RNET requirement
+    POSITION_FREQUENCY = 0.015   # 100Hz - RNET requirement
     STATUS_FREQUENCY = 0.5        # 2Hz
     JOY_WATCHDOG_TIMEOUT = 20   # Force joystick position to [0,0] after 200ms without data.
     ACTUATOR_FREQUENCY = 0.05   # 20 Hz
     ACTUATOR_WATCHDOG_TIMEOUT = 6 # 700ms (assume mqtt publish every 2Hz / 500ms)
     SERIAL_FREQUENCY = 0.05     # 50 ms period
+    JSM_HEARTBEAT_PERIOD = 0.1 #10Hz
     AUTO_LIGHT_PERIOD = 0.25
-    power_state = True
+    power_state = False
+    nb_thread_ended = 0 # except auto_lights
 
     light_state = [False,False,False] # flashing left, flashing right, Warnning
     auto_light = False
 
-    def __init__(self, logJoyFrames = False):
+    def __init__(self):
+        """
+        Main R-net class to Act just like a JSM (using only one can interface)
+        """
         self.RnetHorn = None
+        self.threads = None
+        # self.hornThread = None
         self.drive_mode = False
         self.battery_level = 0
         self.chair_speed = 0.0
         self.joy_watchdog = 0
         self.actuator_watchdog = 0
-        self.fdLog = None
+        self.motorXY = [0,0]
+        
         threading.Thread.__init__(self)
-
-        self.logJoyFrames = logJoyFrames
         
         logger.info("========== START ========== ")
+
+        # Open can socket to prepare JSM power_on
+        logger.info("Opening socketcan...")
+        self.rnet_can = RnetCanJSMsub()
+        self.cansend = can2RNET.cansendraw
+
         try:
             self.mqtt_client = mqtt.Client() 
             self.mqtt_client.on_connect = self.on_connect 
@@ -52,18 +62,9 @@ class RnetControl(threading.Thread):
         except:
             logger.error("mqtt connection error")
 
-        drive = action_drive(False)
+        drive = action_drive(False) #Sen to enveryone that the joy doesn't control the chair
         self.mqtt_client.publish(action_drive.TOPIC_NAME, drive.serialize())
-
-        self.cansend = can2RNET.cansendraw
-
-        if logJoyFrames:
-            logger.info("Ready to store JOY_POSITION frames")
-
-        # Open can socket to prepare fake JSM power_on
-        logger.info("Opening socketcan")
-        self.rnet_can = RnetCan()
-
+        
 
     # MQTT Connection initialization
     def on_connect(self, mqtt_client, userdata, flags, rc):
@@ -82,6 +83,7 @@ class RnetControl(threading.Thread):
                 logger.info(f"Connection failed with code {rc}")
             
     def update_light_state(self, rnetLid):
+        """Makeing shure that 'light_state' attribute is up to date"""
         if rnetLid == 4 :
             return # Front light status is not save
         elif rnetLid == 3: # Warning
@@ -94,9 +96,11 @@ class RnetControl(threading.Thread):
 
     # MQTT Message broker :
     def on_message(self, mqtt_client, userdata, msg):
-            if not self.rnet_can.init_done: # TODO Exception when turn ON message is receive
-                if not msg.topic == joystick_state.TOPIC_NAME:
-                    logger.info("[WARNING] : Recv %s but init of Rnet_can not done yet" % (msg.topic))
+
+            # To ignore mqtt messages when we are off 
+            if (self.power_state is False) and (msg.topic != action_poweron.TOPIC_NAME):
+                if not msg.topic == joystick_state.TOPIC_NAME: #Ignore joy msg
+                    logger.info("[WARNING] : Recv %s but power_on not done yet" % (msg.topic))
                 return
 
             # ENABLE/DISABLE DRIVE COMMAND
@@ -109,7 +113,7 @@ class RnetControl(threading.Thread):
                 action_light_obj = deserialize(msg.payload)
                 rnetLid = action_light_obj.light_id               
                 self.RnetLight.set_data(rnetLid) # Send to can
-                self.cansend(self.rnet_can.motor_cansocket, self.RnetLight.encode())
+                self.cansend(self.rnet_can.cansocket, self.RnetLight.encode())
                 self.update_light_state(rnetLid)
                 logger.info("[recv %s] Swich Light #%d" %(msg.topic, rnetLid))
             
@@ -125,41 +129,48 @@ class RnetControl(threading.Thread):
 
             # POWER ON
             elif msg.topic == action_poweron.TOPIC_NAME:
-                logger.info("[recv %s] Power On - NOT WORKING NO FRAME SENT" %(msg.topic))
-                
-                # cmd = RnetDissector.RnetPowerOn()
-                # thread_serial = threading.Thread(target=self.serial_thread, daemon=True)
-                # thread_serial.start()
-                # thread_serial = threading.Thread(target=self.serial_thread, daemon=True)
-                # thread_serial.start()
+                if self.power_state is True:
+                    logger.info("[recv %s] Power On - But already ON, message ignored" %(msg.topic))
+                    return
+                logger.info("[recv %s] Power On - Sending init frames" %(msg.topic))
+                self.threads = self.power_on()               
 
 
             # POWER OFF
             elif msg.topic == action_poweroff.TOPIC_NAME:
                 logger.info("[recv %s] Power Off" %(msg.topic))
-                cmd = RnetDissector.RnetPowerOff()
-                self.cansend(self.rnet_can.motor_cansocket, cmd.encode())
-                # Need to sleep some time before ending threads, to let the ending frame exchange end
-                time.sleep(0.2)
+
                 self.power_state = False
                 self.auto_light = False
-                drive = action_drive(False)
+
+                #cmd = RnetDissector.RnetPowerOff() #TODO NOT ENOUGH: study poweroff sequences to be able to repeate them
+                #self.cansend(self.rnet_can.cansocket, cmd.encode())
+
+                drive = action_drive(False) #Tell to everyone that joy dosen't control the weelchair anymore
                 self.mqtt_client.publish(drive.TOPIC_NAME, drive.serialize())
-                # All threads end --> join() end --> reboot using supervisor
+
+                while self.nb_thread_ended < 5:
+                    time.sleep(0.01)
+                self.rnet_can.turnMotorOff()
+                
 
             # HORN
             elif msg.topic == action_horn.TOPIC_NAME:
                 logger.info("[recv %s] Play Tone" %(msg.topic))
                 tone = RnetDissector.RnetPlayTone()
-                self.cansend(self.rnet_can.jsm_cansocket, tone.encode())
+                self.cansend(self.rnet_can.cansocket, tone.encode())
 
             # SET MAX SPEED
             elif msg.topic == action_max_speed.TOPIC_NAME:
                 max_speed = deserialize(msg.payload)
-                speed = (max_speed.max_speed)*20
-                self.RnetMotorMaxSpeed.set_data(speed)
-                self.cansend(self.rnet_can.motor_cansocket,self.RnetMotorMaxSpeed.encode())
-                logger.info("[recv %s] set max speed to %d" %(msg.topic, speed))
+                speed = max_speed.max_speed
+                if (speed < 1) or (speed > 5):
+                    logger.error("[ERROR] : [recv %s] Non supported max speed of %d" %(msg.topic, speed))
+                    return
+                self.RnetMotorConfSpeed.set_data(speed)
+                self.maxSpeedState = 6
+                self.max_speed_configuration()                
+                logger.info("[recv %s] Configuring max speed to %d..." %(msg.topic, speed))
 
             # JOYSTICK POSITION
             elif msg.topic == joystick_state.TOPIC_NAME:
@@ -182,13 +193,14 @@ class RnetControl(threading.Thread):
 
                     # Check if long click is pressed to get out of drive mode
                     # and force position to neutral if true
-                    if (joy_data.buttons == 1) :
+                    if (joy_data.long_click == 1) :
                         logger.info("[CLIC] Switch to drive mode OFF")
                         self.drive_mode = False
                         drive = action_drive(False)
                         self.mqtt_client.publish(drive.TOPIC_NAME, drive.serialize())
                         self.RnetJoyPosition.set_data(0, 0)
                     else:
+                        #x = 0 if self.auto_light else x # Test line that is usefull to only send y values when auto_light are ON
                         self.RnetJoyPosition.set_data(x, y)
                         if x or y:
                             logger.debug("[recv %s] X=%d, Y=%d" %(msg.topic, x, y))
@@ -205,47 +217,56 @@ class RnetControl(threading.Thread):
                 logger.error("MQTT unsupported message")
 
 
-    # For now Horn doesn't work, use 'playTone' instead
-    # def horn_thread(self):
-    #     while self.RnetHorn.get_state() == 0:
-    #         self.cansend(self.rnet_can.motor_cansocket,self.RnetHorn.encode())
-    #         logger.info("Send horn to motor: %s " %(RnetDissector.printFrame(self.RnetHorn.encode())))
-    #         time.sleep(0.1)
-
-    #     self.RnetHorn.toogle_state()
-    #     self.cansend(self.rnet_can.motor_cansocket,self.RnetHorn.encode())      
-    #     logger.info("Send horn to motor: %s " %(RnetDissector.printFrame(self.RnetHorn.encode())))
-    #     self.hornThread = None
 
 
     def power_on(self):
+        """
+        Method that starts the communication with motor by\n
+         - Sending init sequence to wake the motor up
+         - Starting all threads to communicate with the motor
+         - Starting listening thread to get motor's info
+        """
 
-        # Send power on sequence (Sends all JSM init frames)
-        self.rnet_can.connect()
-
-        # Wait for init to be sent by JSM
-        while self.rnet_can.init_done is not True:
-            time.sleep(0.1)
-
-        logger.info("Rnet Init complete, deviceID is: 0x%x" % (self.rnet_can.joy_subtype))
+        self.rnet_can.turnMotorOn()
+        logger.info("Rnet Init complete, jsm_subtype id is: %x" %self.rnet_can.jsm_subtype)
 
         # Initialize required Rnet frame objects and callbacks:
         self.rnet_can.set_battery_level_callback(self.update_battery_level)  
-        self.rnet_can.set_chair_speed_callback(self.update_chair_speed)   
+        self.rnet_can.set_chair_speed_callback(self.update_chair_speed)
+        self.rnet_can.set_motor_joy_values_callback(self.update_motor_joy_values)
         self.RnetHorn = RnetDissector.RnetHorn(self.rnet_can.jsm_subtype)
         self.RnetJoyPosition = RnetDissector.RnetJoyPosition(0,0,self.rnet_can.joy_subtype)
         self.RnetLight = RnetDissector.RnetLightCtrl(self.rnet_can.jsm_subtype)
         self.RnetBatteryLevel = RnetDissector.RnetBatteryLevel()
-        self.RnetMotorMaxSpeed = RnetDissector.RnetMotorMaxSpeed(20, self.rnet_can.joy_subtype)
+        self.RnetMotorMaxSpeed = RnetDissector.RnetMotorMaxSpeed(100, self.rnet_can.joy_subtype)
+        self.RnetMotorConfSpeed = RnetDissector.RnetMotorConfSpeed(1)
         self.RnetActuatorCtrl = RnetDissector.RnetActuatorCtrl(0, 0, self.rnet_can.jsm_subtype)
 
-        if self.logJoyFrames:
-            self.motorXY = [0,0]
-            self.rnet_can.set_motor_pos_callback(self.update_motor_pos)
+        self.power_state = True
 
-        return self.start_threads()
+        thrs = self.start_threads()
+        self.rnet_can.connect()
 
-    def update_motor_pos(self, rawData):
+        logger.info("Power on done")
+
+        return thrs
+
+
+    def update_battery_level(self, raw_frame):
+        """Callback to update internal battery level"""
+        self.RnetBatteryLevel.set_raw(raw_frame)
+        self.battery_level = self.RnetBatteryLevel.decode()
+        logger.debug("Got battery level info: %d" %self.battery_level)
+
+    def update_chair_speed(self, rnetFrame):
+        """Callback to update internal chair speed"""
+        data = RnetDissector.getFrameType(rnetFrame)[4]
+        speedStr = binascii.hexlify(data)[0:4]
+        self.chair_speed = int(speedStr[2:4],16) + (int(speedStr[0:2],16)/256)
+        logger.debug("Got chair speed info: %f" %self.chair_speed)
+    
+    def update_motor_joy_values(self, rawData):
+        """Callback function gived to rnet_ctrl in order to log 'JOY_POSITION' frames values from motor"""
         x = rawData[0]
         y = rawData[1]
         x = (x-256) if (x>127) else x
@@ -253,100 +274,122 @@ class RnetControl(threading.Thread):
         self.motorXY = [x,y]
         return
 
-    def update_battery_level(self, raw_frame):
-        self.RnetBatteryLevel.set_raw(raw_frame)
-        self.battery_level = self.RnetBatteryLevel.decode()
-        logger.debug("Got battery level info: %d" %self.battery_level)
+    def max_speed_configuration(self):
+        """
+        Function that handle max speed configuration of the weelchair.
+        
+        To change the max speed, we must first send the max speed value with a 'MAX_SPEED_CONF' frame (data between 1 and 5).
+        Then, after receiving 5 frames of type 'MAX_SPEED_REAC' from motor (using rnet_can), we send the last 'MAX_SPEED' frame with a 100% value in data.
 
-    def update_chair_speed(self, rnetFrame):
-        data = RnetDissector.getFrameType(rnetFrame)[4]
-        speedStr = binascii.hexlify(data)[0:4]
-        self.chair_speed = int(speedStr[2:4],16) + (int(speedStr[0:2],16)/256)
-        logger.debug("Got chair speed info: %f" %self.chair_speed)
+        This function is a state machine. At each call, it takes one step in this algorithm, using self.maxSpeedState variable.
+        """
+        self.maxSpeedState -= 1
+        #logger.info("[MAX_SPEED_CONF] State is %d" % self.maxSpeedState)
+
+        if self.maxSpeedState == 5: #At first call, send the 'MAX_SPEED_CONF' frame
+            self.rnet_can.set_max_speed_config_callback(self.max_speed_configuration) #To count all 'MAX_SPEED_REAC' frames
+            self.cansend(self.rnet_can.cansocket,self.RnetMotorConfSpeed.encode())
+            logger.debug("[MAX_SPEED_CONF] Frame 'MAX_SPEED_CONF' sent.")
+            return
+        
+        if self.maxSpeedState == 0: # Last call, send the 'MAX_SPEED' frame with a 100% (already fixed) value
+            self.cansend(self.rnet_can.cansocket, self.RnetMotorMaxSpeed.encode())
+            self.rnet_can.set_max_speed_config_callback(None) # To ignore other unwanted 'MAX_SPEED_REAC' frames
+            logger.info("[MAX_SPEED_CONF] Max speed configuration done.")
+            return        
+        # Else, just decrement the maxSpeedState in order to wait the 5 'MAX_SPEED_REAC' frames from motor
+        return
 
     def start_threads(self):
+        """Start all threads to communicate with the motor"""
         logger.info("Starting Rnet threads...")
+        thread_serial = threading.Thread(target=self.serial_thread, daemon=True)
         thread_joy = threading.Thread(target=self.rnet_joystick_thread, daemon=True)
-        thread_joy.start()
         thread_act = threading.Thread(target=self.actuator_ctrl_thread, daemon=True)
-        thread_act.start()
         thread_batt = threading.Thread(target=self.rnet_status_thread, daemon=True)
+        thread_htbt = threading.Thread(target=self.heartbeat_thead, daemon=True)
+        thread_serial.start()
+        thread_htbt.start()
+        thread_joy.start()
+        thread_act.start()
         thread_batt.start()
-        if self.logJoyFrames:
-            thread_log = threading.Thread(target=self.log_thread, daemon=True)
-            thread_log.start()
-        return [thread_joy, thread_act, thread_batt]
+        return [thread_joy, thread_act, thread_batt, thread_serial, thread_htbt]
 
 
-    def log_thread(self):
-        fdLog = open("/tmp/pos.log", 'a')
-        logger.info("Rnet joy pos thread started")
-        flusher = 0
-        while self.power_state:
-            flusher += 1
-            jx, jy = self.RnetJoyPosition.get_data()
-            mx, my = self.motorXY
-            fdLog.write("%d %d %d %d\n" % (jx,jy,mx,my))
-            if flusher%100 == 0: #In case of crash, all files are flushed do we have datas to debug
-                fdLog.flush()
-        logger.info("Rnet joy pos thread ended")
-        fdLog.close()
-
-
-    """
-    Endless loop that provides wheelchair statuses such as battery level, chair speed...
-    """
     def rnet_status_thread(self):
-        logger.info("Rnet status thread started")
+        """ Loop that publishes wheelchair statuses such as battery level, chair speed..."""
+        logger.info("[RNET_STATUS] thread started")
         while self.power_state:
             status = status_battery_level(self.battery_level)
             self.mqtt_client.publish(status.TOPIC_NAME, status.serialize())
             speedStatus = status_chair_speed(self.chair_speed)
             self.mqtt_client.publish(speedStatus.TOPIC_NAME, speedStatus.serialize())
-            logger.debug("Published chair status info: %.1fkm/h %d(battery)" % (self.chair_speed, self.battery_level))
+            logger.debug("[RNET_STATUS] Published infos: %.1fkm/h %d(battery)" % (self.chair_speed, self.battery_level))
             time.sleep(self.STATUS_FREQUENCY)
+        self.nb_thread_ended += 1
+        logger.info("[RNET_STATUS] thread ended")
 
 
     def actuator_ctrl_thread(self):
-        logger.info("Rnet actuator_ctrl thread started")
+        """Threads that moves actuators if necessary"""
+        logger.info("[ACTUATOR] thread started")
         while self.power_state:
             # Decrement actuator watchdog
             if self.actuator_watchdog != 0 :
                 actuatorframe = self.RnetActuatorCtrl.encode()
-                self.cansend(self.rnet_can.motor_cansocket, actuatorframe)           
+                self.cansend(self.rnet_can.cansocket, actuatorframe)           
                 self.actuator_watchdog -= 1
             
             time.sleep(self.ACTUATOR_FREQUENCY)
+        self.nb_thread_ended += 1
+        logger.info("[ACTUATOR] thread ended")
 
 
     def serial_thread(self):
-        logger.info("Serial periodic Thread")
+        """Threads that send serial bytes periodicaly"""
+        logger.info("[SERIAL] thread started")
+        serial = RnetDissector.RnetSerial(self.rnet_can.serial_bytes)
         while self.power_state:
-            serial = RnetDissector.RnetSerial(binascii.unhexlify("9700148100000000"))
-            self.cansend(self.rnet_can.cansocket0, serial.encode())
-            self.cansend(self.rnet_can.cansocket1, serial.encode())
+            self.cansend(self.rnet_can.cansocket, serial.encode())
             time.sleep(self.SERIAL_FREQUENCY)
+        self.nb_thread_ended += 1
+        logger.info("[SERIAL] thread ended")
+
+    def heartbeat_thead(self):
+        """Threads that send (false) JSM heartBeat periodicaly"""
+        logger.info("[HEARTBEAT] thread started")
+        htbt = RnetDissector.RnetHeartbeat()
+        while self.power_state:
+            self.cansend(self.rnet_can.cansocket, htbt.encode())
+            time.sleep(self.JSM_HEARTBEAT_PERIOD)
+        self.nb_thread_ended += 1
+        logger.info("[HEARTBEAT] thread ended")
 
 
-    """
-    Endless loop that sends periodically Rnet joystick position frames
-    """
     def rnet_joystick_thread(self):
-        logger.info("Rnet joystick thread started")
+        """Loop that sends periodically Rnet joystick position frames"""
+        logger.info("[JOYSTICK] thread started")
         while self.power_state:
             joyframe = self.RnetJoyPosition.encode()
-            self.cansend(self.rnet_can.motor_cansocket, joyframe)
+            self.cansend(self.rnet_can.cansocket, joyframe)
             
             # Decrement joystick watchdog
-            # force position to [0,0] if no data received from 
-            # joystick 
+            # force position to [0,0] if no data received from joystick 
             self.joy_watchdog -= 1
             if self.joy_watchdog == 0 :
                 self.RnetJoyPosition.set_data(0, 0)
             
+            if self.drive_mode: #Only log if you drive
+                jx, jy = self.RnetJoyPosition.get_data()
+                joyLog = joy_log(jx, jy, self.motorXY[0], self.motorXY[1])
+                self.mqtt_client.publish(joyLog.TOPIC_NAME, joyLog.serialize())
+
             time.sleep(self.POSITION_FREQUENCY)
+        self.nb_thread_ended += 1
+        logger.info("[JOYSTICK] thread ended")
 
     def auto_light_thread(self):
+        """Loop that sends Rnet light frames if necessary, base on 'light_state' attribute and joystick position"""
         logger.info("[AUTO LIGHT] Thread start")
         lim = 10
         while self.auto_light:
@@ -377,7 +420,6 @@ Argument parser definition
 def parseInputs():
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--debug", help="Enable debug messages", action="store_true")
-    parser.add_argument("-l", "--logJoyFrames", help="Save in '/tmp/joy.log' all rnet frames send and recieve with name 'JOY_POSITION'", action="store_true")
 
     return parser.parse_args()
 
@@ -392,8 +434,11 @@ if __name__ == "__main__":
         logger.setLevel(logging.INFO)
 
     # Connect to piCan and initialize Rnet controller,
-    rnet = RnetControl(args.logJoyFrames) # Send JSM init sequence 'power on'
-    threads = rnet.power_on()
-    for thread in threads:
+    rnet = RnetControlJSMsub() # Send JSM init sequence 'power on'
+    while rnet.threads == None:
+        time.sleep(0.5)
+
+    for thread in rnet.threads:
         thread.join()
+    
     logger.info("All threads joined, rebooting <rnet_ctrl.py> using supervisord ..")
