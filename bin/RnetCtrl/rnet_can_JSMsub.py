@@ -7,7 +7,6 @@ from rnet_seqence_recorder import RnetSeqReplayer, RPI_INIT_FILE, RPI_OFF_FILE
 logger = can2RNET.logger
 
 
-# To change if "no buffer space available" error occurs during power on part
 SOCKET_NO = 1
 
 class RnetCanJSMsub(threading.Thread):
