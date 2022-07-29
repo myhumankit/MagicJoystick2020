@@ -45,7 +45,7 @@ class RnetControlJSMsub(threading.Thread):
         
         threading.Thread.__init__(self)
         
-        logger.info("========== START ========== ")
+        logger.info("========== START RNET_CTRL 'SUBSTITUTION' ========== ")
 
         # Open can socket to prepare JSM power_on
         logger.info("Opening socketcan...")

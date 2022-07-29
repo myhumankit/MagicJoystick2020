@@ -18,9 +18,12 @@ class RnetCan(threading.Thread):
     joy_subtype = None
     motor_cansocket = None
     jsm_cansocket = None
+    
     battery_level_callback = None
     chair_speed_callback = None
     motor_pos_callback = None
+    joy_position_callback = None
+    power_off_callback = None
 
     def __init__(self):
         self.cansocket0 = None
@@ -55,13 +58,6 @@ class RnetCan(threading.Thread):
 
 
     """
-    Set weather the JSM or the minijoy has the control on the wheelchair
-    """
-    def set_jsm_mode(self, mode):
-        self.jsm_mode = mode
-
-
-    """
     Battery level display callback
     """
     def set_battery_level_callback(self, callback):
@@ -78,6 +74,18 @@ class RnetCan(threading.Thread):
     """
     def set_motor_pos_callback(self, callback):
         self.motor_pos_callback = callback
+    
+    """
+    Used to send modified joy frames
+    """
+    def set_joy_position_callback(self, callback):
+        self.joy_position_callback = callback
+    
+    """
+    Set callback for power off frame
+    """
+    def set_power_off_callback(self, callback):
+        self.power_off_callback = callback
 
 
     """
@@ -90,14 +98,16 @@ class RnetCan(threading.Thread):
         while True:
             rnetFrame = can2RNET.canrecv(listensock)
 
-            __, subType, device_id, frameName, data, __, __ = RnetDissector.getFrameType(rnetFrame)
-           
-            # Trash all joy position frames if not in JSM mode enabled
+            __, _, device_id, frameName, data, __, __ = RnetDissector.getFrameType(rnetFrame)
+
+            
             if (frameName == 'JOY_POSITION'):
-                if (self.motor_pos_callback is not None) and (listensock==self.motor_cansocket):
+                if (listensock==self.motor_cansocket) and (self.motor_pos_callback is not None): #From motor
                     self.motor_pos_callback(data)
-            else:
-                can2RNET.cansendraw(sendsock, rnetFrame)
+                elif (listensock==self.jsm_cansocket) and (self.joy_position_callback is not None):
+                    rnetFrame = self.joy_position_callback(rnetFrame) # joy frame is modified so we send it like the other ones
+            
+            can2RNET.cansendraw(sendsock, rnetFrame)
 
             if self.init_done == False:
                 if frameName == 'PMTX_HEATBEAT':
@@ -112,6 +122,8 @@ class RnetCan(threading.Thread):
                 
                 if (self.jsm_subtype is not None) and (self.jsm_cansocket is not None):
                     self.init_done = True
+                
+                continue #Ignore the lines below
 
 
             if (frameName == 'BATTERY_LEVEL'):
@@ -120,5 +132,9 @@ class RnetCan(threading.Thread):
             
             if (frameName == 'CHAIR_SPEED'):
                 if self.chair_speed_callback is not None:
-                    self.chair_speed_callback(rnetFrame)
+                    self.chair_speed_callback(rnetFrame)      
+
+            if (frameName == 'POWER_OFF'):
+                if self.power_off_callback is not None:
+                    self.power_off_callback(False)           
 

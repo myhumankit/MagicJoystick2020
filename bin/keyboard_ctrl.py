@@ -137,9 +137,6 @@ def light_handler(client, key):
         client.publish(lightMsg.TOPIC_NAME, lightMsg.serialize())
         return # to Ignore the auto light state
 
-    if state['AUTO_LIGHT']: #Do not send Warn or flash changes if auto lights is on
-        return
-
     if lid == WARNING_LIGHT :
         state['LIGHT'][FLASHING_LEFT] = False 
         state['LIGHT'][FLASHING_RIGHT] = False 
