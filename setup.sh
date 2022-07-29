@@ -194,6 +194,19 @@ remote 'sudo systemctl enable hostapd'
 remote 'sudo rfkill unblock wlan'
 remote 'sudo service hostapd start'
 
+#config IR
+remote "sudo cp /boot/config.txt /boot/config.txt.bak"
+read -r -d '' LC_IR_CONFIG << EOF
+# MagicJoy IR config starts =========
+# Uncomment this to enable the infrared module
+#for receiver, enable to receive IR signals
+dtoverlay=gpio-ir,gpio_pin=18,rc-map-name=ir-keytable
+#for transmitter, enable to send IR signals
+dtoverlay=gpio-ir-tx,gpio_pin=17
+# MagicJoy IR config stops ==========
+EOF
+export LC_IR_CONFIG
+
 # Add python packages
 echo " -> Adding extra python packages"
 remote_cp requirements.txt .
