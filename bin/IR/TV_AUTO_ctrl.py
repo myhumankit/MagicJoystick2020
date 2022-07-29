@@ -6,6 +6,7 @@ from magick_joystick.Topics import *
 import logging
 import sys
 import os
+import RPi.GPIO as GPIO
 
 # Instanciate logger:
 logging.basicConfig(
@@ -44,6 +45,11 @@ def on_message(mqtt_client, userdata, msg):
         print("TV_A : un bouton")
         send_command_A(command_id)
 
+#Set the PIN to 3v3
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(26, GPIO.OUT)
+GPIO.output(26, GPIO.HIGH)
 
 
 mqtt_client = mqtt.Client() 
