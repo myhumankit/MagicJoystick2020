@@ -4,34 +4,31 @@
     <link rel="stylesheet" href="css/wheelchair.css">
 {% endblock %}
 
-
 {% block content %}
+    <div class="header">
+        <span id="time">
+        </span>
+        <span id="battery">
+            100%
+        </span>
+    </div>
 
-        <div class="header">
-            <span id="time">
-            </span>
-            <span id="battery">
-                100%
-            </span>
+    <div class="body light">
+        <div>
+            <div id="light_1" class="icon"><i class="fas fa-arrow-alt-circle-left"></i></div>
+            <div id="light_2" class="icon"><i class="fas fa-arrow-alt-circle-right"></i></div>
         </div>
-
-        <div class="body light">
-            <div>
-                <div id="light_1" class="icon"><i class="fas fa-arrow-alt-circle-left"></i></div>
-                <div id="light_2" class="icon"><i class="fas fa-arrow-alt-circle-right"></i></div>
-            </div>
-            <div>
-                <div id="light_3" class="icon"><i class="fas fa-exclamation-triangle"></i></div>
-                <div id="light_4" class="icon"><i class="fas fa-sun"></i></div>
-            </div>
-            <div>
-                <div id="light_5" class="icon"><i class="fab fa-autoprefixer"></i></div>
-            </div>
-            <div>
-                <div></div>
-                <div id="button_back" class="svg"></div>
-            </div>
+        <div>
+            <div id="light_3" class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <div id="light_4" class="icon"><i class="fas fa-sun"></i></div>
         </div>
-    </body>
-</html>
+        <div>
+            <div id="light_5" class="icon"><i class="fab fa-autoprefixer"></i></div>
+        </div>
+        <div>
+            <div></div>
+            <div id="button_back" class="svg"></div>
+        </div>
+    </div>
+{% endblock %}
 
