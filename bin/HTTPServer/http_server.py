@@ -46,42 +46,27 @@ def check_files_TV_A():
     return state
 
 class StaticPages(Resource):
-    def get(self, filename = "index.html"):
-        files = ["index.html", "wheelchair.html", "style.css", "wheelchair.js", 
-                 "script.js", "jquery-3.6.0.min.js", "all.min.css", "wheelchair.css", "TV.css",
-                 "IR.html", "TV.html", "TV.js", "TV_A.html", "TV_A.js", "IR_check_last_command.js", 
-                 "actuator.html", "light.html", "timer.html", "IR_check_command.html"]
+    def get(self, folder = "views", filename = "index.html"):
+        """
+        Return the static page requested from folder and filename
+        If folder is null, return the file from the views folder
+        """
+        print(folder, filename)
 
-        svg_files = ["button_default.svg", "-1.svg", 
-                 "button_wheelchair.svg", "button_horn.svg", "button_light.svg", "actuator.svg",
-                 "button_speed.svg", "button_drive_mode.svg", "button_drive_mode_on.svg", "button_back.svg",
-                 "actuator_0_0.svg", "actuator_0_1.svg", "actuator_5_1.svg", 
-                 "actuator_1_0.svg", "actuator_1_1.svg", "actuator_2_0.svg",
-                 "actuator_2_1.svg", "actuator_3_0.svg", "actuator_3_1.svg",
-                 "actuator_4_0.svg", "actuator_4_1.svg", "actuator_5_0.svg",
-                 "IR.svg", "TV.svg", "TV_A.svg", "A.svg", 
-                 "button_power.svg", "button_0.svg", "button_1.svg", "button_2.svg", "button_3.svg", 
-                 "button_4.svg", "button_5.svg", "button_6.svg", 
-                 "button_7.svg", "button_8.svg", "button_9.svg", 
-                 "mute.svg", "volume_up.svg", "volume_down.svg",
-                 "left.svg", "down.svg", "right.svg", "up.svg", "ok.svg", 
-                 "TV_exit.svg", "TV_home.svg", "TV_info.svg", "TV_menu.svg", "TV_return.svg", "TV_source.svg", "TV_tools.svg"]
-        
-        timer = ["circle.css", "circle.js", "jquery-1.12.4.min.js", "timer.css"]
+        #if folder == "":
+        #    if filename in os.listdir("views"):
+        #        return send_from_directory("views", filename)
 
-        fonts = ["fa-solid-900.woff2", "fa-brands-400.woff2"]
+        #    print("%s: file not found" % filename)
+        #    return "", 404
 
-        print(filename)
+        folders = ["css", "js", "img", "fonts", "fonts", "views", "svg_icon"]
 
-        if (filename in files) or (filename in fonts):
-            return send_from_directory("html", filename)
-        elif (filename in svg_files):
-            return send_from_directory("html/svg_icon", filename)
-        elif (filename in timer):
-            return send_from_directory("html/timer", filename)
-        else:
-            print("%s: file not found" % filename)
-            return "", 404
+        if folder in folders and filename in os.listdir(folder):
+            return send_from_directory(folder, filename)
+
+        print("%s: file not found" % filename)
+        return "", 404
 
 class Actions(Resource):
     def __init__(self):
@@ -303,7 +288,10 @@ def on_message(client, userdata, msg):
 app = Flask(__name__)
 api = Api(app)
 
-api.add_resource(StaticPages, "/<string:filename>", "/", "/webfonts/<string:filename>", "/svg_icon/<string:filename>", "/timer/<string:filename>")
+api.add_resource(StaticPages,
+    "/",
+    "/v/<string:filename>",
+    "/v/<string:folder>/<string:filename>",)
 api.add_resource(Actions, "/action/<string:action>")
 api.add_resource(CurrentValues, "/current/<string:topic>")
 api.add_resource(TV, "/TV/<string:command>")
