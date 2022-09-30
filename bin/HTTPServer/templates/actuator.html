@@ -1,58 +1,48 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="format-detection" content="telephone=no">
-        <meta name="msapplication-tap-highlight" content="no">
-        <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover">
-        <meta name="color-scheme" content="light dark">
-        <link rel="stylesheet" href="css/style.css">
-        <link rel="stylesheet" href="css/wheelchair.css">
-        <link href="css/all.min.css" rel="stylesheet">
-        <script src="js/jquery-3.6.0.min.js"></script>
-        <script src="js/script.js"></script>
+{% extends 'base.html' %}
+
+{% block scripts %}
         <script src="js/wheelchair.js"></script>
-        <title>Magic Joystick</title>
-    </head>
-    <body onload="load();load_wheelchair()">
-        <div class="header">
-            <span id="time">
-            </span>
-            <span id="battery">
-                -1%
-            </span>
-        </div>
+{% endblock %}
 
-        <div class="body actuator">
-            <div>
-                <div id="actuator_0_0" class="svg"></div>
-                <div id="actuator_0_1" class="svg"></div>
-            </div>
-            <div>
-                <div id="actuator_1_0" class="svg"></div>
-                <div id="actuator_1_1" class="svg"></div>
-            </div>
-            <div>
-                <div id="actuator_2_0" class="svg"></div>
-                <div id="actuator_2_1" class="svg"></div>
-            </div>
-            <div>
-                <div id="actuator_3_0" class="svg"></div>
-                <div id="actuator_3_1" class="svg"></div>
-            </div>
-            <div>
-                <div id="actuator_4_0" class="svg"></div>
-                <div id="actuator_4_1" class="svg"></div>
-            </div>
-            <div>
-                <div id="actuator_5_0" class="svg"></div>
-                <div id="actuator_5_1" class="svg"></div>
-            </div>
-            <div>
-                <div></div>
-                <div id="button_back" class="svg"></div>
-            </div>
-        </div>
-    </body>
-</html>
+{% block onload %} load_wheelchair(); {% endblock %}
 
+{% block content %}
+    <div class="header">
+        <span id="time">
+        </span>
+        <span id="battery">
+            -1%
+        </span>
+    </div>
+
+    <div class="body actuator">
+        <div>
+            <div id="actuator_0_0" class="svg"></div>
+            <div id="actuator_0_1" class="svg"></div>
+        </div>
+        <div>
+            <div id="actuator_1_0" class="svg"></div>
+            <div id="actuator_1_1" class="svg"></div>
+        </div>
+        <div>
+            <div id="actuator_2_0" class="svg"></div>
+            <div id="actuator_2_1" class="svg"></div>
+        </div>
+        <div>
+            <div id="actuator_3_0" class="svg"></div>
+            <div id="actuator_3_1" class="svg"></div>
+        </div>
+        <div>
+            <div id="actuator_4_0" class="svg"></div>
+            <div id="actuator_4_1" class="svg"></div>
+        </div>
+        <div>
+            <div id="actuator_5_0" class="svg"></div>
+            <div id="actuator_5_1" class="svg"></div>
+        </div>
+        <div>
+            <div></div>
+            <div id="button_back" class="svg"></div>
+        </div>
+    </div>
+{% endblock %}
