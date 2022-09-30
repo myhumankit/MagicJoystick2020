@@ -1,5 +1,5 @@
 from sys import stdin
-from flask import Flask, send_from_directory, request
+from flask import Flask, send_from_directory, request, render_template, make_response
 from flask_restful import Resource, Api
 import paho.mqtt.client as mqtt
 from magick_joystick.Topics import *
@@ -46,24 +46,24 @@ def check_files_TV_A():
     return state
 
 class StaticPages(Resource):
-    def get(self, folder = "views", filename = "index.html"):
+    def get(self, folder = "", filename = "index.html"):
         """
         Return the static page requested from folder and filename
         If folder is null, return the file from the views folder
         """
         print(folder, filename)
 
-        #if folder == "":
-        #    if filename in os.listdir("views"):
-        #        return send_from_directory("views", filename)
+        if folder == "":
+            if filename in os.listdir("templates"):
+                return make_response(render_template(filename))
+            
+            print("%s: file not found" % filename)
+            return "", 404
 
-        #    print("%s: file not found" % filename)
-        #    return "", 404
-
-        folders = ["css", "js", "img", "fonts", "fonts", "views", "svg_icon"]
+        folders = ["css", "js", "img", "fonts", "fonts", "svg_icon"]
 
         if folder in folders and filename in os.listdir(folder):
-            return send_from_directory(folder, filename)
+            return send_from_directory(folder,filename)
 
         print("%s: file not found" % filename)
         return "", 404
@@ -289,7 +289,7 @@ app = Flask(__name__)
 api = Api(app)
 
 api.add_resource(StaticPages,
-    "/",
+    "/v/",
     "/v/<string:filename>",
     "/v/<string:folder>/<string:filename>",)
 api.add_resource(Actions, "/action/<string:action>")

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block scripts %}
+        <script src="js/wheelchair.js"></script>
+{% endblock %}
+
+{% block onload %} load_wheelchair(); {% endblock %}
+
+{% block content %}
+    <!-- <img class="logo" src="logo.png"/> -->
+
+    <div class="header">
+        <span id="time">
+        </span>
+        <span id="battery">
+            -1%
+        </span>
+    </div>
+
+    <div class="body main">
+        <div>
+            <div id="button_wheelchair" class="svg"></div>
+        </div>
+        <div>
+            <div id="IR" class="svg"></div>
+        </div>
+        <div>
+            <div id="bluetooth" class="icon"><i class="fab fa-bluetooth-b"></i></div>
+        </div>
+        <div>
+            <div id="heater" class="icon"><i class="fas fa-mitten"></i></div>
+        </div>
+        <div>
+            <div id="power" class="icon"><i class="fas fa-power-off"></i></div>
+        </div>
+    </div>
+{% endblock %}
