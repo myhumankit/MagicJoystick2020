@@ -176,40 +176,25 @@ function load_wheelchair() {
     $(window).on("load", set_icons_status)
 
     // Wheelchair buttons
-    $("#actuator_0_0").mouseup(function() {clearInterval(interval);})
-    $("#actuator_0_0").mousedown(function() {actuator_ctrl(0, 0);})
-    $("#actuator_0_1").mouseup(function() {clearInterval(interval);})
-    $("#actuator_0_1").mousedown(function() {actuator_ctrl(0, 1);})
-    $("#actuator_1_0").mouseup(function() {clearInterval(interval);})
-    $("#actuator_1_0").mousedown(function() {actuator_ctrl(1, 0);})
-    $("#actuator_1_1").mouseup(function() {clearInterval(interval);})
-    $("#actuator_1_1").mousedown(function() {actuator_ctrl(1, 1);})
-    $("#actuator_2_0").mouseup(function() {clearInterval(interval);})
-    $("#actuator_2_0").mousedown(function() {actuator_ctrl(2, 0);})
-    $("#actuator_2_1").mouseup(function() {clearInterval(interval);})
-    $("#actuator_2_1").mousedown(function() {actuator_ctrl(2, 1);})
-    $("#actuator_3_0").mouseup(function() {clearInterval(interval);})
-    $("#actuator_3_0").mousedown(function() {actuator_ctrl(3, 0);})
-    $("#actuator_3_1").mouseup(function() {clearInterval(interval);})
-    $("#actuator_3_1").mousedown(function() {actuator_ctrl(3, 1);})
-    $("#actuator_4_0").mouseup(function() {clearInterval(interval);})
-    $("#actuator_4_0").mousedown(function() {actuator_ctrl(4, 0);})
-    $("#actuator_4_1").mouseup(function() {clearInterval(interval);})
-    $("#actuator_4_1").mousedown(function() {actuator_ctrl(4, 1);})
-    $("#actuator_5_0").mouseup(function() {clearInterval(interval);})
-    $("#actuator_5_0").mousedown(function() {actuator_ctrl(5, 0);})
-    $("#actuator_5_1").mouseup(function() {clearInterval(interval);})
-    $("#actuator_5_1").mousedown(function() {actuator_ctrl(5, 1);})
+    $('.actuator').mouseup(() => { clearInterval(interval) });
+    $('.actuator').mousedown((e) => {
+        let id = e.target.id,
+            exploded = id.split("_");
+        actuator_ctrl(exploded[1], exploded[2]);
+    });
+
     $("#light_1").on("click", function() {change_light(1);})
     $("#light_2").on("click", function() {change_light(2);})
     $("#light_3").on("click", function() {change_light(3);})
     $("#light_4").on("click", function() {change_light(4);})
     $("#light_5").on("click", function() {change_light(5);})
+
     $("#lvl1").on("click", function() {change_max_speed(1)})
     $("#lvl2").on("click", function() {change_max_speed(2)})
     $("#lvl3").on("click", function() {change_max_speed(3)})
     $("#lvl4").on("click", function() {change_max_speed(4)})
     $("#lvl5").on("click", function() {change_max_speed(5)})
+
     $("#power").on("click", change_power)
     $("#button_speed").on("click", add_speed)
     $("#button_drive_mode").on("click", function() {$.post("/action/drive")})

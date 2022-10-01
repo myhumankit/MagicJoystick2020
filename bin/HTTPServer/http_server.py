@@ -100,14 +100,14 @@ class Actions(MagicResource):
         super().__init__()
         self.name = "Action"
         self.commands = {
-            "light": lambda data: action_light(data["light_id"]),
-            "auto_light": lambda data: action_auto_light(),
-            "max_speed": lambda data: action_max_speed(data["max_speed"]),
-            "drive": lambda data: action_drive(True),
-            "horn": lambda data: action_horn(),
+            "light":         lambda data: action_light(data["light_id"]),
+            "auto_light":    lambda data: action_auto_light(),
+            "max_speed":     lambda data: action_max_speed(data["max_speed"]),
+            "drive":         lambda data: action_drive(True),
+            "horn":          lambda data: action_horn(),
             "actuator_ctrl": lambda data: action_actuator_ctrl(data["actuator_num"], data["direction"]),
-            "poweroff": lambda data: action_poweroff(),
-            "poweron": lambda data: action_poweron()
+            "poweroff":      lambda data: action_poweroff(),
+            "poweron":       lambda data: action_poweron()
         }
 
     def __on_connect(self, client, userdata, flags, rc):
