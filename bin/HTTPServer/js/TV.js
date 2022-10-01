@@ -1,59 +1,54 @@
 function load_TV()
 {
-    /* Change volume */
-    function change_TV_volume(type)
-    {
+    // Change volume
+    function change_TV_volume(type) {
         $.ajax({
             type: "POST",
             url: "/TV/volume",
             data: JSON.stringify({"type": type}),
             contentType: "application/json; charset=utf-8",
             dataType: "json",
-            success: function(data){},
-            error: function(errMsg){}
+            success: function(data) {},
+            error: function(errMsg) {}
         });
     }
 
-    /* Change other command */
-    function change_TV_param(type)
-    {
+    // Change other command
+    function change_TV_param(type) {
         $.ajax({
             type: "POST",
             url: "/TV/param",
             data: JSON.stringify({"type": type}),
             contentType: "application/json; charset=utf-8",
             dataType: "json",
-            success: function(data){},
-            error: function(errMsg){}
+            success: function(data) {},
+            error: function(errMsg) {}
         });
     }
 
-    /* Change direction */
-    function change_TV_direction(type)
-    {
+    // Change direction
+    function change_TV_direction(type) {
         $.ajax({
             type: "POST",
             url: "/TV/direction",
             data: JSON.stringify({"type": type}),
             contentType: "application/json; charset=utf-8",
             dataType: "json",
-            success: function(data){},
-            error: function(errMsg){}
+            success: function(data) {},
+            error: function(errMsg) {}
         });
-
     }
 
-    /* Change channel number */
-    function change_TV_number(nb)
-    {
+    // Change channel number
+    function change_TV_number(nb) {
         $.ajax({
             type: "POST",
             url: "/TV/number",
             data: JSON.stringify({"nb": nb}),
             contentType: "application/json; charset=utf-8",
             dataType: "json",
-            success: function(data){},
-            error: function(errMsg){}
+            success: function(data) {},
+            error: function(errMsg) {}
         });
     }
     
