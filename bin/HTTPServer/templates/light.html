@@ -4,6 +4,12 @@
     <link rel="stylesheet" href="css/wheelchair.css">
 {% endblock %}
 
+{% block script %}
+    <script src="js/wheelchair.js"></script>
+{% endblock %}
+
+{% block onload %} load_wheelchair(); {% endblock %}
+
 {% block content %}
     <div class="header">
         <span id="time">
