@@ -8,21 +8,18 @@ function load() {
 
     function display_time_battery() {
         let now = new Date();
-        $.ajax({
-            type: "GET",
-            url: "/current/time-battery",
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
-            success: function(result) {
+
+        AjaxHelper.get("/current/time-battery",
+            (result) => {
                 str = "" + pad(now.getHours()) +":" + pad(now.getMinutes());
                 $("#time").html(str);
                 str = "" + result.BATTERY_LEVEL.toFixed() + "%";
                 $("#battery").html(str);
             },
-            error: function(errMsg) {
+            (errMsg) => {
                 console.log(errMsg);
             }
-        });
+        );
     }
 
     

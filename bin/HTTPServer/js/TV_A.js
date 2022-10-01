@@ -2,12 +2,8 @@ function load_TV_A()
 {  
     // Put the unknown button on red background when TV_A.html page is loaded
     function get_and_update_buttons() {
-        $.ajax({
-            type: "GET",
-            url: "/TV_A/buttons",
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
-            success: function(result){
+        AjaxHelper.get("/TV_A/buttons",
+            (result) => {
                 for (let i = 0; i < result["BUTTONS"].length; i++){
                     if (!result.BUTTONS[i]) {
                         if (!($("#TV_A_"+i).hasClass("no"))) {
@@ -21,24 +17,15 @@ function load_TV_A()
                         if (!($("#TV_A_"+i).hasClass("no"))) {
                             $("#TV_A_"+i).addClass("no");
                         }
-
-                        $.ajax({
-                            type: "POST",
-                            url: "/TV_A/delete",
-                            data: JSON.stringify({"id": i}),
-                            contentType: "application/json; charset=utf-8",
-                            dataType: "json",
-                            success: function(data) {},
-                            error: function(errMsg) {}
-                        });
+                        AjaxHelper.post("/TV_A/delete", {"id": i});
                     }
                 }
             },
-            error: function(errMsg) {
+            (errMsg) => {
                 console.log("function get and update buttons error"),
                 console.log(errMsg)
             }
-        });
+        );
     }
 
     // send the command if the raw command exists, or write the command is a text file
@@ -50,36 +37,25 @@ function load_TV_A()
             $("#TV_A_" + id).removeClass("no");
             $("#TV_A_" + id).addClass("to_check");
 
-            $.ajax({
-                type: "POST",
-                url: "/TV_A/get",
-                data: JSON.stringify({"id": id}),
-                contentType: "application/json; charset=utf-8",
-                dataType: "json",
-                success: function(data){
+            AjaxHelper.post(
+                "/TV_A/get",
+                {"id": id},
+                (result) => {
                     popup.close();
                     if (window.confirm("Commande enregistée, vérifier la nouvelle commande ?")) {
                         popup = window.open("IR_check_command.html");
                     }
                 },
-                error: function(errMsg){
+                (errMsg) => {
                     popup.close();
                     alert("La commande n'a pas pu être enregistrée");
                     window.location.reload();
                 }
-            });
+            );
         } else if ($("#TV_A_"+id).hasClass("to_check")) {
             window.location = "IR_check_command.html";
         } else {
-            $.ajax({
-                type: "POST",
-                url: "/TV_A/control",
-                data: JSON.stringify({"id": id}),
-                contentType: "application/json; charset=utf-8",
-                dataType: "json",
-                success: function(data) {},
-                error: function(errMsg) {}
-            });
+            AjaxHelper.post("/TV_A/control", {"id": id});
         };
     }
 

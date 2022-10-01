@@ -1,14 +1,10 @@
 function load_wheelchair() {
-    var actuatorWatchdogTime = 500 // in ms
+    let actuatorWatchdogTime = 500 // in ms
 
     /* Get the current values of drive mode, speed and if lights are on */
     function synchro_lights_speed_driveMode() {
-        $.ajax({
-            type: "GET",
-            url: "/current/lights-speed-driveMode",
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
-            success: function(result) {
+        AjaxHelper.get("/current/lights-speed-driveMode",
+            (result) => {
                 if(result.DRIVE_MODE === true) {
                     if (!($("#button_drive_mode").hasClass("on"))) {
                         $("#button_drive_mode").addClass("on");
@@ -22,9 +18,9 @@ function load_wheelchair() {
                 str = "" + result.CHAIR_SPEED.toFixed(1) + " km/h";
                 $("#current_speed").html(str);
 
-                for ( var i=0 ; i<result["LIGHTS"].length ; i++ ) {
-                    light = "light_" + (i+1)
-                    if(result["LIGHTS"][i] === true) {
+                for (let i = 0; i < result["LIGHTS"].length; i++) {
+                    light = `light_${i + 1}`;
+                    if (result["LIGHTS"][i]) {
                         sessionStorage.setItem(light, "true")
                         if (! $(`#${light}`).hasClass("on")) {
                             $(`#${light}`).addClass("on");
@@ -35,29 +31,20 @@ function load_wheelchair() {
                             $(`#${light}`).removeClass("on");
                         }
                     }
-                            
                 }
             },
-            error: function(errMsg) {
+            (errMsg) => {
                 console.log(errMsg)
             }
-        })
+        );
     }
 
-    /* Send the light on/off command */
+    // Send the light on/off command
     function send_light(light_id) {
-        $.ajax({
-            type: "POST",
-            url: "/action/light", 
-            data: JSON.stringify({"light_id": light_id}),
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
-            success: function(data) {},
-            error: function(errMsg) {}
-        });
+        AjaxHelper.post("/action/light", {"light_id": light_id});
     }
 
-    /* Change the light on/off command on web */
+    // Change the light on/off command on web
     function change_light(light_id) {
         let light = 'light_' + light_id;
 
@@ -78,12 +65,7 @@ function load_wheelchair() {
 
     /* Send power command to wheelchair */
     function send_power(url) {
-        $.ajax({
-            type: "POST",
-            url: url, 
-            success: function(data) {},
-            error: function(errMsg) {}
-        });
+        AjaxHelper.post(url);
     }
     
     /* Change power on/off command on web */
@@ -118,46 +100,31 @@ function load_wheelchair() {
             }
         }
 
-        $.ajax({
-            type: "POST",
-            url: "/action/max_speed", 
-            data: JSON.stringify({max_speed: level}),
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
-            success: function(data) {},
-            error: function(errMsg) {}
-        });
+        AjaxHelper.post("/action/max_speed", {max_speed: level});
     }
 
-    /* Change the max speed level directly on web */
+    // Change the max speed level directly on web
     function change_max_speed(level) {
-        $.ajax({
-            type: "POST",
-            url: "/action/max_speed", 
-            data: JSON.stringify({max_speed: level}),
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
-            success: function(data) {
-                for(var i = 1; i <= 5; i++) {
+        AjaxHelper.post(
+            "/action/max_speed",
+            {max_speed: level},
+            (result) => {
+                for(let i = 1; i <= 5; i++) {
                     if(i <= level) {
                         $("#lvl" + i).addClass("on");
                     } else {
                         $("#lvl" + i).removeClass("on");
                     }
                 }
-            },
-            error: function(errMsg) {}
-        });
+            }
+        );
     }
 
     // Get the max speed level on load
     function get_max_speed() {
-        $.ajax({
-            type: "GET",
-            url: "/action/max_speed", 
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
-            success: function(result) {
+        AjaxHelper.get(
+            "/action/max_speed",
+            (result) => {
                 for(var i = 1; i <= 5; i++) {
                     if(i <= result.MAX_SPEED) {
                         $("#lvl" + i).addClass("on");
@@ -166,23 +133,18 @@ function load_wheelchair() {
                     }
                 }
             },
-            error: function(errMsg) {
-                console.log(errMsg);
+            (errMsg) => {
+                console.log(errMsg)
             }
-        });
+        );
     }
 
     // Send actuator command 
     function send_actuator_ctrl(actuator_num, direction) {
-        $.ajax({
-            type: "POST",
-            url: "/action/actuator_ctrl", 
-            data: JSON.stringify({"actuator_num": actuator_num, "direction": direction}),
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
-            success: function(data) {},
-            error: function(errMsg) {}
-        });
+        AjaxHelper.post(
+            "/action/actuator_ctrl",
+            {actuator_num: actuator_num, direction: direction}
+        );
     }
     
     /* Timer actuator command */
