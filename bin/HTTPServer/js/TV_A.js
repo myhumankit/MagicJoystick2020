@@ -63,30 +63,9 @@ function load_TV_A()
     $("#button_back_ir").on("click", function() {window.location = "IR.html";})
 
     // TV IR learning buttons
-    $("#TV_A_0").on("click", function() {send_or_get_TV_A(0)})
-    $("#TV_A_1").on("click", function() {send_or_get_TV_A(1)})
-    $("#TV_A_2").on("click", function() {send_or_get_TV_A(2)})
-    $("#TV_A_3").on("click", function() {send_or_get_TV_A(3)})
-    $("#TV_A_4").on("click", function() {send_or_get_TV_A(4)})
-    $("#TV_A_5").on("click", function() {send_or_get_TV_A(5)})
-    $("#TV_A_6").on("click", function() {send_or_get_TV_A(6)})
-    $("#TV_A_7").on("click", function() {send_or_get_TV_A(7)})
-    $("#TV_A_8").on("click", function() {send_or_get_TV_A(8)})
-    $("#TV_A_9").on("click", function() {send_or_get_TV_A(9)})
-    $("#TV_A_10").on("click", function() {send_or_get_TV_A(10)})
-    $("#TV_A_11").on("click", function() {send_or_get_TV_A(11)})
-    $("#TV_A_12").on("click", function() {send_or_get_TV_A(12)})
-    $("#TV_A_27").on("click", function() {send_or_get_TV_A(27)})
-    $("#TV_A_22").on("click", function() {send_or_get_TV_A(22)})
-    $("#TV_A_20").on("click", function() {send_or_get_TV_A(20)})
-    $("#TV_A_24").on("click", function() {send_or_get_TV_A(24)})
-    $("#TV_A_26").on("click", function() {send_or_get_TV_A(26)})
-    $("#TV_A_23").on("click", function() {send_or_get_TV_A(23)})
-    $("#TV_A_25").on("click", function() {send_or_get_TV_A(25)})
-    $("#TV_A_16").on("click", function() {send_or_get_TV_A(16)})
-    $("#TV_A_21").on("click", function() {send_or_get_TV_A(21)})
-    $("#TV_A_18").on("click", function() {send_or_get_TV_A(18)})
-    $("#TV_A_13").on("click", function() {send_or_get_TV_A(13)})
-    $("#TV_A_17").on("click", function() {send_or_get_TV_A(17)})
-    $("#TV_A_14").on("click", function() {send_or_get_TV_A(14)})
+    $(".TV_A").click((e) =>{
+        e.preventDefault();
+        let nb = $(e.target).data("number");
+        send_or_get_TV_A(nb);
+    });
 }
