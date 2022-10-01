@@ -67,6 +67,17 @@ function load_wheelchair() {
     function send_power(url) {
         AjaxHelper.post(url);
     }
+
+    // Set speed bar to the provide speed
+    function setSpeed(speed) {
+        for(let i = 1; i <= 5; i++) {
+            if(i <= speed) {
+                $(`#lvl${i}`).addClass("on");
+            } else {
+                $(`#lvl${i}`).removeClass("on");
+            }
+        }
+    }
     
     /* Change power on/off command on web */
     function change_power() {
@@ -81,25 +92,20 @@ function load_wheelchair() {
         }
     }
 
-    /* Speed +1*/
+    /* Speed +1 */
     function add_speed() {   
         let level = 0;
 
-        if ($("#lvl5").hasClass("on")) {
-            level = 1;
-            for (var i = 2; i <= 5; i++) {
-                $(`#lvl${i}`).removeClass("on");
-            }
-        } else {
-            for (var i = 1; i <= 5; i++) {
-                if (!$(`#lvl${i}`).hasClass("on")) {
-                    level = i;
-                    $(`#lvl${level}`).addClass("on");
-                    break;
-                }
+        for (let i = 1; i <= 5; i++) {
+            if (!$(`#lvl${i}`).hasClass("on")) {
+                level = i;
+                break;
             }
         }
 
+        level = level === 0 ? 1 : level
+
+        setSpeed(level);
         AjaxHelper.post("/action/max_speed", {max_speed: level});
     }
 
@@ -109,13 +115,7 @@ function load_wheelchair() {
             "/action/max_speed",
             {max_speed: level},
             (result) => {
-                for(let i = 1; i <= 5; i++) {
-                    if(i <= level) {
-                        $(`#lvl${i}`).addClass("on");
-                    } else {
-                        $(`#lvl${i}`).removeClass("on");
-                    }
-                }
+                setSpeed(level);
             }
         );
     }
@@ -125,13 +125,7 @@ function load_wheelchair() {
         AjaxHelper.get(
             "/action/max_speed",
             (result) => {
-                for(let i = 1; i <= 5; i++) {
-                    if(i <= result.MAX_SPEED) {
-                        $(`#lvl${i}`).addClass("on");
-                    } else {
-                        $(`#lvl${i}`).removeClass("on");
-                    }
-                }
+                setSpeed(result.MAX_SPEED);
             },
             (errMsg) => {
                 console.log(errMsg)

@@ -1,5 +1,4 @@
-function load_TV_A()
-{  
+function load_TV_A() {  
     // Put the unknown button on red background when TV_A.html page is loaded
     function get_and_update_buttons() {
         AjaxHelper.get("/TV_A/buttons",
