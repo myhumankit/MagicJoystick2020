@@ -1,123 +1,50 @@
 body {
-  margin: 0px;
-  background: #222;
+    margin: 0px;
+    background: #222;
 }
+
 .page {
-  background: #222;
-  width:100vw;
-  align-items: center;
+    background: #222;
+    width:100vw;
+    align-items: center;
 }
+
 .title > h1 {
-  text-align: center;
-  font-weight: normal;
-  color: #e6e6e6ff;
-  font-size: 42px;
+    text-align: center;
+    font-weight: normal;
+    color: #e6e6e6ff;
+    font-size: 42px;
 }
+
 .timer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height:50vh;
-  width:100vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height:50vh;
+    width:100vw;
 }
+
 .button {
-  display: flex;
-  flex-direction: column;
-  gap: 5vh;
-  align-items: center;
-  justify-content: center;
-  height:50vh;
+    display: flex;
+    flex-direction: column;
+    gap: 5vh;
+    align-items: center;
+    justify-content: center;
+    height:50vh;
 }
 
 div.last-command {
-  display: flexbox;
-  height: 25vh;
-  width:100vw;
+    display: flexbox;
+    height: 25vh;
+    width:100vw;
 }
 
-.loader {
-  position: relative;
-  float:left;
-  user-select: none;
-  box-sizing: border-box;
-  width: 150px;
-  height: 150px;
-}
-.loader-bg {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  box-sizing: border-box;
-  border: solid ;
-  border-color: rgba(255,255,255,0.25);
-  box-shadow: inset 2px 2px 20px 0 rgba(255, 255, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.spinner-holder-one {
-  position: absolute;
-  top:0;
-  left:0;
-  overflow: hidden;
-  width: 50%;
-  height: 50%;
-  background: transparent;
-  box-sizing: border-box;
-}
-.spinner-holder-two {
-  position: absolute;
-  top:0;
-  left:0;
-  overflow: hidden;
-  width: 100%;
-  height: 100%;
-  background: transparent;
-  box-sizing: border-box;
-}
 .loader-spinner {
-  width: 200%;
-  height: 200%;
-  border-radius: 50%;
-  border: solid;
-  box-sizing: border-box;
-  border-color: yellow;
-}
-
-.animate-0-25-a {
-  transform: rotate(90deg);
-  transform-origin: 100% 100%;
-}
-.animate-0-25-b {
-  transform: rotate(-90deg);
-  transform-origin: 100% 100%;
-}
-.animate-25-50-a {
-  transform: rotate(180deg);
-  transform-origin: 100% 100%;
-}
-.animate-25-50-b {
-  transform: rotate(-90deg);
-  transform-origin: 100% 100%;
-}
-.animate-50-75-a {
-  transform: rotate(270deg);
-  transform-origin: 100% 100%;
-}
-.animate-50-75-b {
-  transform: rotate(-90deg);
-  transform-origin:100% 100%;
-}
-.animate-75-100-a {
-  transform: rotate(0deg);
-  transform-origin: 100% 100%;
-}
-.animate-75-100-b {
-  transform: rotate(-90deg);
-  transform-origin: 100% 100%;
-}
-.text {
-  text-align: center;
-  font-weight: bold;  
+    width: 200%;
+    height: 200%;
+    border-radius: 50%;
+    border: solid;
+    box-sizing: border-box;
+    border-color: yellow;
 }

@@ -6,6 +6,7 @@
     width: 150px;
     height: 150px;
 }
+
 .loader-bg {
     width: 100%;
     height: 100%;
@@ -18,6 +19,7 @@
     align-items: center;
     justify-content: center;
 }
+
 .spinner-holder-one {
     position: absolute;
     top:0;
@@ -28,6 +30,7 @@
     background: transparent;
     box-sizing: border-box;
 }
+
 .spinner-holder-two {
     position: absolute;
     top:0;
@@ -38,47 +41,47 @@
     background: transparent;
     box-sizing: border-box;
 }
-.loader-spinner {
-    width: 200%;
-    height: 200%;
-    border-radius: 50%;
-    border: solid;
-    box-sizing: border-box;
-    border-color: yellow;
-}
 
 .animate-0-25-a {
     transform: rotate(90deg);
     transform-origin: 100% 100%;
 }
+
 .animate-0-25-b {
     transform: rotate(-90deg);
     transform-origin: 100% 100%;
 }
+
 .animate-25-50-a {
     transform: rotate(180deg);
     transform-origin: 100% 100%;
 }
+
 .animate-25-50-b {
     transform: rotate(-90deg);
     transform-origin: 100% 100%;
 }
+
 .animate-50-75-a {
     transform: rotate(270deg);
     transform-origin: 100% 100%;
 }
+
 .animate-50-75-b {
     transform: rotate(-90deg);
     transform-origin:100% 100%;
 }
+
 .animate-75-100-a {
     transform: rotate(0deg);
     transform-origin: 100% 100%;
 }
+
 .animate-75-100-b {
     transform: rotate(-90deg);
     transform-origin: 100% 100%;
 }
+
 .text {
     text-align: center;
     font-weight: bold;  
