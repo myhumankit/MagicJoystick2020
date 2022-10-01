@@ -30,19 +30,19 @@ function load_TV()
     $("#TV_volume_up").on("click", function() {change_TV_volume("up")})
     $("#TV_volume_down").on("click", function() {change_TV_volume("down")})
 
-    $('.TV_param').click((e) => {
+    $('.TV_param').on("click", (e) => {
         e.preventDefault();
         let param = $(e.target).data('param');
         change_TV_param(param);
     });
 
-    $('.TV_direction').click((e) => {
+    $('.TV_direction').on("click", (e) => {
         e.preventDefault();
         let direction = $(e.target).data('direction');
         change_TV_direction(direction);
     });
-    
-    $(".TV_number").click((e) =>{
+
+    $(".TV_number").on("click", (e) =>{
         e.preventDefault();
         let nb = $(e.target).data("number");
         change_TV_number(nb);

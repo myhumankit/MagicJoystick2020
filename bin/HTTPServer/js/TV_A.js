@@ -63,7 +63,7 @@ function load_TV_A()
     $("#button_back_ir").on("click", function() {window.location = "IR.html";})
 
     // TV IR learning buttons
-    $(".TV_A").click((e) =>{
+    $(".TV_A").on("click", (e) => {
         e.preventDefault();
         let nb = $(e.target).data("number");
         send_or_get_TV_A(nb);
