@@ -6,18 +6,18 @@ function load_TV_A()
             (result) => {
                 for (let i = 0; i < result["BUTTONS"].length; i++){
                     if (!result.BUTTONS[i]) {
-                        if (!($("#TV_A_"+i).hasClass("no"))) {
-                            $("#TV_A_"+i).addClass("no");
+                        if (!($(`#TV_A_${i}`).hasClass("no"))) {
+                            $(`#TV_A_${i}`).addClass("no");
                         }
                     } else if (result.VALIDATE[i]) {
-                        if ($("#TV_A_"+i).hasClass("no")) {
-                            $("#TV_A_"+i).removeClass("no");
+                        if ($(`#TV_A_${i}`).hasClass("no")) {
+                            $(`#TV_A_${i}`).removeClass("no");
                         }
                     } else if (!result.VALIDATE[i]) {
-                        if (!($("#TV_A_"+i).hasClass("no"))) {
-                            $("#TV_A_"+i).addClass("no");
+                        if (!($(`#TV_A_${i}`).hasClass("no"))) {
+                            $(`#TV_A_${i}`).addClass("no");
                         }
-                        AjaxHelper.post("/TV_A/delete", {"id": i});
+                        AjaxHelper.post("/TV_A/delete", {id: i});
                     }
                 }
             },
@@ -32,14 +32,14 @@ function load_TV_A()
     function send_or_get_TV_A(id) {
         TV_A_id_2 = id;
 
-        if ($("#TV_A_"+id).hasClass("no")) {
+        if ($(`#TV_A_${id}`).hasClass("no")) {
             popup = window.open("timer.html");
-            $("#TV_A_" + id).removeClass("no");
-            $("#TV_A_" + id).addClass("to_check");
+            $(`#TV_A_${id}`).removeClass("no");
+            $(`#TV_A_${id}`).addClass("to_check");
 
             AjaxHelper.post(
                 "/TV_A/get",
-                {"id": id},
+                {id: id},
                 (result) => {
                     popup.close();
                     if (window.confirm("Commande enregistée, vérifier la nouvelle commande ?")) {
@@ -52,10 +52,10 @@ function load_TV_A()
                     window.location.reload();
                 }
             );
-        } else if ($("#TV_A_"+id).hasClass("to_check")) {
+        } else if ($(`#TV_A_${id}`).hasClass("to_check")) {
             window.location = "IR_check_command.html";
         } else {
-            AjaxHelper.post("/TV_A/control", {"id": id});
+            AjaxHelper.post("/TV_A/control", {id: id});
         };
     }
 

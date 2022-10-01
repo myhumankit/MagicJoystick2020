@@ -11,9 +11,9 @@ function load() {
 
         AjaxHelper.get("/current/time-battery",
             (result) => {
-                str = "" + pad(now.getHours()) +":" + pad(now.getMinutes());
+                str = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
                 $("#time").html(str);
-                str = "" + result.BATTERY_LEVEL.toFixed() + "%";
+                str = `${result.BATTERY_LEVEL.toFixed()}%`;
                 $("#battery").html(str);
             },
             (errMsg) => {
@@ -36,5 +36,4 @@ function load() {
     $("#button_back_index").on("click", function() {window.location = "index.html";})
     $("#button_back").on("click", function() {window.location = "wheelchair.html";})
     $("#button_light").on("click", function() {window.location = "light.html";})
-
 }

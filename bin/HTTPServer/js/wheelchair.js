@@ -15,7 +15,7 @@ function load_wheelchair() {
                     }
                 }
 
-                str = "" + result.CHAIR_SPEED.toFixed(1) + " km/h";
+                str = `${result.CHAIR_SPEED.toFixed(1)} km/h`;
                 $("#current_speed").html(str);
 
                 for (let i = 0; i < result["LIGHTS"].length; i++) {
@@ -41,19 +41,19 @@ function load_wheelchair() {
 
     // Send the light on/off command
     function send_light(light_id) {
-        AjaxHelper.post("/action/light", {"light_id": light_id});
+        AjaxHelper.post("/action/light", {light_id: light_id});
     }
 
     // Change the light on/off command on web
     function change_light(light_id) {
-        let light = 'light_' + light_id;
+        let light = `light_${light_id}`;
 
-        if ($("#" + light).hasClass("on")) {
+        if ($(`#${light}`).hasClass("on")) {
             sessionStorage.setItem(light, "false")
-            $("#" + light).removeClass("on");
+            $(`#${light}`).removeClass("on");
         } else {
             sessionStorage.setItem(light, "true")
-            $("#" + light).addClass("on");
+            $(`#${light}`).addClass("on");
         }
 
         if (light_id < 5) {
@@ -88,13 +88,13 @@ function load_wheelchair() {
         if ($("#lvl5").hasClass("on")) {
             level = 1;
             for (var i = 2; i <= 5; i++) {
-                $("#lvl" + i).removeClass("on");
+                $(`#lvl${i}`).removeClass("on");
             }
         } else {
             for (var i = 1; i <= 5; i++) {
-                if (!$("#lvl" + i).hasClass("on")) {
+                if (!$(`#lvl${i}`).hasClass("on")) {
                     level = i;
-                    $("#lvl" + level).addClass("on");
+                    $(`#lvl${level}`).addClass("on");
                     break;
                 }
             }
@@ -111,9 +111,9 @@ function load_wheelchair() {
             (result) => {
                 for(let i = 1; i <= 5; i++) {
                     if(i <= level) {
-                        $("#lvl" + i).addClass("on");
+                        $(`#lvl${i}`).addClass("on");
                     } else {
-                        $("#lvl" + i).removeClass("on");
+                        $(`#lvl${i}`).removeClass("on");
                     }
                 }
             }
@@ -125,11 +125,11 @@ function load_wheelchair() {
         AjaxHelper.get(
             "/action/max_speed",
             (result) => {
-                for(var i = 1; i <= 5; i++) {
+                for(let i = 1; i <= 5; i++) {
                     if(i <= result.MAX_SPEED) {
-                        $("#lvl" + i).addClass("on");
+                        $(`#lvl${i}`).addClass("on");
                     } else {
-                        $("#lvl" + i).removeClass("on");
+                        $(`#lvl${i}`).removeClass("on");
                     }
                 }
             },

@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    var prefs = {
+    let prefs = {
         element: ".circlebar"
     };
     $('.circlebar').each(function() {
@@ -12,8 +12,8 @@ function Circlebar(prefs) {
     this.element = $(prefs.element);
     this.element.append('<div class="spinner-holder-one animate-0-25-a"><div class="spinner-holder-two animate-0-25-b"><div class="loader-spinner" style=""></div></div></div><div class="spinner-holder-one animate-25-50-a"><div class="spinner-holder-two animate-25-50-b"><div class="loader-spinner"></div></div></div><div class="spinner-holder-one animate-50-75-a"><div class="spinner-holder-two animate-50-75-b"><div class="loader-spinner"></div></div></div><div class="spinner-holder-one animate-75-100-a"><div class="spinner-holder-two animate-75-100-b"><div class="loader-spinner"></div></div></div>');
     this.value, this.maxValue, this.counter, this.dialWidth, this.size, this.fontSize, this.fontColor, this.triggerPercentage, this.type, this.timer;
-    // var attribs = this.element.find("div")[0].parentNode.dataset;
-    var attribs = this.element[0].dataset,
+    // let attribs = this.element.find("div")[0].parentNode.dataset;
+    let attribs = this.element[0].dataset,
         that = this;
     this.initialise = function() {
         that.value = parseInt(attribs.circleStarttime) || parseInt(prefs.startTime) || 0;
@@ -37,7 +37,7 @@ function Circlebar(prefs) {
     this.initialise();
     this.renderProgress = function(progress) {
         progress = Math.floor(progress);
-        var angle = 0;
+        let angle = 0;
         if (progress < 25) {
             angle = -90 + (progress / 100) * 360;
             that.element.find(".animate-0-25-b").css("transform", "rotate(" + angle + "deg)");
@@ -57,7 +57,7 @@ function Circlebar(prefs) {
         }
     };
     this.textFilter = function() {
-        var percentage = 0,
+        let percentage = 0,
             date = 0,
             text = that.element.find(".text");
         if (that.type == "timer") {
@@ -75,7 +75,7 @@ function Circlebar(prefs) {
         }
         if (that.type == "progress") {
             function setDeceleratingTimeout(factor, times) {
-                var internalCallback = function(counter) {
+                let internalCallback = function(counter) {
                     return function() {
                         if (that.value < that.maxValue && that.value < 100) {
                             that.value += 1;

@@ -29,16 +29,12 @@ function load_IR_check()
     // Delete the last recorded command
     function delete_command() {   
         alert("Voulez-vous vraiment supprimer la commande ?")
-        $.ajax({
-            type: "POST",
-            url: "/TV_A/last-delete",
-            success: function(data) {
-                window.location = "TV_A.html"
-            },
-            error: function(errMsg) {
-                window.location = "TV_A.html"
-            }
-        })
+        // Condition ?
+        AjaxHelper.post("/TV_A/delete",
+            {},
+            (result) => { window.location = "TV_A.html"; },
+            (errMsg) => { window.location = "TV_A.html"; }
+        );
         
     }
     
@@ -46,31 +42,28 @@ function load_IR_check()
     function modify_command() {
         popup = window.open("timer.html");
 
-        $.ajax({
-            type: "POST",
-            url: "TV_A/last-modify",
-            success: function(data) {
+        AjaxHelper.post(
+            "/TV_A/last-modify",
+            (data) => {
                 popup.close();
                 alert("Commande enregistée, vérifier la nouvelle commande ?")
             },
-            error: function(errMsg) {
+            (errMsg) => {
                 popup.close();
                 alert("La commande n'a pas pu être enregistrée");
             }
-        });
+        );
     }
 
     // Validate the last recorded command and register it in "database"
     function validate_command() {
-        $.ajax({
-            type: "POST",
-            url: "TV_A/last-validate",
-            success: function(data) {
+        AjaxHelper.post(
+            "TV_A/last-validate",
+            (data) => {
                 $("#TV_A_" + data).removeClass("to_check");
                 window.location = "TV_A.html"
-            },
-            error: function(errMsg) {}
-        });
+            }
+        );
     }
 
 
