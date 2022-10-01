@@ -26,6 +26,9 @@ RECORD_TIME = 10 #in seconds
 last = -1 #NUMBER OF LAST TV_A COMMAND
 validate = []
 NB_COMMAND = 28
+IR_PATH = "../IR/raw_command/" #../IR/TV_A_raw_command/
+IR_FILE_PREFIX = "" # TV_A_
+IR_FILE_EXTENSION = ".txt"
 
 def init_validate():
     global validate
@@ -177,7 +180,7 @@ class TV_A(MagicResource):
         elif command == "get": #record the command
             data = request.get_json()
             id = data["id"]
-            f_string = "../IR/TV_A_raw_command/" + "TV_A_" + str(id) +  ".txt"
+            f_string = IR_PATH + IR_FILE_PREFIX + str(id) + IR_FILE_EXTENSION
             file = open(f_string, "w")
             process = subprocess.Popen(["ir-ctl", "-r",  "-d", "/dev/lirc1", "--mode2"], stdout=file)   # pass cmd and args to the function
             time.sleep(RECORD_TIME)
@@ -191,18 +194,18 @@ class TV_A(MagicResource):
         elif command == "delete": #delete the command
             data = request.get_json()
             id = data["id"]
-            f_string = "../IR/TV_A_raw_command/" + "TV_A_" + str(id) +  ".txt"
+            f_string = IR_PATH + IR_FILE_PREFIX + str(id) + IR_FILE_EXTENSION
             os.remove(f_string)
             last = -1
         elif command == "last-launch": #send the last command recorded
             msg = TV_A_control(last)
             self.client.publish(msg.TOPIC_NAME, msg.serialize())
         elif command == "last-delete": #delete the last command recorded
-            f_string = "../IR/TV_A_raw_command/" + "TV_A_" + str(last) +  ".txt"
+            f_string = IR_PATH + IR_FILE_PREFIX + str(last) + IR_FILE_EXTENSION
             os.remove(f_string)
             last = -1
         elif command == "last-modify": #modify the last command recorded
-            f_string = "../IR/TV_A_raw_command/" + "TV_A_" + str(last) +  ".txt"
+            f_string = IR_PATH + IR_FILE_PREFIX + str(last) + IR_FILE_EXTENSION
             file = open(f_string, "w")
             process = subprocess.Popen(["ir-ctl", "-r",  "-d", "/dev/lirc1", "--mode2"], stdout=file)   # pass cmd and args to the function
             time.sleep(RECORD_TIME)
