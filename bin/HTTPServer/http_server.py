@@ -68,12 +68,44 @@ class StaticPages(Resource):
         print("%s: file not found" % filename)
         return "", 404
 
-class Actions(Resource):
+
+class MagicResource(Resource):
     def __init__(self):
         self.client = mqtt.Client() 
         self.client.on_connect = self.__on_connect 
         self.client.connect("localhost", 1883, 60) 
         self.client.loop_start()
+        self.name = "topic_name"
+        self.commands = {}
+
+    def __on_connect(self, client, userdata, flags, rc):
+        if rc == 0:
+            print("Connection successful to "+self.name)
+        else:
+            print(f"Connection failed with code {rc}")
+        
+    def post(self, command):
+        if command in self.commands:
+            msg = self.commands[command](request.get_json())
+            self.client.publish(msg.TOPIC_NAME, msg.serialize())
+            return "", 200
+        
+        return "", 404
+
+class Actions(MagicResource):
+    def __init__(self):
+        super().__init__()
+        self.name = "Action"
+        self.commands = {
+            "light": lambda data: action_light(data["light_id"]),
+            "auto_light": lambda data: action_auto_light(),
+            "max_speed": lambda data: action_max_speed(data["max_speed"]),
+            "drive": lambda data: action_drive(True),
+            "horn": lambda data: action_horn(),
+            "actuator_ctrl": lambda data: action_actuator_ctrl(data["actuator_num"], data["direction"]),
+            "poweroff": lambda data: action_poweroff(),
+            "poweron": lambda data: action_poweron()
+        }
 
     def __on_connect(self, client, userdata, flags, rc):
         if rc == 0:
@@ -89,31 +121,11 @@ class Actions(Resource):
 
     def post(self, action):
         global max_speed_level
-        if action == "light":
-            data = request.get_json()
-            msg = action_light(data["light_id"])
-        elif action == "auto_light":
-            msg = action_auto_light()
-        elif action == "max_speed":
-            data = request.get_json()
-            msg = action_max_speed(data["max_speed"])
-            max_speed_level = data["max_speed"]
-        elif action == "drive":
-            msg = action_drive(True)
-        elif action == "horn":
-            msg = action_horn()
-        elif action == "actuator_ctrl":
-            data = request.get_json()
-            msg = action_actuator_ctrl(data["actuator_num"], data["direction"])
-        elif action == "poweroff":
-            msg = action_poweroff()
-        elif action == "poweron":
-            msg = action_poweron()
-        else:
-            return "", 404
-            
-        self.client.publish(msg.TOPIC_NAME, msg.serialize())
-        return "", 200
+
+        if action == "max_speed":
+            max_speed_level = request.get_json()["max_speed"]
+
+        return super().post(action)
 
 
 class CurrentValues(Resource):
@@ -130,60 +142,24 @@ class CurrentValues(Resource):
             #return {"CHAIR_SPEED" : chair_speed, "LIGHTS": lights}
 
 
-class TV(Resource):
+class TV(MagicResource):
     def __init__(self):
-        self.client = mqtt.Client() 
-        self.client.on_connect = self.__on_connect 
-        self.client.connect("localhost", 1883, 60) 
-        self.client.loop_start()
-    
-    def __on_connect(self, client, userdata, flags, rc):
-        if rc == 0:
-            print("Connection successful to TV")
-        else:
-            print(f"Connection failed with code {rc}")
-
-    def post(self, command):
-        global last
-        if command == "power":
-            msg = TV_power()
-        # if command == "power_on":
-        #     msg = TV_power(True)
-        # if command == "power_off":
-        #     msg = TV_power(False)
-        elif command == "volume":
-            data = request.get_json()
-            msg = TV_volume(data["type"])
-        elif command == "param":
-            data = request.get_json()
-            msg = TV_param(data["type"])
-        elif command == "direction":
-            data = request.get_json()
-            msg = TV_direction(data["type"])
-        elif command == "number":
-            data = request.get_json()
-            msg = TV_number(data["nb"])
-
-        else:
-            return "", 404
-
-        self.client.publish(msg.TOPIC_NAME, msg.serialize())
-        return "", 200
+        super().__init__()
+        self.name = "TV"
+        self.commands = {
+            "power":      lambda data: TV_power(),
+            "volume":     lambda data: TV_volume(data["type"]),
+            "param":      lambda data: TV_param(data["type"]),
+            "direction":  lambda data: TV_direction(data["type"]),
+            "number":     lambda data: TV_number(data["nb"]),
+        }
 
 
-
-class TV_A(Resource):
+class TV_A(MagicResource):
     def __init__(self):
-        self.client = mqtt.Client() 
-        self.client.on_connect = self.__on_connect 
-        self.client.connect("localhost", 1883, 60) 
-        self.client.loop_start()
-    
-    def __on_connect(self, client, userdata, flags, rc):
-        if rc == 0:
-            print("Connection successful to TV_auto")
-        else:
-            print(f"Connection failed with code {rc}")
+        super().__init__()
+        self.name = "TV_auto"
+        self.commands = {}
     
     def get(self, command):
         if command == "buttons":
@@ -193,6 +169,7 @@ class TV_A(Resource):
 
     def post(self, command):
         global last
+
         if command == "control": #send the command
             data = request.get_json()
             msg = TV_A_control(data["id"])
@@ -217,7 +194,6 @@ class TV_A(Resource):
             f_string = "../IR/TV_A_raw_command/" + "TV_A_" + str(id) +  ".txt"
             os.remove(f_string)
             last = -1
-
         elif command == "last-launch": #send the last command recorded
             msg = TV_A_control(last)
             self.client.publish(msg.TOPIC_NAME, msg.serialize())
