@@ -1,5 +1,5 @@
 from sys import stdin
-from flask import Flask, send_from_directory, request
+from flask import Flask, send_from_directory, request, render_template, make_response
 from flask_restful import Resource, Api
 import paho.mqtt.client as mqtt
 from magick_joystick.Topics import *
@@ -26,6 +26,9 @@ RECORD_TIME = 10 #in seconds
 last = -1 #NUMBER OF LAST TV_A COMMAND
 validate = []
 NB_COMMAND = 28
+IR_PATH = "../IR/raw_command/" #../IR/TV_A_raw_command/
+IR_FILE_PREFIX = "" # TV_A_
+IR_FILE_EXTENSION = ".txt"
 
 def init_validate():
     global validate
@@ -46,49 +49,66 @@ def check_files_TV_A():
     return state
 
 class StaticPages(Resource):
-    def get(self, filename = "index.html"):
-        files = ["index.html", "wheelchair.html", "style.css", "wheelchair.js", 
-                 "script.js", "jquery-3.6.0.min.js", "all.min.css", "wheelchair.css", "TV.css",
-                 "IR.html", "TV.html", "TV.js", "TV_A.html", "TV_A.js", "IR_check_last_command.js", 
-                 "actuator.html", "light.html", "timer.html", "IR_check_command.html"]
+    def get(self, folder = "", filename = "index.html"):
+        """
+        Return the static page requested from folder and filename
+        If folder is null, return the file from the views folder
+        """
+        print(folder, filename)
 
-        svg_files = ["button_default.svg", "-1.svg", 
-                 "button_wheelchair.svg", "button_horn.svg", "button_light.svg", "actuator.svg",
-                 "button_speed.svg", "button_drive_mode.svg", "button_drive_mode_on.svg", "button_back.svg",
-                 "actuator_0_0.svg", "actuator_0_1.svg", "actuator_5_1.svg", 
-                 "actuator_1_0.svg", "actuator_1_1.svg", "actuator_2_0.svg",
-                 "actuator_2_1.svg", "actuator_3_0.svg", "actuator_3_1.svg",
-                 "actuator_4_0.svg", "actuator_4_1.svg", "actuator_5_0.svg",
-                 "IR.svg", "TV.svg", "TV_A.svg", "A.svg", 
-                 "button_power.svg", "button_0.svg", "button_1.svg", "button_2.svg", "button_3.svg", 
-                 "button_4.svg", "button_5.svg", "button_6.svg", 
-                 "button_7.svg", "button_8.svg", "button_9.svg", 
-                 "mute.svg", "volume_up.svg", "volume_down.svg",
-                 "left.svg", "down.svg", "right.svg", "up.svg", "ok.svg", 
-                 "TV_exit.svg", "TV_home.svg", "TV_info.svg", "TV_menu.svg", "TV_return.svg", "TV_source.svg", "TV_tools.svg"]
-        
-        timer = ["circle.css", "circle.js", "jquery-1.12.4.min.js", "timer.css"]
-
-        fonts = ["fa-solid-900.woff2", "fa-brands-400.woff2"]
-
-        print(filename)
-
-        if (filename in files) or (filename in fonts):
-            return send_from_directory("html", filename)
-        elif (filename in svg_files):
-            return send_from_directory("html/svg_icon", filename)
-        elif (filename in timer):
-            return send_from_directory("html/timer", filename)
-        else:
+        if folder == "":
+            if filename in os.listdir("templates"):
+                return make_response(render_template(filename))
+            
             print("%s: file not found" % filename)
             return "", 404
 
-class Actions(Resource):
+        folders = ["css", "js", "img", "fonts", "fonts", "svg_icon"]
+
+        if folder in folders and filename in os.listdir(folder):
+            return send_from_directory(folder,filename)
+
+        print("%s: file not found" % filename)
+        return "", 404
+
+
+class MagicResource(Resource):
     def __init__(self):
         self.client = mqtt.Client() 
         self.client.on_connect = self.__on_connect 
         self.client.connect("localhost", 1883, 60) 
         self.client.loop_start()
+        self.name = "topic_name"
+        self.commands = {}
+
+    def __on_connect(self, client, userdata, flags, rc):
+        if rc == 0:
+            print("Connection successful to "+self.name)
+        else:
+            print(f"Connection failed with code {rc}")
+        
+    def post(self, command):
+        if command in self.commands:
+            msg = self.commands[command](request.get_json())
+            self.client.publish(msg.TOPIC_NAME, msg.serialize())
+            return "", 200
+        
+        return "", 404
+
+class Actions(MagicResource):
+    def __init__(self):
+        super().__init__()
+        self.name = "Action"
+        self.commands = {
+            "light":         lambda data: action_light(data["light_id"]),
+            "auto_light":    lambda data: action_auto_light(),
+            "max_speed":     lambda data: action_max_speed(data["max_speed"]),
+            "drive":         lambda data: action_drive(True),
+            "horn":          lambda data: action_horn(),
+            "actuator_ctrl": lambda data: action_actuator_ctrl(data["actuator_num"], data["direction"]),
+            "poweroff":      lambda data: action_poweroff(),
+            "poweron":       lambda data: action_poweron()
+        }
 
     def __on_connect(self, client, userdata, flags, rc):
         if rc == 0:
@@ -104,31 +124,11 @@ class Actions(Resource):
 
     def post(self, action):
         global max_speed_level
-        if action == "light":
-            data = request.get_json()
-            msg = action_light(data["light_id"])
-        elif action == "auto_light":
-            msg = action_auto_light()
-        elif action == "max_speed":
-            data = request.get_json()
-            msg = action_max_speed(data["max_speed"])
-            max_speed_level = data["max_speed"]
-        elif action == "drive":
-            msg = action_drive(True)
-        elif action == "horn":
-            msg = action_horn()
-        elif action == "actuator_ctrl":
-            data = request.get_json()
-            msg = action_actuator_ctrl(data["actuator_num"], data["direction"])
-        elif action == "poweroff":
-            msg = action_poweroff()
-        elif action == "poweron":
-            msg = action_poweron()
-        else:
-            return "", 404
-            
-        self.client.publish(msg.TOPIC_NAME, msg.serialize())
-        return "", 200
+
+        if action == "max_speed":
+            max_speed_level = request.get_json()["max_speed"]
+
+        return super().post(action)
 
 
 class CurrentValues(Resource):
@@ -145,60 +145,24 @@ class CurrentValues(Resource):
             #return {"CHAIR_SPEED" : chair_speed, "LIGHTS": lights}
 
 
-class TV(Resource):
+class TV(MagicResource):
     def __init__(self):
-        self.client = mqtt.Client() 
-        self.client.on_connect = self.__on_connect 
-        self.client.connect("localhost", 1883, 60) 
-        self.client.loop_start()
-    
-    def __on_connect(self, client, userdata, flags, rc):
-        if rc == 0:
-            print("Connection successful to TV")
-        else:
-            print(f"Connection failed with code {rc}")
-
-    def post(self, command):
-        global last
-        if command == "power":
-            msg = TV_power()
-        # if command == "power_on":
-        #     msg = TV_power(True)
-        # if command == "power_off":
-        #     msg = TV_power(False)
-        elif command == "volume":
-            data = request.get_json()
-            msg = TV_volume(data["type"])
-        elif command == "param":
-            data = request.get_json()
-            msg = TV_param(data["type"])
-        elif command == "direction":
-            data = request.get_json()
-            msg = TV_direction(data["type"])
-        elif command == "number":
-            data = request.get_json()
-            msg = TV_number(data["nb"])
-
-        else:
-            return "", 404
-
-        self.client.publish(msg.TOPIC_NAME, msg.serialize())
-        return "", 200
+        super().__init__()
+        self.name = "TV"
+        self.commands = {
+            "power":      lambda data: TV_power(),
+            "volume":     lambda data: TV_volume(data["type"]),
+            "param":      lambda data: TV_param(data["type"]),
+            "direction":  lambda data: TV_direction(data["type"]),
+            "number":     lambda data: TV_number(data["nb"]),
+        }
 
 
-
-class TV_A(Resource):
+class TV_A(MagicResource):
     def __init__(self):
-        self.client = mqtt.Client() 
-        self.client.on_connect = self.__on_connect 
-        self.client.connect("localhost", 1883, 60) 
-        self.client.loop_start()
-    
-    def __on_connect(self, client, userdata, flags, rc):
-        if rc == 0:
-            print("Connection successful to TV_auto")
-        else:
-            print(f"Connection failed with code {rc}")
+        super().__init__()
+        self.name = "TV_auto"
+        self.commands = {}
     
     def get(self, command):
         if command == "buttons":
@@ -208,6 +172,7 @@ class TV_A(Resource):
 
     def post(self, command):
         global last
+
         if command == "control": #send the command
             data = request.get_json()
             msg = TV_A_control(data["id"])
@@ -215,7 +180,7 @@ class TV_A(Resource):
         elif command == "get": #record the command
             data = request.get_json()
             id = data["id"]
-            f_string = "../IR/TV_A_raw_command/" + "TV_A_" + str(id) +  ".txt"
+            f_string = IR_PATH + IR_FILE_PREFIX + str(id) + IR_FILE_EXTENSION
             file = open(f_string, "w")
             process = subprocess.Popen(["ir-ctl", "-r",  "-d", "/dev/lirc1", "--mode2"], stdout=file)   # pass cmd and args to the function
             time.sleep(RECORD_TIME)
@@ -229,19 +194,18 @@ class TV_A(Resource):
         elif command == "delete": #delete the command
             data = request.get_json()
             id = data["id"]
-            f_string = "../IR/TV_A_raw_command/" + "TV_A_" + str(id) +  ".txt"
+            f_string = IR_PATH + IR_FILE_PREFIX + str(id) + IR_FILE_EXTENSION
             os.remove(f_string)
             last = -1
-
         elif command == "last-launch": #send the last command recorded
             msg = TV_A_control(last)
             self.client.publish(msg.TOPIC_NAME, msg.serialize())
         elif command == "last-delete": #delete the last command recorded
-            f_string = "../IR/TV_A_raw_command/" + "TV_A_" + str(last) +  ".txt"
+            f_string = IR_PATH + IR_FILE_PREFIX + str(last) + IR_FILE_EXTENSION
             os.remove(f_string)
             last = -1
         elif command == "last-modify": #modify the last command recorded
-            f_string = "../IR/TV_A_raw_command/" + "TV_A_" + str(last) +  ".txt"
+            f_string = IR_PATH + IR_FILE_PREFIX + str(last) + IR_FILE_EXTENSION
             file = open(f_string, "w")
             process = subprocess.Popen(["ir-ctl", "-r",  "-d", "/dev/lirc1", "--mode2"], stdout=file)   # pass cmd and args to the function
             time.sleep(RECORD_TIME)
@@ -303,7 +267,10 @@ def on_message(client, userdata, msg):
 app = Flask(__name__)
 api = Api(app)
 
-api.add_resource(StaticPages, "/<string:filename>", "/", "/webfonts/<string:filename>", "/svg_icon/<string:filename>", "/timer/<string:filename>")
+api.add_resource(StaticPages,
+    "/v/",
+    "/v/<string:filename>",
+    "/v/<string:folder>/<string:filename>",)
 api.add_resource(Actions, "/action/<string:action>")
 api.add_resource(CurrentValues, "/current/<string:topic>")
 api.add_resource(TV, "/TV/<string:command>")

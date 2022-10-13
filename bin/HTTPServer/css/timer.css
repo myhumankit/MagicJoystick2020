@@ -1,0 +1,50 @@
+body {
+    margin: 0px;
+    background: #222;
+}
+
+.page {
+    background: #222;
+    width:100vw;
+    align-items: center;
+}
+
+.title > h1 {
+    text-align: center;
+    font-weight: normal;
+    color: #e6e6e6ff;
+    font-size: 42px;
+}
+
+.timer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height:50vh;
+    width:100vw;
+}
+
+.button {
+    display: flex;
+    flex-direction: column;
+    gap: 5vh;
+    align-items: center;
+    justify-content: center;
+    height:50vh;
+}
+
+div.last-command {
+    display: flexbox;
+    height: 25vh;
+    width:100vw;
+}
+
+.loader-spinner {
+    width: 200%;
+    height: 200%;
+    border-radius: 50%;
+    border: solid;
+    box-sizing: border-box;
+    border-color: yellow;
+}

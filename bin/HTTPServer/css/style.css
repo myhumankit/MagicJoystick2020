@@ -133,19 +133,19 @@ div.body.light > div {
 }
 
 #IR {
-    background-image: url("svg_icon/IR.svg");
+    background-image: url("/v/svg_icon/IR.svg");
 }
 
 #button_wheelchair {
-    background-image: url("svg_icon/button_wheelchair.svg");
+    background-image: url("/v/svg_icon/button_wheelchair.svg");
 }
 
 #button_back, #button_back_index, #button_back_ir {
-    background-image: url("svg_icon/button_back.svg");
+    background-image: url("/v/svg_icon/button_back.svg");
 }
 
 #A {
-    background-image: url("svg_icon/A.svg");
+    background-image: url("/v/svg_icon/A.svg");
 }
 
 #current_speed {
@@ -158,7 +158,7 @@ div.body.light > div {
 }
 
 .icon {
-    background: url("svg_icon/button_default.svg") no-repeat center;
+    background: url("/v/svg_icon/button_default.svg") no-repeat center;
     background-size: contain;
 }
 

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block css %}
+    <link rel="stylesheet" href="css/TV.css">
+{% endblock %}
+
+{% block content %}
+    <!-- <img class="logo" src="logo.png"/> -->
+
+    <div class="header">
+        <span id="time">
+        </span>
+        <span id="battery">
+            -1%
+        </span>
+    </div>
+
+    <div class="body IR">
+        <div>
+            <div id="TV" class="svg"></div>
+        </div>
+        <div>
+            <div id="TV_A" class="svg"></div>
+        </div>
+        <div>
+            <div id="A" class="svg"></div>
+        </div>
+        <div>
+            <div id="button_back_index" class="svg"></div>
+        </div>
+    </div>
+{% endblock %}
+
