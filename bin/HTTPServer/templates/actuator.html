@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
 {% block script %}
-        <script src="js/wheelchair.js"></script>
+    {{ resource.script('wheelchair.js') }}
 {% endblock %}
 
 {% block css %}
-    <link rel="stylesheet" href="css/wheelchair.css">
+    {{ resource.style('wheelchair.css') }}
 {% endblock %}
 
 {% block onload %} load_wheelchair(); {% endblock %}
@@ -21,7 +21,9 @@
 
     <div class="body actuator">
         <div>
-            <div id="actuator_0_0" class="actuator svg"></div>
+            <div id="actuator_0_0" class="actuator svg">
+                {{ resource.icon('actuator_0_0.svg') }}
+            </div>
             <div id="actuator_0_1" class="actuator svg"></div>
         </div>
         <div>

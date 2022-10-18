@@ -1,3 +1,4 @@
+{% import 'components/resource.html' as resource %}
 <!DOCTYPE html>
 <html>
     <head>
@@ -7,13 +8,14 @@
         <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover">
         <meta name="color-scheme" content="light dark">
 
-        <link rel="stylesheet" href="css/style.css">
-        <link href="css/all.min.css" rel="stylesheet">
+        {{ resource.style('style.css') }}
+
+        {{ resource.style('all.min.css') }}
         {% block css %} {% endblock %}
 
-        <script src="js/jquery-3.6.0.min.js"></script>
-        <script src="js/ajax_helper.js"></script>
-        <script src="js/script.js"></script>
+        {{ resource.script('jquery-3.6.0.min.js') }}
+        {{ resource.script('ajax_helper.js') }}
+        {{ resource.script('script.js') }}
         {% block script %} {% endblock %}
 
         <title>Magic Joystick</title>

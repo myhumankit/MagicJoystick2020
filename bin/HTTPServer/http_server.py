@@ -7,6 +7,7 @@ import os
 import time
 import subprocess
 import signal
+from urllib.request import urlopen
 
 app = Flask(__name__)
 lights = [False, False, False, False]
@@ -14,6 +15,12 @@ drive_mode = False #pas en mode drive au démarrage
 battery_level = 7 #valeur d'init (fausse)
 chair_speed = -1.0 #valeur d'init (fausse)
 max_speed_level = 1 #valeur par défaut à au power on
+
+#Resource loading system
+LOADING_METHOD = 'static'
+SCRIPT_PATH = './js/'
+STYLE_PATH = './css/'
+ICON_PATH = './svg_icon/'
 
 #Lights
 FLASHING_LEFT = 0
@@ -265,6 +272,23 @@ def on_message(client, userdata, msg):
 
 
 app = Flask(__name__)
+
+
+# Static loading functions
+def get_content(filename):
+    with open(filename, "r") as f:
+        return f.read()
+
+def static_load_script(src):
+    return get_content(SCRIPT_PATH + src)
+
+def static_load_style(href):
+    return get_content(STYLE_PATH + href)
+
+def static_load_icon(src):
+    return get_content(ICON_PATH + src)
+    
+
 api = Api(app)
 
 api.add_resource(StaticPages,
@@ -276,6 +300,11 @@ api.add_resource(CurrentValues, "/current/<string:topic>")
 api.add_resource(TV, "/TV/<string:command>")
 api.add_resource(TV_A, "/TV_A/<string:command>")
 
+app.jinja_env.globals.update(static_load_script=static_load_script)
+app.jinja_env.globals.update(static_load_style=static_load_style)
+app.jinja_env.globals.update(static_load_icon=static_load_icon)
+app.jinja_env.globals.update(LOADING_METHOD=LOADING_METHOD)
+
 if __name__ == "__main__":
     validate = init_validate()
     client = mqtt.Client()
@@ -285,3 +314,4 @@ if __name__ == "__main__":
     client.loop_start()
 
     app.run(debug = True, host = "0.0.0.0", port = 8080)
+

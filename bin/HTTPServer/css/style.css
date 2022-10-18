@@ -132,14 +132,6 @@ div.body.light > div {
     height: calc(100% / 4);
 }
 
-#IR {
-    background-image: url("/v/svg_icon/IR.svg");
-}
-
-#button_wheelchair {
-    background-image: url("/v/svg_icon/button_wheelchair.svg");
-}
-
 #button_back, #button_back_index, #button_back_ir {
     background-image: url("/v/svg_icon/button_back.svg");
 }
@@ -157,12 +149,7 @@ div.body.light > div {
     background: none;
 }
 
-.icon {
-    background: url("/v/svg_icon/button_default.svg") no-repeat center;
-    background-size: contain;
-}
-
-.svg {
-    background: no-repeat center;
-    background-size: contain;
+svg {
+    width: var(--icon-size);
+    height: var(--icon-size);
 }

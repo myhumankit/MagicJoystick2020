@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
 {% block css %}
-    <link rel="stylesheet" href="css/wheelchair.css">
+    {{ resource.style('wheelchair.css') }}
 {% endblock %}
 
 {% block script %}
-    <script src="js/wheelchair.js"></script>
+    {{ resource.script('wheelchair.js') }}
 {% endblock %}
 
 {% block onload %} load_wheelchair(); {% endblock %}

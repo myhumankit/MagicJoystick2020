@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
 {% block css %}
-    <link rel="stylesheet" href="css/TV.css">
+    {{ resource.style('TV.css') }}
 {% endblock %}
 
 {% block script %}
-    <script src="js/TV.js"></script>
+    {{ resource.script('TV.js') }}
 {% endblock %}
 
 {% block onload %} load_TV(); {% endblock %}

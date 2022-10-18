@@ -1,3 +1,4 @@
+{% import 'components/resource.html' as resource %}
 <!doctype html>
 <html>
     <head>
@@ -8,10 +9,11 @@
         <!-- <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover"> -->
         <meta name="color-scheme" content="light dark">
         <title>IR check command</title>
-        <link rel="stylesheet" type="text/css" href="css/timer.css">
-        <link rel="stylesheet" type="text/css" href="css/TV.css">
-        <script src="js/jquery-3.6.0.min.js"></script>
-        <script src="js/IR_check_last_command.js"></script>
+        {{ resource.style('timer.css') }}
+        {{ resource.style('TV.css') }}
+        
+        {{ resource.script('jquery-3.6.0.min.js') }}
+        {{ resource.script('IR_check_last_command.js') }}
     </head>
 
     <body onload="load_IR_check()">
