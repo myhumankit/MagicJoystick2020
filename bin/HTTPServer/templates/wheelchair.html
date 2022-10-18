@@ -20,21 +20,35 @@
             -1%
         </span>
         <div class="working">
-            <div id="light_1" class="icon"><i class="fas fa-arrow-alt-circle-left"></i></div>
-            <div id="light_2" class="icon"><i class="fas fa-arrow-alt-circle-right"></i></div>
-            <div id="light_3" class="icon"><i class="fas fa-exclamation-triangle"></i></div>
-            <div id="light_4" class="icon"><i class="fas fa-sun"></i></div>
-            <div id="light_5" class="icon"><i class="fab fa-autoprefixer"></i></div>
+            <div id="light_1" class="icon">
+                {{ resource.icon('arrow_circle_left.svg') }}
+            </div>
+            <div id="light_2" class="icon">
+                {{ resource.icon('arrow_circle_right.svg') }}
+            </div>
+            <div id="light_3" class="icon">
+                {{ resource.icon('triangle_exclamation.svg') }}
+            </div>
+            <div id="light_4" class="icon">
+                {{ resource.icon('sun.svg') }}
+            </div>
+            <div id="light_5" class="icon">
+                {{ resource.icon('autoprefixer.svg') }}
+            </div>
         </div>
     </div>
 
     <div class="body wheelchair">
         <div>
-            <div id="button_drive_mode" class="svg"></div>
+            <div id="button_drive_mode">
+                {{ resource.icon('button_drive_mode.svg') }}
+            </div>
             <div id="current_speed"></div>
         </div>
         <div>
-            <div id="button_speed" class="svg"></div>
+            <div id="button_speed">
+                {{ resource.icon('button_speed.svg') }}
+            </div>
             <div id="max_speed">
                 <div id="lvl1" class="bargraph"></div>
                 <div id="lvl2" class="bargraph"></div>
@@ -44,14 +58,22 @@
             </div>
         </div>
         <div>
-            <div id="actuator" class="svg"></div>
+            <div id="actuator">
+                {{ resource.icon('actuator.svg') }}
+            </div>
         </div>
         <div>
-            <div id="button_light" class="svg"></div>
+            <div id="button_light">
+                {{ resource.icon('button_light.svg') }}
+            </div>
         </div>
         <div>
-            <div id="button_horn" class="svg"></div>
-            <div id="button_back_index" class="svg"></div>
+            <div id="button_horn">
+                {{ resource.icon('button_horn.svg') }}
+            </div>
+            <div id="button_back_index">
+                {{ resource.icon('button_back.svg') }}
+            </div>
         </div>
     </div>
 {% endblock %}

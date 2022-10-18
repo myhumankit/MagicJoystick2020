@@ -20,35 +20,21 @@
     </div>
 
     <div class="body actuator">
-        <div>
-            <div id="actuator_0_0" class="actuator svg">
-                {{ resource.icon('actuator_0_0.svg') }}
+        {% for i in ['0', '1', '2', '3', '4', '5'] %}
+            <div>
+                <div id="actuator_{{ i }}_0" class="actuator">
+                    {{ resource.icon('actuator_' + i + '_0.svg') }}
+                </div>
+                <div id="actuator_{{ i }}_1" class="actuator">
+                    {{ resource.icon('actuator_' + i + '_1.svg') }}
+                </div>
             </div>
-            <div id="actuator_0_1" class="actuator svg"></div>
-        </div>
-        <div>
-            <div id="actuator_1_0" class="actuator svg"></div>
-            <div id="actuator_1_1" class="actuator svg"></div>
-        </div>
-        <div>
-            <div id="actuator_2_0" class="actuator svg"></div>
-            <div id="actuator_2_1" class="actuator svg"></div>
-        </div>
-        <div>
-            <div id="actuator_3_0" class="actuator svg"></div>
-            <div id="actuator_3_1" class="actuator svg"></div>
-        </div>
-        <div>
-            <div id="actuator_4_0" class="actuator svg"></div>
-            <div id="actuator_4_1" class="actuator svg"></div>
-        </div>
-        <div>
-            <div id="actuator_5_0" class="actuator svg"></div>
-            <div id="actuator_5_1" class="actuator svg"></div>
-        </div>
+        {% endfor %}
         <div>
             <div></div>
-            <div id="button_back" class="svg"></div>
+            <div id="button_back">
+                {{ resource.icon('button_back.svg') }}
+            </div>
         </div>
     </div>
 {% endblock %}
