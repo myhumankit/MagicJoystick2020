@@ -182,7 +182,7 @@ class TV_A(MagicResource):
             id = data["id"]
             f_string = IR_PATH + IR_FILE_PREFIX + str(id) + IR_FILE_EXTENSION
             file = open(f_string, "w")
-            process = subprocess.Popen(["ir-ctl", "-r",  "-d", "/dev/lirc1", "--mode2"], stdout=file)   # pass cmd and args to the function
+            process = subprocess.Popen(["ir-ctl", "--receive",  "--device", "/dev/lirc1", "--mode2"], stdout=file)   # pass cmd and args to the function
             time.sleep(RECORD_TIME)
             process.send_signal(signal.SIGINT)   # send Ctrl-C signal
             file.close()
@@ -207,7 +207,7 @@ class TV_A(MagicResource):
         elif command == "last-modify": #modify the last command recorded
             f_string = IR_PATH + IR_FILE_PREFIX + str(last) + IR_FILE_EXTENSION
             file = open(f_string, "w")
-            process = subprocess.Popen(["ir-ctl", "-r",  "-d", "/dev/lirc1", "--mode2"], stdout=file)   # pass cmd and args to the function
+            process = subprocess.Popen(["ir-ctl", "--receive",  "--device", "/dev/lirc1", "--mode2"], stdout=file)   # pass cmd and args to the function
             time.sleep(RECORD_TIME)
             process.send_signal(signal.SIGINT)   # send Ctrl-C signal
             file.close()
