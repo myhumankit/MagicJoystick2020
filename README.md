@@ -88,4 +88,3 @@ Now the raspberry is connected to the motor and waits for a Joystick client to c
 
 * The motor maximum speed is hard coded for the moment to a very slow speed.
 * For each program, you can have a help display typing "python3 joyClient.py --help" for example.
-
