@@ -45,7 +45,7 @@ class IR_interaction:
         """
         f_string = self.get_path(id)
         file = open(f_string, "w")
-        process = subprocess.Popen(["ir-ctl", "-r",  "-d", "/dev/lirc1", "--mode2"], stdout=file)   # pass cmd and args to the function
+        process = subprocess.Popen(["ir-ctl", "-r",  "-d", "/dev/lirc1", "--mode2", "--one-shot"], stdout=file)   # pass cmd and args to the function
         print('Recording...')
         time.sleep(self.record_time)
         print('Done !')

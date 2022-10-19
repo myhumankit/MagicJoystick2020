@@ -10,7 +10,7 @@ RECORD_TIME = 10 #in seconds
 last = -1 #NUMBER OF LAST TV_A COMMAND
 validate = []
 NB_COMMAND = 28
-IR_PATH = "../IR/raw_command/" #../IR/TV_A_raw_command/
+IR_PATH = "../IR/raw_command/"
 IR_FILE_PREFIX = "" # TV_A_
 IR_FILE_EXTENSION = ".txt"
 
