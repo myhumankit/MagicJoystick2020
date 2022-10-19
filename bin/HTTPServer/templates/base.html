@@ -22,5 +22,8 @@
     </head>
     <body onload="load();{% block onload %} {% endblock %}">
         {% block content %} {% endblock %}
+        <script>
+            API_PATH = "{{ API_PATH }}";
+        </script>
     </body>
 </html>

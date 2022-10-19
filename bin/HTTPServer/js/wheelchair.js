@@ -33,8 +33,8 @@ function load_wheelchair() {
                     }
                 }
             },
-            (errMsg) => {
-                console.log(errMsg)
+            (request) => {
+                console.log(request);
             }
         );
     }
@@ -47,6 +47,7 @@ function load_wheelchair() {
     // Change the light on/off command on web
     function change_light(light_id) {
         let light = `light_${light_id}`;
+        console.log(light);
 
         if ($(`#${light}`).hasClass("on")) {
             sessionStorage.setItem(light, "false")
@@ -127,8 +128,8 @@ function load_wheelchair() {
             (result) => {
                 setSpeed(result.MAX_SPEED);
             },
-            (errMsg) => {
-                console.log(errMsg)
+            (error) => {
+                console.log(error);
             }
         );
     }

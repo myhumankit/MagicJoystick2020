@@ -12,16 +12,16 @@
 }
 
 
-#light_1.on, #light_2.on, #power.on{
-    color: #00FF00;
+#light_1.on path, #light_2.on path, #power.on path{
+    fill: #00FF00;
 }
 
-#light_3.on, #light_5.on {
-    color: #FF6600;
+#light_3.on path, #light_5.on path {
+    fill: #FF6600;
 }
 
-#light_4.on {
-    color: #FFFF00;
+#light_4.on path {
+    fill: #FFFF00;
 }
 
 

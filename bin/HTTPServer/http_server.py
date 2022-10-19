@@ -1,6 +1,7 @@
 from sys import stdin
 from flask import Flask, send_from_directory, request, render_template, make_response
 from flask_restful import Resource, Api
+from flask_cors import CORS
 import paho.mqtt.client as mqtt
 from magick_joystick.Topics import *
 import os
@@ -10,6 +11,7 @@ import signal
 from urllib.request import urlopen
 
 app = Flask(__name__)
+CORS(app)
 lights = [False, False, False, False]
 drive_mode = False #pas en mode drive au démarrage
 battery_level = 7 #valeur d'init (fausse)
@@ -21,6 +23,8 @@ LOADING_METHOD = 'static'
 SCRIPT_PATH = './js/'
 STYLE_PATH = './css/'
 ICON_PATH = './svg_icon/'
+#API_PATH = 'localhost:8080'
+API_PATH = ''
 
 #Lights
 FLASHING_LEFT = 0
@@ -270,10 +274,6 @@ def on_message(client, userdata, msg):
             lights[FLASHING_LEFT] = (not lights[FLASHING_LEFT]) and lid==FLASHING_LEFT
             lights[FLASHING_RIGHT] = (not lights[FLASHING_RIGHT]) and lid==FLASHING_RIGHT
 
-
-app = Flask(__name__)
-
-
 # Static loading functions
 def get_content(filename):
     with open(filename, "r") as f:
@@ -304,6 +304,7 @@ app.jinja_env.globals.update(static_load_script=static_load_script)
 app.jinja_env.globals.update(static_load_style=static_load_style)
 app.jinja_env.globals.update(static_load_icon=static_load_icon)
 app.jinja_env.globals.update(LOADING_METHOD=LOADING_METHOD)
+app.jinja_env.globals.update(API_PATH=API_PATH)
 
 if __name__ == "__main__":
     validate = init_validate()

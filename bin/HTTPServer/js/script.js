@@ -16,8 +16,8 @@ function load() {
                 str = `${result.BATTERY_LEVEL.toFixed()}%`;
                 $("#battery").html(str);
             },
-            (errMsg) => {
-                console.log(errMsg);
+            (error) => {
+                console.log(error);
             }
         );
     }
