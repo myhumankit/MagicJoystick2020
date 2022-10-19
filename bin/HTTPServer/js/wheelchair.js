@@ -33,8 +33,8 @@ function load_wheelchair() {
                     }
                 }
             },
-            (errMsg) => {
-                console.log(errMsg)
+            (request) => {
+                console.log(request);
             }
         );
     }
@@ -127,8 +127,8 @@ function load_wheelchair() {
             (result) => {
                 setSpeed(result.MAX_SPEED);
             },
-            (errMsg) => {
-                console.log(errMsg)
+            (error) => {
+                console.log(error);
             }
         );
     }

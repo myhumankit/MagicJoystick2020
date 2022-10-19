@@ -1,7 +1,7 @@
 :root {
     --header-height: 10vh; /* 10% de la hauteur pour le header */
     --border-width: 10px;
-    --icon-size: min(18vmin, 100px);
+    --icon-size: min(15vmin, 100px);
 }
 
 
@@ -85,13 +85,6 @@ div.body > div > div {
     height: 90%;
 }
 
-div.body > div > div > i {
-    position: relative;
-    font-size: var(--icon-size);
-    top: 50%;
-    margin-top: calc(var(--icon-size) / -2)
-}
-
 .spacer {
     color: transparent;
 }
@@ -132,22 +125,6 @@ div.body.light > div {
     height: calc(100% / 4);
 }
 
-#IR {
-    background-image: url("/v/svg_icon/IR.svg");
-}
-
-#button_wheelchair {
-    background-image: url("/v/svg_icon/button_wheelchair.svg");
-}
-
-#button_back, #button_back_index, #button_back_ir {
-    background-image: url("/v/svg_icon/button_back.svg");
-}
-
-#A {
-    background-image: url("/v/svg_icon/A.svg");
-}
-
 #current_speed {
     background: none;
     font-size: 30px;
@@ -157,12 +134,7 @@ div.body.light > div {
     background: none;
 }
 
-.icon {
-    background: url("/v/svg_icon/button_default.svg") no-repeat center;
-    background-size: contain;
-}
-
-.svg {
-    background: no-repeat center;
-    background-size: contain;
+svg {
+    width: var(--icon-size);
+    height: var(--icon-size);
 }

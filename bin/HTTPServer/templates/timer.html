@@ -1,3 +1,4 @@
+{% import 'components/resource.html' as resource %}
 <!doctype html>
 <html>
     
@@ -5,10 +6,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Timer IR record command</title>
-        <link rel="stylesheet" type="text/css" href="css/timer.css">
-        <link rel="stylesheet" type="text/css" href="css/circle.css">
-        <script src="js/jquery-3.6.0.min.js"></script>
-        <script src="js/circle.js"></script>
+        {{ resource.style('timer.css') }}
+        {{ resource.style('circle.css') }}
+        
+        {{ resource.script('jquery-3.6.0.min.js') }}
+        {{ resource.script('circle.js') }}
     </head>
 
     <body>

@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
 {% block css %}
-    <link rel="stylesheet" href="css/TV.css">
+    {{ resource.style('TV.css') }}
 {% endblock %}
 
 {% block script %}
-    <script src="js/TV_A.js"></script>
+    {{ resource.script('TV_A.js') }}
 {% endblock %}
 
 {% block onload %} load_TV_A(); {% endblock %}
@@ -23,52 +23,106 @@
 
     <div class="body TV">
         <div>
-            <div id="TV_A_0" class="TV_A svg" data-number="0"></div>
-            <div id="TV_A_1" class="TV_A svg" data-number="1"></div>
-            <div id="TV_A_2" class="TV_A svg" data-number="2"></div>
-            <div id="TV_A_3" class="TV_A svg" data-number="3"></div>
+            <div id="TV_A_0" class="TV_A" data-number="0">
+                {{ resource.icon('button_power.svg') }}
+            </div>
+            <div id="TV_A_1" class="TV_A" data-number="1">
+                {{ resource.icon('button_1.svg') }}
+            </div>
+            <div id="TV_A_2" class="TV_A" data-number="2">
+                {{ resource.icon('button_2.svg') }}
+            </div>
+            <div id="TV_A_3" class="TV_A" data-number="3">
+                {{ resource.icon('button_3.svg') }}
+            </div>
         </div>
         <div>
-            <div id="TV_A_4" class="TV_A svg" data-number="4"></div>
-            <div id="TV_A_5" class="TV_A svg" data-number="5"></div>
-            <div id="TV_A_6" class="TV_A svg" data-number="6"></div>
-            <div id="TV_A_7" class="TV_A svg" data-number="7"></div>
+            <div id="TV_A_4" class="TV_A" data-number="4">
+                {{ resource.icon('mute.svg') }}
+            </div>
+            <div id="TV_A_5" class="TV_A" data-number="5">
+                {{ resource.icon('button_4.svg') }}
+            </div>
+            <div id="TV_A_6" class="TV_A" data-number="6">
+                {{ resource.icon('button_5.svg') }}
+            </div>
+            <div id="TV_A_7" class="TV_A" data-number="7">
+                {{ resource.icon('button_6.svg') }}
+            </div>
         </div>
         <div>
-            <div id="TV_A_8" class="TV_A svg" data-number="8"></div>
-            <div id="TV_A_9" class="TV_A svg" data-number="9"></div>
-            <div id="TV_A_10" class="TV_A svg" data-number="10"></div>
-            <div id="TV_A_11" class="TV_A svg" data-number="11"></div>
+            <div id="TV_A_8" class="TV_A" data-number="8">
+                {{ resource.icon('volume_up.svg') }}
+            </div>
+            <div id="TV_A_9" class="TV_A" data-number="9">
+                {{ resource.icon('button_7.svg') }}
+            </div>
+            <div id="TV_A_10" class="TV_A" data-number="10">
+                {{ resource.icon('button_8.svg') }}
+            </div>
+            <div id="TV_A_11" class="TV_A" data-number="11">
+                {{ resource.icon('button_9.svg') }}
+            </div>
         </div>
         <div>
-            <div id="TV_A_12" class="TV_A svg" data-number="12"></div>
-            <div id="TV_A_13" class="TV_A svg" data-number="13"></div>
-            <div id="TV_A_14" class="TV_A svg" data-number="14"></div>
+            <div id="TV_A_12" class="TV_A" data-number="12">
+                {{ resource.icon('volume_down.svg') }}
+            </div>
+            <div id="TV_A_13" class="TV_A" data-number="13">
+                {{ resource.icon('up.svg') }}
+            </div>
+            <div id="TV_A_14" class="TV_A" data-number="14">
+                {{ resource.icon('button_0.svg') }}
+            </div>
             <div id="" class="icon"></div>
         </div>
         <div>
-            <div id="TV_A_16" class="TV_A svg" data-number="16"></div>
-            <div id="TV_A_17" class="TV_A svg" data-number="17"></div>
-            <div id="TV_A_18" class="TV_A svg" data-number="18"></div>
+            <div id="TV_A_16" class="TV_A" data-number="16">
+                {{ resource.icon('left.svg') }}
+            </div>
+            <div id="TV_A_17" class="TV_A" data-number="17">
+                {{ resource.icon('ok.svg') }}
+            </div>
+            <div id="TV_A_18" class="TV_A" data-number="18">
+                {{ resource.icon('right.svg') }}
+            </div>
             <div id="" class="icon"></div>
         </div>
         <div>
-            <div id="TV_A_20" class="TV_A svg" data-number="20"></div>
-            <div id="TV_A_21" class="TV_A svg" data-number="21"></div>
-            <div id="TV_A_22" class="TV_A svg" data-number="22"></div>
-            <div id="TV_A_23" class="TV_A svg" data-number="23"></div>
+            <div id="TV_A_20" class="TV_A" data-number="20">
+                {{ resource.icon('TV_info.svg') }}
+            </div>
+            <div id="TV_A_21" class="TV_A" data-number="21">
+                {{ resource.icon('down.svg') }}
+            </div>
+            <div id="TV_A_22" class="TV_A" data-number="22">
+                {{ resource.icon('TV_home.svg') }}
+            </div>
+            <div id="TV_A_23" class="TV_A" data-number="23">
+                {{ resource.icon('TV_source.svg') }}
+            </div>
         </div>
         <div>
-            <div id="TV_A_24" class="TV_A svg" data-number="24"></div>
-            <div id="TV_A_25" class="TV_A svg" data-number="25"></div>
-            <div id="TV_A_26" class="TV_A svg" data-number="26"></div>
-            <div id="TV_A_27" class="TV_A svg" data-number="27"></div>
+            <div id="TV_A_24" class="TV_A" data-number="24">
+                {{ resource.icon('TV_menu.svg') }}
+            </div>
+            <div id="TV_A_25" class="TV_A" data-number="25">
+                {{ resource.icon('TV_tools.svg') }}
+            </div>
+            <div id="TV_A_26" class="TV_A" data-number="26">
+                {{ resource.icon('TV_return.svg') }}
+            </div>
+            <div id="TV_A_27" class="TV_A" data-number="27">
+                {{ resource.icon('TV_exit.svg') }}
+            </div>
         </div>
         <div>
             <div></div>
             <div></div>
             <div></div>
-            <div id="button_back_ir" class="svg"></div>
+            <div id="button_back_ir">
+                {{ resource.icon('button_back.svg') }}
+            </div>
         </div>
     </div>
 {% endblock %}

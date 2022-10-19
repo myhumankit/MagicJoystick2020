@@ -11,88 +11,17 @@
     margin-right: 2.5%;
 }
 
-#actuator_0_0 {
-    background-image: url("/v/svg_icon/actuator_0_0.svg");
+
+#light_1.on path, #light_2.on path, #power.on path{
+    fill: #00FF00;
 }
 
-#actuator_0_1 {
-    background-image: url("/v/svg_icon/actuator_0_1.svg");
+#light_3.on path, #light_5.on path {
+    fill: #FF6600;
 }
 
-#actuator_1_0 {
-    background-image: url("/v/svg_icon/actuator_1_0.svg");
-}
-
-#actuator_1_1 {
-    background-image: url("/v/svg_icon/actuator_1_1.svg");
-}
-
-#actuator_2_0 {
-    background-image: url("/v/svg_icon/actuator_2_0.svg");
-}
-
-#actuator_2_1 {
-    background-image: url("/v/svg_icon/actuator_2_1.svg");
-}
-
-#actuator_3_0 {
-    background-image: url("/v/svg_icon/actuator_3_0.svg");
-}
-
-#actuator_3_1 {
-    background-image: url("/v/svg_icon/actuator_3_1.svg");
-}
-
-#actuator_4_0 {
-    background-image: url("/v/svg_icon/actuator_4_0.svg");
-}
-
-#actuator_4_1 {
-    background-image: url("/v/svg_icon/actuator_4_1.svg");
-}
-
-#actuator_5_0 {
-    background-image: url("/v/svg_icon/actuator_5_0.svg");
-}
-
-#actuator_5_1 {
-    background-image: url("/v/svg_icon/actuator_5_1.svg");
-}
-
-#actuator {
-    background-image: url("/v/svg_icon/actuator.svg");
-}
-
-#button_horn {
-    background-image: url("/v/svg_icon/button_horn.svg");
-}
-
-#button_light {
-    background-image: url("/v/svg_icon/button_light.svg");
-}
-
-#button_speed {
-    background-image: url("/v/svg_icon/button_speed.svg");
-}
-
-#button_drive_mode {
-    background-image: url("/v/svg_icon/button_drive_mode.svg");
-}
-
-#button_drive_mode.on {
-    background-image: url("/v/svg_icon/button_drive_mode_on.svg");
-}
-
-#light_1.on, #light_2.on, #power.on{
-    color: #00FF00;
-}
-
-#light_3.on, #light_5.on {
-    color: #FF6600;
-}
-
-#light_4.on {
-    color: #FFFF00;
+#light_4.on path {
+    fill: #FFFF00;
 }
 
 

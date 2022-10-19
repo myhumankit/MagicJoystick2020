@@ -1,0 +1,27 @@
+{% macro script(src) -%}
+    {% if LOADING_METHOD == 'static' %}
+        <script>
+            {{ static_load_script(src)|safe }}
+        </script>
+    {% else %}
+        <script src="script/{{ src }}"></script>
+    {% endif %}
+{%- endmacro %}
+
+{% macro style(href) -%}
+    {% if LOADING_METHOD == 'static' %}
+        <style>
+            {{ static_load_style(href)|safe }}
+        </style>
+    {% else %}
+        <link rel="stylesheet" href="css/{{ href }}">
+    {% endif %}
+{%- endmacro %}
+
+{% macro icon(src) -%}
+    {% if LOADING_METHOD == 'static' %}
+        {{ static_load_icon(src)|safe }}
+    {% else %}
+        <img src="svg_icon/{{ src }}">
+    {% endif %}
+{%- endmacro %}

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block script %}
-        <script src="js/wheelchair.js"></script>
+    {{ resource.script('wheelchair.js') }}
 {% endblock %}
 
 {% block onload %} load_wheelchair(); {% endblock %}
@@ -19,19 +19,30 @@
 
     <div class="body main">
         <div>
-            <div id="button_wheelchair" class="svg"></div>
+            <div id="button_wheelchair" class="icon">
+                {{ resource.icon('button_wheelchair.svg') }}
+            </div>
         </div>
         <div>
-            <div id="IR" class="svg"></div>
+            <div id="IR" class="icon">
+                {{ resource.icon('IR.svg') }}
+            </div>
         </div>
         <div>
-            <div id="bluetooth" class="icon"><i class="fab fa-bluetooth-b"></i></div>
+            <div id="bluetooth" class="icon">
+                {{ resource.icon('bluetooth.svg') }}
+            </div>
         </div>
         <div>
-            <div id="heater" class="icon"><i class="fas fa-mitten"></i></div>
+            <div id="heater" class="icon">
+                Heater
+                {# resource.icon('heater.svg') #}
+            </div>
         </div>
         <div>
-            <div id="power" class="icon"><i class="fas fa-power-off"></i></div>
+            <div id="power" class="icon">
+                {{ resource.icon('button_power.svg') }}
+            </div>
         </div>
     </div>
 {% endblock %}

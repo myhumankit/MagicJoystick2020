@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
 {% block css %}
-    <link rel="stylesheet" href="css/wheelchair.css">
+    {{ resource.style('wheelchair.css') }}
 {% endblock %}
 
 {% block script %}
-    <script src="js/wheelchair.js"></script>
+    {{ resource.script('wheelchair.js') }}
 {% endblock %}
 
 {% block onload %} load_wheelchair(); {% endblock %}
@@ -21,19 +21,31 @@
 
     <div class="body light">
         <div>
-            <div id="light_1" class="icon"><i class="fas fa-arrow-alt-circle-left"></i></div>
-            <div id="light_2" class="icon"><i class="fas fa-arrow-alt-circle-right"></i></div>
+            <div id="light_1" class="icon">
+                {{ resource.icon('arrow_circle_left.svg') }}
+            </div>
+            <div id="light_2" class="icon">
+                {{ resource.icon('arrow_circle_right.svg') }}
+            </div>
         </div>
         <div>
-            <div id="light_3" class="icon"><i class="fas fa-exclamation-triangle"></i></div>
-            <div id="light_4" class="icon"><i class="fas fa-sun"></i></div>
+            <div id="light_3" class="icon">
+                {{ resource.icon('triangle_exclamation.svg') }}
+            </div>
+            <div id="light_4" class="icon">
+                {{ resource.icon('sun.svg') }}
+            </div>
         </div>
         <div>
-            <div id="light_5" class="icon"><i class="fab fa-autoprefixer"></i></div>
+            <div id="light_5" class="icon">
+                {{ resource.icon('autoprefixer.svg') }}
+            </div>
         </div>
         <div>
             <div></div>
-            <div id="button_back" class="svg"></div>
+            <div id="button_back">
+                {{ resource.icon('button_back.svg') }}
+            </div>
         </div>
     </div>
 {% endblock %}
