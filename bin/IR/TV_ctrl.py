@@ -61,26 +61,7 @@ def send_direction(type):
 
 
 def send_number(nb):
-    if(nb == "0"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/0.txt")
-    elif (nb == "1"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/1.txt")
-    elif (nb == "2"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/2.txt")
-    elif (nb == "3"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/3.txt")
-    elif (nb == "4"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/4.txt")
-    elif (nb == "5"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/5.txt")
-    elif (nb == "6"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/6.txt")
-    elif (nb == "7"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/7.txt")
-    elif (nb == "8"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/8.txt")
-    elif (nb == "9"):
-        os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/9.txt")
+    os.system("sudo ir-ctl -d /dev/lirc0 -s raw_command/%s.txt"%nb)
     
 
 # MQTT Connection initialization
