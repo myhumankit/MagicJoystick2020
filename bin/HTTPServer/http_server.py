@@ -9,6 +9,7 @@ import time
 import subprocess
 import signal
 from urllib.request import urlopen
+from IR import IR_interaction
 
 app = Flask(__name__)
 CORS(app)
@@ -153,7 +154,6 @@ class CurrentValues(Resource):
         elif topic == "lights-speed-driveMode":
             print("get request", lights)
             return {"DRIVE_MODE": drive_mode, "CHAIR_SPEED" : chair_speed, "LIGHTS": lights}
-            #return {"CHAIR_SPEED" : chair_speed, "LIGHTS": lights}
 
 
 class TV(MagicResource):
@@ -168,12 +168,16 @@ class TV(MagicResource):
             "number":     lambda data: TV_number(data["nb"]),
         }
 
+def set_last(id):
+    global last
+    last = id
 
 class TV_A(MagicResource):
     def __init__(self):
         super().__init__()
         self.name = "TV_auto"
         self.commands = {}
+        self.recorder = IR_interaction('TV_A', self.client, IR_PATH)
     
     def get(self, command):
         if command == "buttons":
@@ -182,51 +186,33 @@ class TV_A(MagicResource):
             return "", 404
 
     def post(self, command):
-        global last
-
         if command == "control": #send the command
             data = request.get_json()
-            msg = TV_A_control(data["id"])
-            self.client.publish(msg.TOPIC_NAME, msg.serialize())
+            self.recorder.send(data["id"])
+
         elif command == "get": #record the command
             data = request.get_json()
-            id = data["id"]
-            f_string = IR_PATH + IR_FILE_PREFIX + str(id) + IR_FILE_EXTENSION
-            file = open(f_string, "w")
-            process = subprocess.Popen(["ir-ctl", "-r",  "-d", "/dev/lirc1", "--mode2"], stdout=file)   # pass cmd and args to the function
-            time.sleep(RECORD_TIME)
-            process.send_signal(signal.SIGINT)   # send Ctrl-C signal
-            file.close()
-            if(os.stat(f_string).st_size == 0):
-                os.remove(f_string)
-                return data["id"], 449
-            else:
-                last = data["id"]
+            set_last(self.recorder.record(data["id"]))
+
         elif command == "delete": #delete the command
             data = request.get_json()
             id = data["id"]
-            f_string = IR_PATH + IR_FILE_PREFIX + str(id) + IR_FILE_EXTENSION
-            os.remove(f_string)
-            last = -1
+
+            set_last(self.recorder.delete(id))
+
         elif command == "last-launch": #send the last command recorded
             msg = TV_A_control(last)
             self.client.publish(msg.TOPIC_NAME, msg.serialize())
+
         elif command == "last-delete": #delete the last command recorded
-            f_string = IR_PATH + IR_FILE_PREFIX + str(last) + IR_FILE_EXTENSION
-            os.remove(f_string)
-            last = -1
+            set_last(self.recorder.delete(last))
+
         elif command == "last-modify": #modify the last command recorded
-            f_string = IR_PATH + IR_FILE_PREFIX + str(last) + IR_FILE_EXTENSION
-            file = open(f_string, "w")
-            process = subprocess.Popen(["ir-ctl", "-r",  "-d", "/dev/lirc1", "--mode2"], stdout=file)   # pass cmd and args to the function
-            time.sleep(RECORD_TIME)
-            process.send_signal(signal.SIGINT)   # send Ctrl-C signal
-            file.close()
-            if(os.stat(f_string).st_size == 0):
-                os.remove(f_string)
-                return data["id"], 449
+            set_last(self.recorder.record(last))
+            
         elif command == "last-validate": #validate the last command recorded
             validate[last] = True
+
         elif command == "last-get": #get the number of the last command recorded
             pass
 
