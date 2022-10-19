@@ -5,3 +5,4 @@ __pycache__
 build/*
 dist/*
 bin/HTTPStaticPages/build/*
+bin/IR/raw_command/*
