@@ -6,9 +6,9 @@ class MagicResource(Resource):
     def __init__(self):
         self.client = mqtt.Client() 
         self.client.on_connect = self.__on_connect 
+        self.name = self.name if hasattr(self, 'name') else "topic_name"
         self.client.connect("localhost", 1883, 60) 
         self.client.loop_start()
-        self.name = "topic_name"
         self.commands = {}
 
     def __on_connect(self, client, userdata, flags, rc):

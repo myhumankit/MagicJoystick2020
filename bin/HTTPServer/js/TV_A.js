@@ -65,8 +65,10 @@ function load_TV_A() {
     // TV IR learning buttons
     $(".TV_A").on("click", (e) => {
         e.preventDefault();
-        // If the target not have data attribute, we get the parent data attribute
         let nb = $(e.target).data("number") || $(e.target.parentNode).data("number");
-        send_or_get_TV_A(nb);
+        if (nb)
+            send_or_get_TV_A(nb);
+        else
+            console.log('nop');
     });
 }

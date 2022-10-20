@@ -3,3 +3,9 @@ Static export :
  - Faire une version ultra mini de JQuery
  - Factoriser les CSS
  - Processus de minification
+
+HttpServer :
+ - Refactoring Class
+
+Client :
+ - Methode de récupération d'id au "on click"
