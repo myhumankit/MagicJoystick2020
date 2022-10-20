@@ -48,12 +48,13 @@ function load_TV()
             console.log('nop')
     });
 
-    $(".TV_number").on("click", (e) =>{
+    $(".TV_number").on("click", (e) => {
         e.preventDefault();
         let nb = $(e.target).data("number") || $(e.target.parentNode).data("number");
-        if (nb)
-            change_TV_number(nb);
-        else 
-            console.log('nop')
+        if (nb) {
+            console.log(`Execute command to IR/TV_A: ${nb}`);
+            AjaxHelper.getir('TV_A', nb)
+
+        } else console.log('nop');
     });
 }

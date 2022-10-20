@@ -48,11 +48,10 @@ class IR_interaction:
         f_string = self.get_path(id)
         print("Path : " + path.abspath(f_string))
         file = open(f_string, "w")
-        process = subprocess.Popen(["ir-ctl", "-r",  "-d", "/dev/lirc1", "--mode2", "--one-shot"], stdout=file)   # pass cmd and args to the function
         print('Recording...')
-        time.sleep(self.record_time)
-        print('Done !')
-        process.send_signal(signal.SIGINT)   # send Ctrl-C signal
+        process = subprocess.Popen(["ir-ctl", "-r",  "-d", "/dev/lirc1", "--mode2", "--one-shot"], stdout=file)   # pass cmd and args to the function
+        process.wait(timeout=10)
+        print('Done !')  # send Ctrl-C signal
         file.close()
 
         return id

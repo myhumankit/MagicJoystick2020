@@ -62,13 +62,32 @@ function load_TV_A() {
     get_and_update_buttons()
     $("#button_back_ir").on("click", function() {window.location = "IR.html";})
 
+
     // TV IR learning buttons
     $(".TV_A").on("click", (e) => {
         e.preventDefault();
         let nb = $(e.target).data("number") || $(e.target.parentNode).data("number");
-        if (nb)
-            send_or_get_TV_A(nb);
-        else
-            console.log('nop');
+        if (nb) {
+            console.log(`Sending command to IR/TV_A: ${nb}`);
+            AjaxHelper.postir('TV_A', nb);
+
+            last_edit_interval = setInterval(() => {
+                AjaxHelper.get("/current/ir_response",
+                    (result) => {
+                        console.log(result)
+                        if (result.IR_RESPONSE[1] == true) {
+                            clearInterval(last_edit_interval);
+                            console.log("Commande apprise : " + result.IR_RESPONSE[0] + "/" + result.IR_RESPONSE[1])
+                            alert("Commande apprise !!!!") 
+                        }
+                    },
+                    (errMsg) => {
+                        console.log("function get and update buttons error"),
+                        console.log(errMsg)
+                    }
+                );
+            }, 1000);
+
+        } else console.log('nop');
     });
 }

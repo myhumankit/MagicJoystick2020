@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block script %}
+{% endblock %}
+
+{% block content %}
+
+<div class="body TV">
+    <div>
+        <div class="button" id="start" data-number="1">
+            {{ resource.icon('button_power.svg') }}
+        </div>
+        <div class="button" id="top" data-number="2" style="transform: rotate(90deg);">
+            {{ resource.icon('arrow_circle_left.svg') }}
+        </div>
+        <div class="button" id="stop" data-number="3">
+            {{ resource.icon('mute.svg') }}
+        </div>
+    </div>
+    <div>
+        <div class="button" id="left" data-number="4">
+            {{ resource.icon('arrow_circle_left.svg') }}
+        </div>
+        <div class="button" id="center" data-number="5">
+            {{ resource.icon('TV_home.svg') }}
+        </div>
+        <div class="button" id="right" data-number="6">
+            {{ resource.icon('arrow_circle_right.svg') }}
+        </div>
+    </div>
+    <div>
+        <div class="button" data-number="7">
+        </div>
+        <div class="button" id="bottom" data-number="8" style="transform: rotate(90deg);">
+            {{ resource.icon('arrow_circle_right.svg') }}
+        </div>
+        <div class="button" data-number="9">
+        </div>
+    </div>
+    <div>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+</div>
+
+
+<script>
+    API = 'http://192.168.42.120/'
+    $('#start').on("click", function() {
+        console.log(API + "start")
+        AjaxHelper2.get(API + 'start');
+    });
+    $('#stop').on("click", function() {
+        console.log(API + "stop")
+        AjaxHelper2.get(API + 'stop');
+    });
+    
+    $('#center').on("click", function() {
+        AjaxHelper2.get(`${API}joy?x=0&y=0`);
+    });
+
+    $('#left').on("click", function() {
+        AjaxHelper2.get(`${API}joy?x=-40&y=0`);
+    });
+    $('#right').on("click", function() {
+        AjaxHelper2.get(`${API}joy?x=40&y=0`);
+    });
+    $('#bottom').on("click", function() {
+        AjaxHelper2.get(`${API}joy?x=0&y=-40`);
+    });
+    $('#top').on("click", function() {
+        AjaxHelper2.get(`${API}joy?x=0&y=40`);
+    });
+</script>
+{% endblock %}
