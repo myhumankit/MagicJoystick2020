@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block script %}
+{{ resource.script('paho-mqtt-min.js') }}
+{% endblock %}
+
+{% block content %}
+
+<div class="body TV">
+    <div>
+        <div class="button" data-number="1">
+            {{ resource.icon('button_1.svg') }}
+        </div>
+        <div class="button" data-number="2">
+            {{ resource.icon('button_2.svg') }}
+        </div>
+        <div class="button" data-number="3">
+            {{ resource.icon('button_3.svg') }}
+        </div>
+    </div>
+    <div>
+        <div class="button" data-number="4">
+            {{ resource.icon('button_4.svg') }}
+        </div>
+        <div class="button" data-number="5">
+            {{ resource.icon('button_5.svg') }}
+        </div>
+        <div class="button" data-number="6">
+            {{ resource.icon('button_6.svg') }}
+        </div>
+    </div>
+    <div>
+        <div class="button" data-number="7">
+            {{ resource.icon('button_7.svg') }}
+        </div>
+        <div class="button" data-number="8">
+            {{ resource.icon('button_8.svg') }}
+        </div>
+        <div class="button" data-number="9">
+            {{ resource.icon('button_9.svg') }}
+        </div>
+    </div>
+    <div>
+        <div></div>
+        <div class="button" data-number="0">
+            {{ resource.icon('button_0.svg') }}
+        </div>
+        <div></div>
+    </div>
+</div>
+
+
+<script>
+    const mqtt_hostname = "{{ MQTT_HOSTNAME }}";
+    const mqtt_port = "{{ MQTT_PORT }}"
+
+    const IR_topics = {
+        write: "IR/write",
+        execute: "IR/execute",
+        delete: "IR/delete",
+        response: "IR/response"
+    }
+
+    folder = "custom_buttons";
+
+    /*
+    const client = mqtt.connect()
+    
+    client.subscribe(IR_topics.response)
+
+    client.on("message", function (topic, payload) {
+        alert([topic, payload].join(": "))
+        client.end()
+    })
+    */
+
+    // Paho - based browser MQTT client 
+    // See doc : https://github.com/eclipse/paho.mqtt.javascript
+    const client = new Paho.MQTT.Client(mqtt_hostname, Number(mqtt_port), "clientId");
+
+    
+
+    client.connect({
+        onSuccess: () => {
+            console.log('Connected !')
+            
+            client.subscribe(IR_topics.response)
+        }
+    })
+
+    client.onMessageArrived  = function (message) {
+        console.log(message);
+        
+        console.log("onMessageArrived:"+message.payloadString);
+        console.log("onMessageArrived Topic:"+message.topic);
+    }
+
+    message = new Paho.MQTT.Message("Hello");
+    message.destinationName = "World";
+    client.send(message);
+</script>
+{% endblock %}

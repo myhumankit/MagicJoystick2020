@@ -11,11 +11,14 @@ import signal
 from urllib.request import urlopen
 
 from resources.static_pages import StaticPages
+
 from resources.IR.TV_A import TV_A
+from resources.TV import TV
+from resources.ir import IR
+
 from resources.base import MagicResource
 from resources.actions import Actions
-from resources.current_values import CurrentValues
-from resources.TV import TV
+from resources.current_values import CurrentValues, update_current_values
 
 app = Flask(__name__)
 CORS(app)
@@ -41,35 +44,12 @@ def on_connect(client, userdata, flags, rc):
             client.subscribe(status_battery_level.TOPIC_NAME)
             client.subscribe(action_light.TOPIC_NAME)
             client.subscribe(action_drive.TOPIC_NAME)
+            client.subscribe(IR_response.TOPIC_NAME)
         else:
             print(f"Connection failed with code {rc}")
 
 def on_message(client, userdata, msg):
-    global battery_level, chair_speed, drive_mode
-    data_current = deserialize(msg.payload)
-    if msg.topic == status_battery_level.TOPIC_NAME:
-        battery_level = data_current.battery_level
-
-    elif msg.topic == status_chair_speed.TOPIC_NAME:
-        chair_speed = data_current.speedMps*3.6
-    
-    elif msg.topic == action_drive.TOPIC_NAME:
-        drive_mode = deserialize(msg.payload).doDrive
-
-    elif msg.topic == action_light.TOPIC_NAME:
-        lid = data_current.light_id-1
-        if lid == FRONT_LIGHTS :
-            lights[lid] = not lights[lid] #light_ID begins at 1
-            return
-
-        if lid == WARNING_LIGHT :
-            lights[FLASHING_LEFT] = False 
-            lights[FLASHING_RIGHT] = False 
-            lights[lid] = not lights[lid]
-    
-        elif lid < 2 and not lights[WARNING_LIGHT]: # Flashing (only if no Warn)
-            lights[FLASHING_LEFT] = (not lights[FLASHING_LEFT]) and lid==FLASHING_LEFT
-            lights[FLASHING_RIGHT] = (not lights[FLASHING_RIGHT]) and lid==FLASHING_RIGHT
+    update_current_values(msg)
 
 # Static loading functions
 def get_content(filename):
@@ -94,6 +74,9 @@ api.add_resource(StaticPages,
     "/v/<string:folder>/<string:filename>",)
 api.add_resource(Actions, "/action/<string:action>")
 api.add_resource(CurrentValues, "/current/<string:topic>")
+
+api.add_resource(IR, "/IR/<string:folder>/<string:action>")
+
 api.add_resource(TV, "/TV/<string:command>")
 api.add_resource(TV_A, "/TV_A/<string:command>")
 
@@ -102,6 +85,8 @@ app.jinja_env.globals.update(static_load_style=static_load_style)
 app.jinja_env.globals.update(static_load_icon=static_load_icon)
 app.jinja_env.globals.update(LOADING_METHOD=LOADING_METHOD)
 app.jinja_env.globals.update(API_PATH=API_PATH)
+app.jinja_env.globals.update(MQTT_HOSTNAME="192.168.42.1")
+app.jinja_env.globals.update(MQTT_PORT="1883")
 
 if __name__ == "__main__":
     client = mqtt.Client()

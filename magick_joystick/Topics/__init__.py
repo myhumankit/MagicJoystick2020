@@ -118,3 +118,22 @@ class TV_A_control(base_mqtt_message):
     TOPIC_NAME = "TV_A/control"
     def __init__(self, id):
         self.id = id
+
+# IR mqtt messages
+class IR_mqtt_message(base_mqtt_message):
+    TOPIC_NAME = "IR"
+    def __init__(self, folder, action):
+        self.folder = folder
+        self.action = action
+
+class IR_write(IR_mqtt_message):
+    TOPIC_NAME = "IR/write"
+
+class IR_execute(IR_mqtt_message):
+    TOPIC_NAME = "IR/execute"
+
+class IR_delete(IR_mqtt_message):
+    TOPIC_NAME = "IR/delete"
+
+class IR_response(IR_mqtt_message):
+    TOPIC_NAME = "IR/response"

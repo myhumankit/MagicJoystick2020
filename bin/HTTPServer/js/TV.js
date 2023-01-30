@@ -32,19 +32,29 @@ function load_TV()
 
     $('.TV_param').on("click", (e) => {
         e.preventDefault();
-        let param = $(e.target).data('param');
-        change_TV_param(param);
+        let param = $(e.target).data("param") || $(e.target.parentNode).data("param");
+        if (param)
+            change_TV_param(param);
+        else
+            console.log('nop')
     });
 
     $('.TV_direction').on("click", (e) => {
         e.preventDefault();
-        let direction = $(e.target).data('direction');
-        change_TV_direction(direction);
+        let direction = $(e.target).data("direction") || $(e.target.parentNode).data("direction");
+        if (direction)
+            change_TV_direction(direction);
+        else
+            console.log('nop')
     });
 
-    $(".TV_number").on("click", (e) =>{
+    $(".TV_number").on("click", (e) => {
         e.preventDefault();
-        let nb = $(e.target).data("number");
-        change_TV_number(nb);
+        let nb = $(e.target).data("number") || $(e.target.parentNode).data("number");
+        if (nb) {
+            console.log(`Execute command to IR/TV_A: ${nb}`);
+            AjaxHelper.getir('TV_A', nb)
+
+        } else console.log('nop');
     });
 }

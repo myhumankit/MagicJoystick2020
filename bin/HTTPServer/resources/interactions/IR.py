@@ -1,4 +1,7 @@
 import subprocess
+from os import path
+import time
+from magick_joystick.Topics import *
 
 IR_FILE_EXTENSION = '.txt'
 
@@ -13,7 +16,6 @@ class IR_interaction:
     """
     def __init__(self, name, client, path, record_time=10):
         self.client = client
-        self.prefix = name + "_"
         self.name = name
         self.path = path
         self.record_time = record_time
@@ -24,7 +26,7 @@ class IR_interaction:
 
         :param id: The id of the IR command
         """
-        return  self.path + self.name + '/' + self.prefix + str(id) + IR_FILE_EXTENSION
+        return  self.path + self.name + '/' + str(id) + IR_FILE_EXTENSION
 
     def send(self, id):
         """
@@ -44,12 +46,12 @@ class IR_interaction:
         :param callback: The callback function
         """
         f_string = self.get_path(id)
+        print("Path : " + path.abspath(f_string))
         file = open(f_string, "w")
-        process = subprocess.Popen(["ir-ctl", "-r",  "-d", "/dev/lirc1", "--mode2"], stdout=file)   # pass cmd and args to the function
         print('Recording...')
-        time.sleep(self.record_time)
-        print('Done !')
-        process.send_signal(signal.SIGINT)   # send Ctrl-C signal
+        process = subprocess.Popen(["ir-ctl", "-r",  "-d", "/dev/lirc1", "--mode2", "--one-shot"], stdout=file)   # pass cmd and args to the function
+        process.wait(timeout=10)
+        print('Done !')  # send Ctrl-C signal
         file.close()
 
         return id
