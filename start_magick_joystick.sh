@@ -13,8 +13,10 @@ hciconfig hci0 noauth
 hciconfig hci0 piscan
 
 # Create log directory
-mkdir -p /var/log/magick_joy/log
+mkdir -p /dev/shm/log/magick_joy/log
 export MAGICK_JOY_LOG=`mktemp -d -p /dev/shm/log/magick_joy/log`
 chown -R 1000:1000 $MAGICK_JOY_LOG
 
+export USER_HOME=/home/mjoy
+source $USER_HOME/.venv/bin/activate
 supervisord -c supervisord.conf

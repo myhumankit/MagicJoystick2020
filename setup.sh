@@ -110,8 +110,54 @@ remote 'sudo sed -i "s/\[General\]/\[General\]\nName = MagickJoystick\nClass = 0
 # Add extra packages
 echo " -> Adding extra packages"
 remote "sudo apt-get -y update > /dev/null"
-remote "sudo apt-get -y install can-utils build-essential python3-dev git python3-pip cmake mosquitto bluez libcap2-bin libdbus-1-dev libglib2.0-dev python3-gi libbluetooth-dev pi-bluetooth hostapd dnsmasq v4l-utils > /dev/null"
+remote "sudo apt-get -y install can-utils build-essential python3-venv python3-dev git python3-pip cmake mosquitto bluez libcap2-bin libdbus-1-dev libglib2.0-dev python3-gi libbluetooth-dev pi-bluetooth hostapd dnsmasq v4l-utils > /dev/null"
 
+#config IR
+remote "sudo cp /boot/config.txt /boot/config.txt.bak"
+read -r -d '' LC_IR_CONFIG << EOF
+# MagicJoy IR config starts =========
+# Uncomment this to enable the infrared module
+#for receiver, enable to receive IR signals
+dtoverlay=gpio-ir,gpio_pin=18,rc-map-name=ir-keytable
+#for transmitter, enable to send IR signals
+dtoverlay=gpio-ir-tx,gpio_pin=17
+# MagicJoy IR config stops ==========
+EOF
+export LC_IR_CONFIG
+
+# Create python virtualenv
+echo " -> Creating python virtualenv"
+remote 'python -m venv .venv'
+
+# Add python packages
+echo " -> Adding extra python packages"
+remote_cp requirements.txt .
+remote "source .venv/bin/activate && pip3 install -q -r requirements.txt && rm requirements.txt"
+
+# Set python capability to bin to bluetooth even if non root
+echo " -> Set python cabability"
+remote 'sudo setcap CAP_NET_BIND_SERVICE=+eip $(readlink -f /usr/bin/python3)'
+
+# Install current code
+echo " -> Installing Magic Joystick python library"
+remote_cp setup.py .
+remote_cp magick_joystick .
+remote "source .venv/bin/activate && pip3 install -q -e ."
+
+# Install applications
+echo " -> Installing applications"
+remote_cp bin .
+
+# Install services
+echo " -> Launch applications at startup"
+remote_cp start_magick_joystick.sh .
+remote_cp supervisord.conf .
+remote_cp magick_joystick.service /tmp
+remote 'cat /tmp/magick_joystick.service | sed "s|@PWD@|$PWD|g" | sudo tee /lib/systemd/system/magick_joystick.service > /dev/null'
+remote 'rm /tmp/magick_joystick.service'
+remote 'sudo systemctl daemon-reload > /dev/null'
+remote 'sudo systemctl enable magick_joystick > /dev/null'
+remote 'sudo systemctl start magick_joystick > /dev/null'
 
 # Setup Acces Point Configuration
 echo " -> Configure acces point files..."
@@ -179,63 +225,15 @@ EOF
 export LC_AP_DEFHOSTAPD
 remote 'echo -ne $LC_AP_DEFHOSTAPD | sudo tee /etc/default/hostapd > /dev/null' LC_AP_DEFHOSTAPD
 
-
 remote "sudo cp /etc/wpa_supplicant/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf.bak"
-read -r -d '' LC_AP_WPA << EOF
-country=fr\n
-EOF
-export LC_AP_WPA
-remote 'echo -ne $LC_AP_WPA | sudo tee -a /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null' LC_AP_WPA
+remote 'echo -ne "" | sudo tee /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null'
 echo " -> Done configuring acces point files"
 
 echo " -> Lauching Hostapd service"
 remote 'sudo systemctl unmask hostapd'
 remote 'sudo systemctl enable hostapd'
 remote 'sudo rfkill unblock wlan'
-remote 'sudo service hostapd start'
-
-#config IR
-remote "sudo cp /boot/config.txt /boot/config.txt.bak"
-read -r -d '' LC_IR_CONFIG << EOF
-# MagicJoy IR config starts =========
-# Uncomment this to enable the infrared module
-#for receiver, enable to receive IR signals
-dtoverlay=gpio-ir,gpio_pin=18,rc-map-name=ir-keytable
-#for transmitter, enable to send IR signals
-dtoverlay=gpio-ir-tx,gpio_pin=17
-# MagicJoy IR config stops ==========
-EOF
-export LC_IR_CONFIG
-
-# Add python packages
-echo " -> Adding extra python packages"
-remote_cp requirements.txt .
-remote "sudo pip3 install -q -r requirements.txt && rm requirements.txt"
-
-# Set python capability to bin to bluetooth even if non root
-echo " -> Set python cabability"
-remote 'sudo setcap CAP_NET_BIND_SERVICE=+eip $(readlink -f /usr/bin/python3)'
-
-# Install current code
-echo " -> Installing Magic Joystick python library"
-remote_cp setup.py .
-remote_cp magick_joystick .
-remote "sudo pip3 install -q -e ."
-
-# Install applications
-echo " -> Installing applications"
-remote_cp bin .
-
-# Install services
-echo " -> Launch applications at startup"
-remote_cp start_magick_joystick.sh .
-remote_cp supervisord.conf .
-remote_cp magick_joystick.service /tmp
-remote 'cat /tmp/magick_joystick.service | sed "s|@PWD@|$PWD|g" | sudo tee /lib/systemd/system/magick_joystick.service > /dev/null'
-remote 'rm /tmp/magick_joystick.service'
-remote 'sudo systemctl daemon-reload > /dev/null'
-remote 'sudo systemctl enable magick_joystick > /dev/null'
-remote 'sudo systemctl start magick_joystick > /dev/null'
+remote 'sudo service hostapd start && sudo reboot'
 
 echo " -> Setup done, rebooting"
 remote 'sudo reboot'

@@ -1,7 +1,7 @@
 [Unit]
 Description=Magick Joystick Service
-Requires=hciuart.service bluetooth.service
-After=hciuart.service bluetooth.service
+#Requires=hciuart.service bluetooth.service
+#After=hciuart.service bluetooth.service
 
 [Service]
 Restart=always
